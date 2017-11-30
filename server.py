@@ -401,7 +401,7 @@ def send_commands():
             elif strChoice == "--c":
                 conn.send(str.encode("exit"))
                 conn.close()
-                main_menu()
+                break
             elif strChoice[:3] == "--m" and len(strChoice) > 3:
                 strMsg = "msg" + strChoice[4:len(strChoice)]
                 conn.send(str.encode(strMsg))
@@ -426,9 +426,9 @@ def send_commands():
                 blnClose = lock_res_shut(strChoice[3:len(strChoice)])
                 if blnClose == "True":  # if the computer is shutdown
                     conn.close()
-                    main_menu()
+                    break
             elif strChoice == "--b":
-                main_menu()
+                break
             elif strChoice == "--e":
                 command_shell()
             elif strChoice == "--d":

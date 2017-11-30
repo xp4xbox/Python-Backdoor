@@ -1,6 +1,6 @@
 '''
 Simple python backdoor by xp4xbox
-License: https://creativecommons.org/licenses/by/2.0/
+License: https://github.com/xp4xbox/Simple-Python-Backdoor/blob/master/LICENSE
 
 VERSION 1.5 CHANGELOG:
 server is now Linux compatible!

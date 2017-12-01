@@ -438,7 +438,7 @@ def send_commands():
 
     except socket.error:  # if there is a socket error
         print("Error, connection was lost!" + "\n")
-        main_menu()
+        break
 
 
 def create_threads():

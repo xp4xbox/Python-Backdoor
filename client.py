@@ -17,7 +17,7 @@ APPDATA = os.environ["APPDATA"]
 # vbs message box
 def MessageBox(message):
     objVBS = open(TMP + "/m.vbs", "w")
-    objVBS.write("Msgbox \"" + message + "\", 16, \"Message\"")
+    objVBS.write("Msgbox \"" + message + "\", 64, \"Message\"")
     objVBS.close()
     subprocess.Popen(["cscript", TMP + "/m.vbs"], shell=True)
 

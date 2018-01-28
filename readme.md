@@ -48,7 +48,7 @@ For more information please refer to the [instructable](https://www.instructable
 
 ## Help
 
-If you need any help at all, feel free to post a "help" issue.
+If you need any help at all, feel free to post a "help" issue or a comment on my [instructable](https://www.instructables.com/id/Simple-Python-Backdoor/).
 
 ## Contributing
 
@@ -59,4 +59,4 @@ Contributing is encouraged and will help make a better program. Please refer to 
 This program must be used for legal purposes! I am not responsible for anything you do with it.
 
 ## License
-[License]https://github.com/xp4xbox/Python-Backdoor/blob/master/license)
+[License](https://github.com/xp4xbox/Python-Backdoor/blob/master/license)

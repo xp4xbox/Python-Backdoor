@@ -34,7 +34,7 @@ Currently this program has several features such as:
 ## Quick Usage
 
 1. Open client with IDLE or any other editor.
-2. Set your IP address in the quotes on line 8 (strHost) to use for the server or if you plan to use DNS server, one the line below put in your dns hostname such as: strHost = socket.gethostbyname("myserver113.ddns.net").
+2. Set your IP address in the quotes on line 8 for `strHost` to use for the server or if you plan to use DNS server, one the line below put in your dns hostname such as: `strHost = socket.gethostbyname("myserver113.ddns.net")`.
 
 > If you plan on using the program outside of your network, you must port forward port 3000.
 

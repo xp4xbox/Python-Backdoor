@@ -557,7 +557,7 @@ def send_commands():
                 print("Invalid choice, please try again!")
 
     except socket.error:  # if there is a socket error
-        print("Error, connection was lost!" + "\n" + socket.error)
+        print("Error, connection was lost!" + "\n" + str(socket.error))
         return
 
 

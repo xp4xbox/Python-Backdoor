@@ -511,8 +511,8 @@ def work():  # do jobs in the queue
             socket_accept()
         elif intValue == 2:
             while True:
+                time.sleep(0.2)
                 if len(arAddresses) > 0:
-                    time.sleep(0.2)
                     main_menu()
                     break
         queue.task_done()

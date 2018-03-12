@@ -259,7 +259,7 @@ def startup():
 
 
 def send_file():
-    strFile = input("\n" + "File to send:  ")
+    strFile = input("\n" + "File to send: ")
     if not os.path.isfile(strFile):
         print("Invalid File!")
         return

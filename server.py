@@ -20,7 +20,6 @@ NOTE: disable your firewall on the server or allow port 3000
 
 import socket, os, time, threading, sys
 from queue import Queue
-from tkinter import *
 
 intThreads = 2
 arJobs = [1, 2]

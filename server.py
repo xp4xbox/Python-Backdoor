@@ -20,6 +20,7 @@ NOTE: disable your firewall on the server or allow port 3000
 
 import socket, os, time, threading, sys
 from queue import Queue
+from tkinter import *
 
 intThreads = 2
 arJobs = [1, 2]
@@ -490,7 +491,7 @@ def send_commands():
                 print("Invalid choice, please try again!")
 
     except socket.error:  # if there is a socket error
-        print("Error, connection was lost!" + "\n")
+        print("Error, connection was lost!")
         return
 
 

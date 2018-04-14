@@ -18,6 +18,7 @@ Currently this program has several features such as:
 * Multi-client support
 * Cross-platform server
 * Built-in keylogger
+* Ability to send command to all clients
 * Ability to capture screenshots/webcam snapshots
 * Ability to upload/download files
 * Ability to send messages

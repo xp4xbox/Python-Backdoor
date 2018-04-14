@@ -180,10 +180,10 @@ def shut_res_lock():
         ctypes.windll.user32.LockWorkStation()  # lock pc
         return
     elif strChoice[3:7] == "none":
-        command = "shutdown " + strChoice[0:2] + " -f -t 100"
+        command = "shutdown " + strChoice[0:2] + " -f -t 0"
         subprocess.Popen(command.split(), shell=True)
     else:
-        command = ("shutdown " + strChoice[0:2] + " -f -t 100 -c").split()
+        command = ("shutdown " + strChoice[0:2] + " -f -t 10 -c").split()
         command.append(strChoice[3:len(strChoice)])
         subprocess.Popen(command, shell=True)
     objSocket.close()  # close connection and exit

@@ -151,7 +151,7 @@ def list_connections():
 
     for intCounter, conn in enumerate(arConnections):
         strClients += str(intCounter) + "\t" + str(arAddresses[intCounter][0]) + "\t" + \
-                      str(arAddresses[intCounter][1]) + "\n"
+                      str(socket.getfqdn(arAddresses[intCounter][0])) + "\t" + str(arAddresses[intCounter][1]) + "\n"
     print("\n" + "Users:" + "\n" + strClients)
 
 

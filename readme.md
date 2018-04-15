@@ -4,7 +4,7 @@
 This program is an opensource, hidden and undetectable backdoor/reverse shell/RAT for Windows made in Python 3 which contains many features such as multi-client support and cross-platform server.
 
 ## Installation
-You will needs:
+You will need:
 * [Python 3.6+](https://www.python.org/downloads)
 * [Pywin32](https://sourceforge.net/projects/pywin32/files/pywin32/)
 

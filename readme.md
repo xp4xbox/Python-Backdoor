@@ -7,9 +7,6 @@ This program is an opensource, hidden and undetectable backdoor/reverse shell/RA
 You will needs:
 * [Python 3.6+](https://www.python.org/downloads)
 * [Pywin32](https://sourceforge.net/projects/pywin32/files/pywin32/)
-* [PyAutoGui](https://pypi.python.org/pypi/PyAutoGUI)
-* [Unoffical Pygame](https://www.lfd.uci.edu/~gohlke/pythonlibs/#pygame)
-* [VideoCapture](https://www.lfd.uci.edu/~gohlke/pythonlibs/#videocapture)
 
 The program can be downloaded via github or git eg. `git clone https://github.com/xp4xbox/Python-Backdoor`
 
@@ -19,7 +16,7 @@ Currently this program has several features such as:
 * Cross-platform server
 * Built-in keylogger
 * Ability to send command to all clients
-* Ability to capture screenshots/webcam snapshots
+* Ability to capture screenshots
 * Ability to upload/download files
 * Ability to send messages
 * Ability to run at startup

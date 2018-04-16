@@ -9,7 +9,8 @@ You will need:
 * [Pywin32](https://sourceforge.net/projects/pywin32/files/pywin32/)
 * [Pyinstaller](http://www.pyinstaller.org/downloads.html#)
 
-To install the two modules, simply run `python -m pip install -r requirements.txt`
+1. Downloaded the repository via github or git eg. `git clone https://github.com/xp4xbox/Python-Backdoor`
+2. Install the two required modules by running `python -m pip install -r requirements.txt`
 
 ## Features
 Currently this program has several features such as:

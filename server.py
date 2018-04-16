@@ -3,19 +3,6 @@ Python backdoor by xp4xbox
 https://github.com/xp4xbox/Python-Backdoor
 https://www.instructables.com/id/Simple-Python-Backdoor/
 License: https://github.com/xp4xbox/Python-Backdoor/blob/master/license
-
-Client Requires:
-
-https://pypi.python.org/pypi/PyAutoGUI
-https://sourceforge.net/projects/pywin32/
-https://www.lfd.uci.edu/~gohlke/pythonlibs/#pygame
-https://www.lfd.uci.edu/~gohlke/pythonlibs/#videocapture
-http://www.pyinstaller.org/downloads.html
-
-To build client with pyinstaller run:
-pyinstaller client.py --exclude-module FixTk --exclude-module tcl --exclude-module tk --exclude-module _tkinter --exclude-module tkinter --exclude-module Tkinter --onefile --windowed
-
-NOTE: disable your firewall on the server or allow port 3000
 '''
 
 import socket, os, time, threading, sys

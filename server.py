@@ -22,7 +22,7 @@ strHost = "0.0.0.0"
 intPort = 3000
 
 if not sys.platform == "linux" or sys.platform == "linux2":
-    os.system("title Simple Backdoor v2")
+    os.system("title Simple Backdoor")
 
 # function to return decoded utf-8
 decode_utf8 = lambda data: data.decode("utf-8")

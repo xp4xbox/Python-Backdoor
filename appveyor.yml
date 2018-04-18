@@ -30,7 +30,7 @@ install:
   - "python -m easy_install -U setuptools"
 
   # install pywin32
-  - "pip install -U -r pywin32"
+  - "pip install -U pywin32"
 
 test_script:
   # run test script

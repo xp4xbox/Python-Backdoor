@@ -201,7 +201,7 @@ def screenshot():
             intBuffer += strClientResponse[intCounter]
     intBuffer = int(intBuffer)
 
-    strFile = time.strftime("%Y%m%d%H%M%S" + ".bmp")
+    strFile = time.strftime("%Y%m%d%H%M%S" + ".png")
 
     ScrnData = recvall(intBuffer)  # get data and write it
     objPic = open(strFile, "wb")

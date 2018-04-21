@@ -30,8 +30,8 @@ install:
   - "python -m easy_install -U setuptools"
 
   # install requirements
-  - "pip install -U -r pywin32"
-  - "pip install -U -r pyscreeze"
+  - "pip install -U pywin32"
+  - "pip install -U pyscreeze"
 
 test_script:
   # run test script

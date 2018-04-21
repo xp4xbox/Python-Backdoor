@@ -6,11 +6,9 @@ This program is an opensource, hidden and undetectable backdoor/reverse shell/RA
 ## Installation
 You will need:
 * [Python 3.6+](https://www.python.org/downloads)
-* [Pywin32](https://sourceforge.net/projects/pywin32/files/pywin32/)
-* [Pyinstaller](http://www.pyinstaller.org/downloads.html#)
 
 1. Downloaded the repository via github or git eg. `git clone https://github.com/xp4xbox/Python-Backdoor`
-2. Install the two required modules by running `python -m pip install -r requirements.txt`
+2. Install the required modules by running `python -m pip install -r requirements.txt`
 
 ## Features
 Currently this program has several features such as:

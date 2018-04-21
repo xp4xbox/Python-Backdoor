@@ -29,8 +29,9 @@ install:
   - "python -m pip install -U pip"
   - "python -m easy_install -U setuptools"
 
-  # install pywin32
-  - "pip install -U pywin32"
+  # install requirements
+  - "pip install -U -r pywin32"
+  - "pip install -U -r pyscreeze"
 
 test_script:
   # run test script

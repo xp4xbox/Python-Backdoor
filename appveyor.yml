@@ -32,6 +32,7 @@ install:
   # install requirements
   - "pip install -U pywin32"
   - "pip install -U pyscreeze"
+  - "pip install -U pynput"
 
 test_script:
   # run test script

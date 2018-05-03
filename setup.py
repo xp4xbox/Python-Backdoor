@@ -1,7 +1,7 @@
 import os, sys, socket
 
 # get the path to python install dir
-python_path = os.path.dirname(sys.executable)
+python_path = "\"" + os.path.dirname(sys.executable)
 
 try:
     # create a dummy socket to get local IP address
@@ -113,7 +113,7 @@ strIconChoice = strIconChoice.replace("\"", "")
 
 # if the user did not choose an icon build the client using pyinstaller
 if strIconChoice == "":
-    os.system(python_path + "/Scripts/pyinstaller client.py --exclude-module FixTk --exclude-module tcl --exclude-module tk "
+    os.system(python_path + "/Scripts/pyinstaller\" client.py --exclude-module FixTk --exclude-module tcl --exclude-module tk "
                       "--exclude-module _tkinter --exclude-module tkinter --exclude-module Tkinter "
                       "--onefile --windowed")
 # check to make sure the icon exists and that it is a .ico file
@@ -125,6 +125,6 @@ elif not strIconChoice.endswith(".ico"):
     sys.exit(0)
 else:
     # build the client with an icon
-    os.system(python_path + "/Scripts/pyinstaller client.py --exclude-module FixTk --exclude-module tcl --exclude-module tk "
+    os.system(python_path + "/Scripts/pyinstaller\" client.py --exclude-module FixTk --exclude-module tcl --exclude-module tk "
                       "--exclude-module _tkinter --exclude-module tkinter --exclude-module Tkinter "
                       "--onefile --windowed --icon=\"" + strIconChoice + "\"")

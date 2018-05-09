@@ -213,7 +213,7 @@ def vbs_block_process(process, popup, message, title, timeout, type):
                  "Set colMonitoredProcesses = objWMIService.ExecNotificationQuery(\"select * " \
                  "from __instancecreationevent \" & \" within 1 where TargetInstance isa 'Win32_Process'\")" + "\n" + \
                  "Do" + "\n" + "Set objLatestProcess = colMonitoredProcesses.NextEvent" + "\n" + \
-                 "If objLatestProcess.TargetInstance.Name = \"" + process + "\" Then" + "\n" + \
+                 "If LCase(objLatestProcess.TargetInstance.Name) = \"" + process + "\" Then" + "\n" + \
                  "objLatestProcess.TargetInstance.Terminate" + "\n"
     if popup == "True":  # if showing a message
         strVBSCode += "objWshShl.Popup \"" + message + "\"," + timeout + ", \"" + title + "\"," + type + "\n"

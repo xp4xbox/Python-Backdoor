@@ -27,6 +27,7 @@ Currently this program has several features such as:
 * Ability to disable task manager
 * Ability to shutdown/restart/lock pc
 * Checking for multiple instances
+* VM/sandboxie check
 * And more...
 
 ## Quick Usage

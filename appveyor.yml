@@ -33,6 +33,7 @@ install:
   - "pip install -U pywin32"
   - "pip install -U pyscreeze"
   - "pip install -U pynput"
+  - "pip install -U WMI"
 
 test_script:
   # run test script

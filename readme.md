@@ -39,11 +39,11 @@ Currently this program has several features such as:
 
 > If you plan on using the program outside of your network, you must port forward port 3000.
 
-For more information please refer to the [instructable](https://www.instructables.com/id/Simple-Python-Backdoor/).
+For more information on doing everything manually please refer to the [instructable](https://www.instructables.com/id/Simple-Python-Backdoor/).
 
 ## Help
 
-If you need any help at all, feel free to post a "help" issue or a comment on my [instructable](https://www.instructables.com/id/Simple-Python-Backdoor/).
+If you need any help at all, feel free to post a "help" issue.
 
 ## Contributing
 

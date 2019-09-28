@@ -434,7 +434,6 @@ def send_command(command):
 def show_help():
     print("--help")
     print("--m Send message")
-    print("--o Open a website")
     print("--r Receive file from the user")
     print("--s Send file to the user")
     print("--p Take screenshot")
@@ -468,9 +467,6 @@ def send_commands():
             elif strChoice[:3] == "--m" and len(strChoice) > 3:
                 strMsg = "msg" + strChoice[4:]
                 send(str.encode(strMsg))
-            elif strChoice[:3] == "--o" and len(strChoice) > 3:
-                strSite = "site" + strChoice[4:]
-                send(str.encode(strSite))
             elif strChoice == "--a 1":
                 startup()
             elif strChoice == "--a 2":

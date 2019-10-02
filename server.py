@@ -31,22 +31,18 @@ intBuff = 1024
 
 
 def decode_utf8(data): return data.decode("utf-8")
-
 # function to return string with quotes removed
 
 
 def remove_quotes(string): return string.replace("\"", "")
-
 # function to return title centered around string
 
 
 def center(string, title): return f"{{:^{len(string)}}}".format(title)
-
 # function to send encrypted data
 
 
 def send(data): return conn.send(data)
-
 # function to receive and decrypt data
 
 

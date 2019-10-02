@@ -3,6 +3,7 @@ import win32api, winerror, win32event, win32crypt
 from shutil import copyfile
 from winreg import *
 
+# Replace with host ip
 strHost = "192.168.1.226"
 # strHost = socket.gethostbyname("")
 intPort = 3000

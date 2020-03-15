@@ -24,7 +24,7 @@ intPort = 3000
 intBuff = 1024
 
 # function to return decoded utf-8
-decode_utf8 = lambda data: data.decode("utf-8")
+decode_utf8 = lambda data: data.decode("utf-8", errors="replace")
 
 # function to return string with quotes removed
 remove_quotes = lambda string: string.replace("\"", "")

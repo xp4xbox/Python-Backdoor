@@ -1,4 +1,5 @@
 # Python Backdoor
+
 [![Build status](https://ci.appveyor.com/api/projects/status/5tdy7lpopxpinui9?svg=true)](https://ci.appveyor.com/project/xp4xbox/python-backdoor)
 
 This program is an non-object oriented opensource, hidden and undetectable backdoor/reverse shell/RAT for Windows made in Python 3 which contains many features such as multi-client support and cross-platform server.
@@ -6,7 +7,9 @@ This program is an non-object oriented opensource, hidden and undetectable backd
 ![image](https://i.imgur.com/A2AXCPf.jpg)
 
 ## Installation
+
 You will need:
+
 * [Python 3.6-3.7](https://www.python.org/downloads)
 * A Windows computer
 
@@ -14,7 +17,9 @@ You will need:
 2. Install the required modules by running `python -m pip install -r requirements.txt`
 
 ## Features
+
 Currently this program has several features such as:
+
 * Multi-client support
 * Cross-platform server
 * Built-in keylogger
@@ -26,6 +31,7 @@ Currently this program has several features such as:
 * Ability to browse files
 * Ability to dump user info
 * Ability to open remote cmd
+* Ability to open remote python interpreter
 * Ability to disable task manager
 * Ability to shutdown/restart/lock pc
 * Ability to melt file on startup
@@ -57,4 +63,5 @@ Contributing is encouraged and will help make a better program. Please refer to 
 This program must be used for legal purposes! I am not responsible for anything you do with it.
 
 ## License
+
 [License](https://github.com/xp4xbox/Python-Backdoor/blob/master/license)

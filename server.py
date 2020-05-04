@@ -436,7 +436,7 @@ def show_help():
     print("--v View files")
     print("--u User Info")
     print("--e Open remote cmd")
-    print("--i Open Remote Python Interpreter")
+    print("--i Open remote python interpreter")
     print("--d Disable task manager")
     print("--k (start) (stop) (dump) Keylogger")
     print("--x (1) Lock user")

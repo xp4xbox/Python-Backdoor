@@ -190,9 +190,9 @@ def select_connection(connection_id, blnGetResponse):
         '''
         IP, PC Name, OS, User
         '''
-        arrInfo = ''
+        arrInfo = tuple()
         for index in [0, 2, 3, 4]:
-            arrInfo += str(arrAddresses[connection_id][index])
+            arrInfo += (str(arrAddresses[connection_id][index]),)
 
         if blnGetResponse == "True":
             print(f"You are connected to {arrInfo[0]} ....\n")

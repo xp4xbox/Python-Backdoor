@@ -217,14 +217,10 @@ def user_info():
 
 def screenshot():
     send(str.encode("screen"))
-    strClientResponse = decode_utf8(recv(intBuff))  # get info
-    print(f"\n{strClientResponse}")
+    strScrnSize = decode_utf8(recv(intBuff))  # get screenshot size
+    print(f"Receiving Screenshot\nFile size: {strScrnSize} bytes\nPlease wait...")
 
-    intBuffer = ""
-    for strResponse in strClientResponse:  # get buffer size from client response
-        if strResponse.isdigit():
-            intBuffer += strResponse
-    intBuffer = int(intBuffer)
+    intBuffer = int(strScrnSize)
 
     strFile = time.strftime("%Y%m%d%H%M%S" + ".png")
 

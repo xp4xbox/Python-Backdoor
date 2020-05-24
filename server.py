@@ -310,16 +310,12 @@ def receive():
     send(str.encode("recv" + strFile))
     strClientResponse = decode_utf8(recv(intBuff))
 
-    print(strClientResponse)
-
     if strClientResponse == "Target file not found!":
+        print(strClientResponse)
         return
 
-    intBuffer = ""
-    for strResponse in strClientResponse:  # get buffer size from client response
-        if strResponse.isdigit():
-            intBuffer += strResponse
-    intBuffer = int(intBuffer)
+    print(f"File size: {strClientResponse} bytes\nPlease wait...")
+    intBuffer = int(strClientResponse)
 
     file_data = recvall(intBuffer)  # get data and write it
 

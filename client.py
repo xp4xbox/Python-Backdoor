@@ -228,7 +228,7 @@ def receive(data):
         send(str.encode("Target file not found!"))
         return
 
-    send(str.encode(f"File size: {str(os.path.getsize(data))} bytes\nPlease wait..."))
+    send(str(os.path.getsize(data)).encode())
     time.sleep(1)
     with open(data, 'rb') as objFile:
         send(objFile.read()) # Send Contents of File

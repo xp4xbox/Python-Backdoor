@@ -172,7 +172,7 @@ def list_connections():
         strClients += "\n"
 
     strInfo = f"\nID{3*' '}"
-    for index, text in enumerate(["IP", "Port", "PC Name", "OS"]):
+    for index, text in enumerate(["IP", "Port", "PC Name", "OS", "User"]):
         strInfo += center(str(arrAddresses[0][index]), text) + 4*" "
     strInfo += f"\n{strClients}"
     print(strInfo, end='')

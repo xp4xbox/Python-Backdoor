@@ -75,9 +75,9 @@ def socket_accept():
         try:
             conn, address = objSocket.accept()
             conn.setblocking(1)  # no timeout
-            arrConnections.append(conn)  # append connection to array
             client_info = decode_utf8(conn.recv(intBuff)).split("`,")
             address += client_info[0], client_info[1], client_info[2],
+            arrConnections.append(conn)
             arrAddresses.append(address)
             print("\nConnection has been established: {0} ({1})".format(address[0], address[2]))
         except socket.error:

@@ -10,7 +10,7 @@ This program is an non-object oriented opensource, hidden and undetectable backd
 
 You will need:
 
-* [Python 3.6-3.7](https://www.python.org/downloads)
+* [Python 3.6+](https://www.python.org/downloads)
 * A Windows computer
 
 1. Downloaded the repository via github or git eg. `git clone https://github.com/xp4xbox/Python-Backdoor`

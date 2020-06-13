@@ -152,8 +152,8 @@ def refresh_connections():  # used to remove any lost connections
         try:
             conn.send(str.encode("test"))  # test to see if connection is active
         except socket.error:
-            del arrAddresses[intCounter]
-            del arrConnections[intCounter]
+            del arrAddresses[arrConnections.index(conn)]
+            arrConnections.remove(conn)
             conn.close()
 
 

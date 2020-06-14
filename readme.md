@@ -1,7 +1,5 @@
 # Python Backdoor
 
-[![Build status](https://ci.appveyor.com/api/projects/status/5tdy7lpopxpinui9?svg=true)](https://ci.appveyor.com/project/xp4xbox/python-backdoor)
-
 This program is an non-object oriented opensource, hidden and undetectable backdoor/reverse shell/RAT for Windows made in Python 3 which contains many features such as multi-client support and cross-platform server.
 
 ![image](https://i.imgur.com/A2AXCPf.jpg)

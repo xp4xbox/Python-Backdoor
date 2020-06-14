@@ -1,5 +1,5 @@
-import socket, os, sys, platform, time, ctypes, subprocess, sqlite3, pyscreeze, threading, pynput.keyboard, wmi, json
-import win32api, winerror, win32event, win32crypt
+import socket, os, sys, platform, time, ctypes, subprocess, pyscreeze, threading, pynput.keyboard, wmi, json
+import win32api, winerror, win32event
 from shutil import copyfile
 from winreg import *
 from io import StringIO, BytesIO

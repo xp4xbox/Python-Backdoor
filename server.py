@@ -1,13 +1,3 @@
-'''
-Python backdoor by xp4xbox
-https://github.com/xp4xbox/Python-Backdoor
-https://www.instructables.com/id/Simple-Python-Backdoor/
-
-License: https://github.com/xp4xbox/Python-Backdoor/blob/master/license
-
-NOTE: This program must be used for legal purposes only! I am not responsible for anything you do with it.
-'''
-
 import socket, os, time, threading, sys, json
 from queue import Queue
 

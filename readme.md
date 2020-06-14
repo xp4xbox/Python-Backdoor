@@ -39,7 +39,7 @@ Currently this program has several features such as:
 
 ## Quick Usage
 
-1. Run `setup.py` and follow the directions on screen to build the client to .exe.
+1. Run `src/setup.py` and follow the directions on screen to build the client to .exe.
 2. Check the `dist` folder for the .exe.
 3. **Disable your firewall on the server or configure your firewall to allow port 3000.**
 4. Run the `server.py` to start accepting connections.

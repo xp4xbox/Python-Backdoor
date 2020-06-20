@@ -31,7 +31,7 @@ recv = lambda buffer: conn.recv(buffer)
 
 def recvall(buffer):  # function to receive large amounts of data
     bytData = b""
-    while len(data) < buffer:
+    while len(bytData) < buffer:
         bytData += recv(buffer)
     return bytData
 

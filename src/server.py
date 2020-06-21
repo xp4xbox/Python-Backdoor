@@ -229,7 +229,7 @@ def browse_files():
     send(b"filebrowser")
     print("\nDrives :")
 
-    strDrives = (recv(intBuff).decode()
+    strDrives = recv(intBuff).decode()
     print(f"{strDrives}\n")
 
     strDir = input("Directory: ")

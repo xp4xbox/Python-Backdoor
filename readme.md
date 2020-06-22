@@ -2,7 +2,7 @@
 
 This program is an non-object oriented opensource, hidden and undetectable backdoor/reverse shell/RAT for Windows made in Python 3 which contains many features such as multi-client support and cross-platform server.
 
-![image](https://i.imgur.com/A2AXCPf.jpg)
+![image](https://i.imgur.com/uTU3PXnl.png)
 
 ## Installation
 

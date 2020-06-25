@@ -20,6 +20,7 @@ Currently this program has several features such as:
 
 * Multi-client support
 * Cross-platform server
+* AES-128 Encryption
 * Built-in keylogger
 * Ability to send command to all clients
 * Ability to capture screenshots

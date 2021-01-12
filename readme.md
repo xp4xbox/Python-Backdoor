@@ -22,7 +22,7 @@ Currently this program has several features such as:
 * Cross-platform server
 * AES-128 Encryption
 * Built-in keylogger
-* Ability to send command to all clients
+* Ability to send commands to all clients
 * Ability to capture screenshots
 * Ability to upload/download files
 * Ability to send messages
@@ -55,11 +55,11 @@ If you need any help at all, feel free to post a "help" issue.
 
 ## Contributing
 
-Contributing is encouraged and will help make a better program. Please refer to [this](https://gist.github.com/MarcDiethelm/7303312) before contributing.
+Contributing is encouraged and will help make this a better program. Please refer to [this](https://gist.github.com/MarcDiethelm/7303312) before contributing.
 
 ## Disclaimer
 
-This program is for educational purposes only! I am not responsible for anything you do with it.
+This program is for educational purposes only! I take no responsibility or liability for own personal use.
 
 ## License
 

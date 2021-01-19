@@ -172,7 +172,7 @@ strIconChoice = strIconChoice.replace("\"", "")
 
 # if the user did not choose an icon build the client using pyinstaller
 if strIconChoice == "":
-    os.system(python_path + "/Scripts/pyinstaller\" client.py " + strUPX + " --exclude-module FixTk --exclude-module tcl --exclude-module tk "
+    os.system(python_path + "/Scripts/pyinstaller\" client.py " + strUPX + " --hidden-import pynput.keyboard._win32 --hidden-import pynput.mouse._win32 --exclude-module FixTk --exclude-module tcl --exclude-module tk "
                       "--exclude-module _tkinter --exclude-module tkinter --exclude-module Tkinter "
                       "--onefile --windowed")
 # check to make sure the icon exists and that it is a .ico file
@@ -184,6 +184,6 @@ elif not strIconChoice.endswith(".ico"):
     sys.exit(0)
 else:
     # build the client with an icon
-    os.system(python_path + "/Scripts/pyinstaller\" client.py " + strUPX + " --exclude-module FixTk --exclude-module tcl --exclude-module tk "
+    os.system(python_path + "/Scripts/pyinstaller\" client.py " + strUPX + " --hidden-import pynput.keyboard._win32 --hidden-import pynput.mouse._win32 --exclude-module FixTk --exclude-module tcl --exclude-module tk "
                       "--exclude-module _tkinter --exclude-module tkinter --exclude-module Tkinter "
                       "--onefile --windowed --icon=\"" + strIconChoice + "\"")

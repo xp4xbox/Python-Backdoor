@@ -1,9 +1,9 @@
 import os, sys, socket, shutil
 
 # get the path to python install dir
-os.chdir(os.path.dirname(os.path.abspath(__file__)))
+python_path = "\"" + os.path.dirname(sys.executable)
 
-os.chdir(os.path.dirname(sys.argv[0]))
+os.chdir(os.path.dirname(os.path.abspath(__file__)))
 
 try:
     # create a dummy socket to get local IP address

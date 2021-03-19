@@ -3,6 +3,8 @@ import os, sys, socket, shutil
 # get the path to python install dir
 python_path = "\"" + os.path.dirname(sys.executable)
 
+os.chdir(os.path.dirname(sys.argv[0]))
+
 try:
     # create a dummy socket to get local IP address
     objSocket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)

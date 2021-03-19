@@ -1,7 +1,7 @@
 import os, sys, socket, shutil
 
 # get the path to python install dir
-python_path = "\"" + os.path.dirname(sys.executable)
+os.chdir(os.path.dirname(os.path.abspath(__file__)))
 
 os.chdir(os.path.dirname(sys.argv[0]))
 

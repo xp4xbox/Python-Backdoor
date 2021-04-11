@@ -8,7 +8,7 @@ This project is a non-object oriented open source, hidden and undetectable backd
 
 You will need:
 
-* [Python 3.6+](https://www.python.org/downloads)
+* [Python 3.6+](https://www.python.org/downloads) (Make sure to add python to PATH during installation)
 * A Windows computer
 
 1. Download the repository via github or git eg. `git clone https://github.com/xp4xbox/Python-Backdoor`

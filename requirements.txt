@@ -4,3 +4,4 @@ pyscreeze
 pynput
 WMI
 cryptography
+pillow

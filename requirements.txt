@@ -1,7 +1,7 @@
-pywin32
-pyinstaller
-pyscreeze
-pynput
-WMI
-cryptography
-pillow
+pywin32=301
+pyinstaller=4.5.1
+pyscreeze=0.1.27
+pynput=1.7.3
+WMI=1.5.1
+cryptography=318 0.1.7
+pillow=8.3.1

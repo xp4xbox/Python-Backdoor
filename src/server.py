@@ -1,5 +1,4 @@
-import base64
-import socket, os, time, threading, sys, json
+import socket, os, time, threading, sys, json, base64
 from queue import Queue
 from cryptography.fernet import Fernet
 

@@ -1,3 +1,4 @@
+import base64
 import socket, os, time, threading, sys, json
 from queue import Queue
 from cryptography.fernet import Fernet
@@ -73,7 +74,7 @@ def socket_accept():
             conn, address = objSocket.accept()
             conn.setblocking(1)  # no timeout
             address += tuple(json.loads(conn.recv(intBuff).decode()))
-            conn.send(objKey)
+            conn.send(base64.b64encode(objKey))
             arrConnections.append(conn)
             arrAddresses.append(address)
             print(f"\nConnection has been established: {address[0]} ({address[2]})")

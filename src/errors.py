@@ -13,3 +13,7 @@ class ServerSocket:
 class ClientSocket:
     class KeyloggerError(Exception):
         pass
+
+    class Persistence:
+        class StartupError(Exception):
+            pass

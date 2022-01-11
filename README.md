@@ -9,7 +9,7 @@ This project is an open source, backdoor/reverse tcp/RAT for Windows made in Pyt
 You will need:
 
 * [Python 3.10+](https://www.python.org/downloads) (Add python to PATH during installation)
-* A Windows computer for buildin the client
+* A Windows computer for building the client
 * Any OS with python support for the server
 
 1. Download the repository via GitHub or git eg. `git clone https://github.com/xp4xbox/Python-Backdoor`
@@ -28,7 +28,7 @@ Currently, this program has several features, notably:
 * Ability to upload/download files
 * Ability to open remote shell or python interpreter
 * Ability to disable a process
-* Ability to run shellcode (x86 python only)
+* Ability to inject shellcode
 * Ability to melt file
 * VM/sandboxie check
 
@@ -43,7 +43,12 @@ Currently, this program has several features, notably:
 
 ## Help
 
-If you need any help at all, feel free to open a "help" issue.
+If you need help, feel free to open a "help" issue.
+
+### Common problems
+
+- Injecting shellcode requires the architecture specified by the command. eg. x64: `msfvenom windows/x64/meterpreter/reverse_tcp`
+- For use outside of network specified port is not open, check specified port with a [port scanner](https://www.whatismyip.com/port-scanner/)
 
 ## Contributing
 

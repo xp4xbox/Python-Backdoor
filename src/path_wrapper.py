@@ -11,4 +11,6 @@ This file should be imported in all main classes as first import
 import sys
 import os
 
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(os.path.realpath(__file__)), os.pardir)))
+
+def wrap():
+    sys.path.append(os.path.abspath(os.path.join(os.path.dirname(os.path.realpath(__file__)), os.pardir)))

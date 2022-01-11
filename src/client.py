@@ -6,8 +6,11 @@ https://github.com/xp4xbox/Python-Backdoor
 license: https://github.com/xp4xbox/Python-Backdoor/blob/master/license
 """
 import socket
+import sys
 
-import path_wrapper
+from path_wrapper import wrap
+wrap()
+
 from src.args import Args
 from src import errors
 from src.client import persistence

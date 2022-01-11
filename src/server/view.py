@@ -155,6 +155,8 @@ class View:
                         case c.MENU_INTERACT_CLOSE:
                             self.control.socket.close()
                             break
+                        case c.MENU_INTERACT_SHELLCODE:
+                            self.control.shellcode()
                     print()
 
         except socket.error as e:  # if there is a socket error

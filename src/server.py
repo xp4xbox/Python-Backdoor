@@ -6,6 +6,8 @@ https://github.com/xp4xbox/Python-Backdoor
 license: https://github.com/xp4xbox/Python-Backdoor/blob/master/license
 """
 
+import path_wrapper
+from src.args import Args
 from src import logger
 from src.server.control import Control
 from src.server.socket import Socket
@@ -13,10 +15,11 @@ from src.server.view import View
 
 
 class Server:
-    def __init__(self, port):
-        logger.init()
+    def __init__(self):
+        self._args = Args(self)
+        logger.init(self._args.get_args())
 
-        self.socket = Socket(port)
+        self.socket = Socket(self._args.get_args().port)
         self.control = Control(self.socket)
 
     def start(self):
@@ -25,4 +28,5 @@ class Server:
         View(self.control)
 
 
-if __name__ == "__main__": Server(3000).start()
+if __name__ == "__main__":
+    Server().start()

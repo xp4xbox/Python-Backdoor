@@ -8,11 +8,9 @@ license: https://github.com/xp4xbox/Python-Backdoor/blob/master/license
 
 import logging.config
 
-import args
-
+from src.defs import LOGGER_ID
 
 # https://stackoverflow.com/questions/1343227/can-pythons-logging-format-be-modified-depending-on-the-message-log-level
-from src.defs import LOGGER_ID
 
 
 class CustomFormatter(logging.Formatter):
@@ -38,9 +36,7 @@ class CustomFormatter(logging.Formatter):
         return formatter.format(record)
 
 
-def init():
-    _args = args.get_args()
-
+def init(_args):
     if _args.debug:
         level = logging.DEBUG
     else:

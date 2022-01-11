@@ -34,7 +34,7 @@ Currently, this program has several features, notably:
 
 ## Quick Usage
 
-1. Run `setup.py` and configure options to build the client
+1. Run `src/setup.pyw` and configure options to build the client
 2. Check the `dist` folder for the .exe.
 3. Disable your firewall on the server or configure your firewall to allow the port chosen.
 4. Run the `src/server.py -p <port>` to start the server and accept connections.

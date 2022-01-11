@@ -11,22 +11,10 @@ import shutil
 import subprocess
 import winreg
 
-import win32api
-import win32event
-import winerror
 import wmi
 
 from src import errors
 from src.defs import *
-
-
-def is_duplicate_instance():
-    mutex = win32event.CreateMutex(None, 1, MUTEX)
-    if win32api.GetLastError() == winerror.ERROR_ALREADY_EXISTS:
-        mutex = None
-        return True
-
-    return False
 
 
 def detect_sandboxie():

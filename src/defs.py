@@ -9,8 +9,6 @@ license: https://github.com/xp4xbox/Python-Backdoor/blob/master/license
 import os
 import sys
 
-MUTEX = "PB_mutex_{A06956EF-1F10-42B4-9CF2-6E1DAC771C07}"
-
 LOGGER_ID = "pb_logger"
 
 REG_STARTUP_NAME = "winupdate"

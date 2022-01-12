@@ -25,12 +25,6 @@ def null_callback():
     pass
 
 
-def check_main_files():
-    if not os.path.isfile("client.py"):
-        tkinter.messagebox.showerror("Error", "Missing src/client.py")
-        sys.exit(0)
-
-
 def get_local_ip():
     try:
         # create a dummy socket to get local IP address
@@ -53,7 +47,7 @@ def get_pyinstaller():
         _path = f"{path}\\Scripts\\pyinstaller.exe"
         if os.path.isfile(_path):
             return "\"" + _path + "\""
-
+            
     tkinter.messagebox.showerror("Error", "Pyinstaller not found in any site packages.")
     sys.exit(0)
 
@@ -90,7 +84,6 @@ class Setup:
     def __init__(self):
 
         os.chdir(os.path.dirname(os.path.abspath(__file__)))  # ensure proper dir
-        check_main_files()
         check_windows()
 
         self.pyinstaller = get_pyinstaller()
@@ -151,7 +144,7 @@ class Setup:
         self.onefile_cb = Checkbutton(self.misc_frame, text="One file", variable=self.one_file)
         self.onefile_cb.grid(column=0, row=0, sticky=W)
 
-        self.startup_cb = Checkbutton(self.misc_frame, text="Add to startup", variable=self.add_startup)
+        self.startup_cb = Checkbutton(self.misc_frame, text="Add to startup", variable=self.add_startup, command=self.startup_cb_callback)
         self.startup_cb.grid(column=0, row=1, sticky=W)
 
         self.add_icon_cb = Checkbutton(self.misc_frame, text="Custom icon", variable=self.icon, command=self.add_icon_cb_callback)
@@ -226,10 +219,10 @@ class Setup:
             if bool(self.one_file.get()):
                 onefile = "--onefile"
 
-            command_arg = f"{self.pyinstaller} client.py {windowed}{icon_command}{onefile} -y --clean --hidden-import " \
+            command_arg = f"{self.pyinstaller} client.py {windowed}{icon_command}{onefile} --noupx -y --hidden-import " \
                           f"pynput.keyboard._win32 --hidden-import pynput.mouse._win32 --exclude-module " \
                           f"FixTk --exclude-module tcl --exclude-module tk --exclude-module _tkinter --exclude-module " \
-                          f"tkinter --exclude-module Tkinter"
+                          f"tkinter --exclude-module Tkinter --debug=all --log-level DEBUG --clean --onedir"
 
             def run_command():
                 self.command = subprocess.Popen(command_arg, shell=True, stderr=subprocess.PIPE, stdout=subprocess.PIPE,
@@ -242,6 +235,13 @@ class Setup:
 
     def melt_cb_callback(self):
         if self.melt.get() == 1:
+            self.one_file.set(1)
+            self.onefile_cb.config(state=DISABLED)
+        else:
+            self.onefile_cb.config(state=ACTIVE)
+
+    def startup_cb_callback(self):
+        if self.add_startup == 1:
             self.one_file.set(1)
             self.onefile_cb.config(state=DISABLED)
         else:

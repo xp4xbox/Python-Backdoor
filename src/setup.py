@@ -238,14 +238,16 @@ class Setup:
             self.one_file.set(1)
             self.onefile_cb.config(state=DISABLED)
         else:
-            self.onefile_cb.config(state=ACTIVE)
+            if self.add_startup.get() != 1:
+                self.onefile_cb.config(state=ACTIVE)
 
     def startup_cb_callback(self):
-        if self.add_startup == 1:
+        if self.add_startup.get() == 1:
             self.one_file.set(1)
             self.onefile_cb.config(state=DISABLED)
         else:
-            self.onefile_cb.config(state=ACTIVE)
+            if self.melt.get() != 1:
+                self.onefile_cb.config(state=ACTIVE)
 
     def add_icon_cb_callback(self):
         if self.icon.get() == 1:

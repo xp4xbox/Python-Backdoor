@@ -8,8 +8,8 @@ license: https://github.com/xp4xbox/Python-Backdoor/blob/master/license
 
 import socket
 
-import src.defs as c
-from src.defs import *
+import src.command_defs as c
+from src.command_defs import *
 
 
 def menu_help(_list):

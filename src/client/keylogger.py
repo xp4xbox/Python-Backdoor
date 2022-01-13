@@ -7,7 +7,6 @@ license: https://github.com/xp4xbox/Python-Backdoor/blob/master/license
 """
 
 import threading
-
 import pynput
 
 from src import errors

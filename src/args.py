@@ -14,7 +14,7 @@ class Args:
         self.parser = ArgumentParser()
         self.parser.add_argument("-d", "--debug", help="debug mode", action="store_true")
 
-        if str(type(parent).__name__) == "Server":
+        if str(type(parent).__name__) == "MainServer":
             self.parser.add_argument("-p", "--port", help="port number", type=int, default=3000)
 
     def get_args(self):

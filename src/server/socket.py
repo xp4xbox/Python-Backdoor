@@ -11,7 +11,7 @@ from threading import Thread
 
 from src import helper, errors
 from src.encrypted_socket import EncryptedSocket
-from src.defs import *
+from src.command_defs import *
 
 
 class Socket(EncryptedSocket):

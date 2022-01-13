@@ -6,22 +6,6 @@ https://github.com/xp4xbox/Python-Backdoor
 license: https://github.com/xp4xbox/Python-Backdoor/blob/master/license
 """
 
-import os
-import sys
-
-LOGGER_ID = "pb_logger"
-
-REG_STARTUP_NAME = "winupdate"
-MELT_FOLDER_NAME = "melted"
-
-# path to current file
-FILE_PATH = os.path.realpath(sys.argv[0])
-
-TMP = os.environ["TEMP"]
-COPY_LOCATION = os.environ["APPDATA"]
-
-BUFFER = 1024
-
 ERROR = -1
 SUCCESS = 0
 

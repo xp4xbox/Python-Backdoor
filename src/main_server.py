@@ -5,9 +5,11 @@ https://github.com/xp4xbox/Python-Backdoor
 
 license: https://github.com/xp4xbox/Python-Backdoor/blob/master/license
 """
+import sys
+import os
 
-from path_wrapper import wrap
-wrap()
+# append path, needed for all 'main' files
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(os.path.realpath(__file__)), os.pardir)))
 
 from src.args import Args
 from src import logger
@@ -16,7 +18,7 @@ from src.server.socket import Socket
 from src.server.view import View
 
 
-class Server:
+class MainServer:
     def __init__(self):
         self._args = Args(self)
         logger.init(self._args.get_args())
@@ -31,4 +33,4 @@ class Server:
 
 
 if __name__ == "__main__":
-    Server().start()
+    MainServer().start()

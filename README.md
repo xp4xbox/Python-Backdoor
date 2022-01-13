@@ -2,7 +2,7 @@
 
 This project is an open source, backdoor/reverse tcp/RAT for Windows made in Python3 which contains many features such as multi-client support and cross-platform server.
 
-![image](.github/resources/setup.png)
+![image](.github/resources/demo.png)
 
 ## Installation
 
@@ -37,22 +37,50 @@ Currently, this program has several features, notably:
 1. Run `src/setup.pyw` and configure options to build the client
 2. Check the `dist` folder for the .exe.
 3. Disable your firewall on the server or configure your firewall to allow the port chosen.
-4. Run the `src/server.py -p <port>` to start the server and accept connections.
+4. If running the server on a different machine, run `pip install cryptography` to install the server dependency
+5. Run the `src/main_server.py -p <port>` to start the server and accept connections.
 
 > If you plan on using the program with DNS hostname or external IP, you must port forward your chosen port.
 
-## Help
+![image](.github/resources/setup.png)
 
-If you need help, feel free to open a "help" issue.
+## File breakdown
 
-### Common problems
+### /src
+
+- `./setup.pyw`: Windowed setup file to configure and build the client
+- `./main_server.py`: Main file for server
+- `./main_client.py`: Main file for client
+- `./logger.py`: Handles logging with the use of the syslog standard
+- `./helper.py`: Collection of useful functions
+- `./errors.py`: Collection of internal errors
+- `./encrypted_socket.py`: Parent socket class for server and client
+- `./command_defs.py`: Constants for all commands/menu options
+- `./args.py`: Handles client and server file arguments
+
+### /src/server
+
+- `./view.py`: Handles menu interaction between user and server
+- `./socket.py`: Child socket class stores connections and client info
+- `./control.py`: Executes the server commands
+
+### /src/client
+
+- `./socket.py`: Child socket class for client
+- `./persistence.py`: Functions for adding persistence/detection
+- `./keylogger.py`: Keylogger module
+- `./control.py`: Executes client commands
+- `./command_handler.py`: Parses command from server
+
+## Common problems
 
 - Injecting shellcode requires the architecture specified by the command. eg. x64: `msfvenom windows/x64/meterpreter/reverse_tcp`
 - For use outside of network specified port is not open, check specified port with a [port scanner](https://www.whatismyip.com/port-scanner/)
 
-## Contributing
+## TODO
 
-Contributing is encouraged and will help make this a better program. Please refer to [this](https://gist.github.com/MarcDiethelm/7303312) before contributing.
+- Configure the client to be cross platform (windows only tools will remain and show only with correct os)
+- Add webcam module (openCV maybe, if there is a smaller dependency)
 
 ## Disclaimer
 

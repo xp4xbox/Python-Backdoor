@@ -12,7 +12,7 @@ import time
 from src.client import control
 from src.encrypted_socket import EncryptedSocket
 from src.client.command_handler import CommandHandler
-from src.defs import *
+from src.command_defs import *
 
 
 class Socket(EncryptedSocket):

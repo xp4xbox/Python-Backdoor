@@ -1,1 +1,9 @@
 .idea
+/src/__pycache__
+/src/client/__pycache__
+/src/server/__pycache__
+src/test.py
+build
+dist
+*.pyo
+*.spec

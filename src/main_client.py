@@ -27,13 +27,7 @@ class MainClient:
         logger.init(self._args.get_args())
 
         self.socket = None
-
-        if is_host_name:
-            self.host = socket.gethostbyname(host)
-        else:
-            self.host = host
-
-        self.host = host
+        self.host = socket.gethostbyname(host) if is_host_name else host
         self.port = port
 
         if melt:
@@ -57,4 +51,4 @@ class MainClient:
 
 
 if __name__ == "__main__": 
-    MainClient('127.0.0.1', 3000).start()
+    MainClient('127.0.0.1', 3000, False, False, False).start()

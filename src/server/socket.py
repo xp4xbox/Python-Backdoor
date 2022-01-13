@@ -7,6 +7,7 @@ license: https://github.com/xp4xbox/Python-Backdoor/blob/master/license
 """
 import base64
 import socket
+import sys
 from threading import Thread
 
 from src import helper, errors
@@ -149,10 +150,7 @@ class Socket(EncryptedSocket):
 
             return info
         else:
-            if inactive:
-                _str = "inactive"
-            else:
-                _str = "active"
+            _str = "inactive" if inactive else "active"
 
             self.logger.warning(f"No {_str} connections")
             return ""
@@ -181,7 +179,6 @@ class Socket(EncryptedSocket):
 
                 if recvall:
                     buffer = self.recv_json()["value"]["buffer"]
-
                     output = self.recvall(buffer).decode()
                 elif recv:
                     output = self.recv_json()["value"]

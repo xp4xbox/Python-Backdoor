@@ -215,18 +215,9 @@ class Setup:
 
             save_files(client_args)
 
-            icon_command = ""
-            windowed = "--windowed"
-            debug_command = ""
-
-            if bool(self.is_console.get()):
-                windowed = ""
-
-            if self.icon_path:
-                icon_command = f"--icon {self.icon_path}"
-
-            if bool(self.is_debug.get()):
-                debug_command = "--debug=all --log-level DEBUG"
+            windowed = "" if bool(self.is_console.get()) else "--windowed"
+            icon_command = f"--icon {self.icon_path}" if self.icon_path else ""
+            debug_command = "--debug=all --log-level DEBUG" if bool(self.is_debug.get()) else ""
 
             command_arg = f"{self.pyinstaller} main_client.py {windowed} {icon_command} {debug_command} --onefile -y " \
                           f"--clean --hidden-import pynput.keyboard._win32 --hidden-import pynput.mouse._win32 " \

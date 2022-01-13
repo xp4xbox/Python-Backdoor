@@ -23,10 +23,11 @@ class CustomFormatter(logging.Formatter):
     format = "[%(levelname)s]: %(message)s"
 
     FORMATS = {
-        logging.DEBUG: grey + format_detail + reset,
-        logging.INFO: grey + format + reset,
-        logging.WARNING: yellow + format + reset,
-        logging.ERROR: red + format + reset,
+        logging.DEBUG: format_detail,
+        logging.INFO: format,
+        logging.WARNING: format,
+        logging.ERROR: format,
+        logging.CRITICAL: format
     }
 
     def format(self, record):
@@ -36,10 +37,7 @@ class CustomFormatter(logging.Formatter):
 
 
 def init(_args):
-    if _args.debug:
-        level = logging.DEBUG
-    else:
-        level = logging.INFO
+    level = logging.DEBUG if _args.debug else logging.INFO
 
     logger = logging.getLogger(LOGGER_ID)
 

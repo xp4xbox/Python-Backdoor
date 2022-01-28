@@ -2,6 +2,7 @@
 
 This project is a cross-platform (Windows/Linux/MacOS) open source, backdoor/reverse tcp/RAT made in Python3 which contains many features such as multi-client support.
 
+![image](.github/resources/demo.png)
 ![image](.github/resources/demo2.png)
 
 ## Installation
@@ -12,9 +13,7 @@ You will need:
 * One of the following
   * Windows (Add python to PATH during installation)
   * MacOS Big Sur or higher (earlier versions may not work with pyinstaller)
-  * Linx machine
-
-> Client linux-support is awaiting python3.10 modules to be updated
+  * Linux
 
 1. Download the repository via GitHub or git eg. `git clone https://github.com/xp4xbox/Python-Backdoor`
 2. If on Linux install python3.10-dev eg. `sudo apt-get install python3.10-dev`
@@ -53,7 +52,7 @@ Currently, this program has several features, notably:
 
 ## Common problems & Solutions
 
-- On linux, if there are any problems with pip modules while building with pyinstaller, uninstall and install them using python3.10
+- On linux, if there are any problems with pip modules while building with pyinstaller, uninstall then re-install them using python3.10
 - Injecting shellcode requires the architecture specified by the command. eg. x64: `msfvenom windows/x64/meterpreter/reverse_tcp`
 - For use outside of network specified port is not open, check specified port with a [port scanner](https://www.whatismyip.com/port-scanner/)
 - Keylogger, and screencapture required permissions in MacOS

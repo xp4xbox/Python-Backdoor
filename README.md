@@ -1,86 +1,62 @@
 # Python Backdoor
 
-This project is an open source, backdoor/reverse tcp/RAT for Windows made in Python3 which contains many features such as multi-client support and cross-platform server.
+This project is a cross-platform (Windows/Linux/MacOS) open source, backdoor/reverse tcp/RAT made in Python3 which contains many features such as multi-client support.
 
-![image](.github/resources/demo.png)
+![image](.github/resources/demo2.png)
 
 ## Installation
 
 You will need:
 
-* [Python 3.10+](https://www.python.org/downloads) (Add python to PATH during installation)
-* A Windows computer for building the client
-* Any OS with python support for the server
+* [Python 3.10+](https://www.python.org/downloads) 
+* One of the following
+  * Windows (Add python to PATH during installation)
+  * MacOS Big Sur or higher (earlier versions may not work with pyinstaller)
+  * Linx machine
+
+> Client linux-support is awaiting python3.10 modules to be updated
 
 1. Download the repository via GitHub or git eg. `git clone https://github.com/xp4xbox/Python-Backdoor`
-2. Install the required modules by running `python -m pip install -r requirements.txt`
+2. If on Linux install python3.10-dev eg. `sudo apt-get install python3.10-dev`
+3. Install the required modules by running `python -m pip install -r requirements.txt`
 
 ## Features
 
 Currently, this program has several features, notably:
 
 * Multi-client support
-* Cross-platform server
+* Cross-platform server and client
 * Fernet encryption
 * Built-in keylogger
 * Ability to send commands to all clients
 * Ability to capture screenshots
 * Ability to upload/download files
 * Ability to open remote shell or python interpreter
-* Ability to disable a process
-* Ability to inject shellcode
-* Ability to melt file
-* VM/sandboxie check
+* Ability to disable a process*
+* Ability to inject shellcode*
+* VM/sandboxie check*
+* Add to startup*
+* Ability to melt file*
+
+> Asterisk means only supported on Windows 
 
 ## Quick Usage
 
-1. Run `src/setup.pyw` and configure options to build the client
-2. Check the `dist` folder for the .exe.
+1. Open `src/setup.py` in python and configure options to build the client
+2. Check the `dist` folder for the binary.
 3. Disable your firewall on the server or configure your firewall to allow the port chosen.
-4. If running the server on a different machine, run `pip install cryptography` to install the server dependency
-5. Run the `src/main_server.py -p <port>` to start the server and accept connections.
+4. Run the `src/main_server.py -p <port>` to start the server and accept connections.
 
 > If you plan on using the program with DNS hostname or external IP, you must port forward your chosen port.
 
 ![image](.github/resources/setup.png)
 
-## File breakdown
+## Common problems & Solutions
 
-### /src
-
-- `./setup.pyw`: Windowed setup file to configure and build the client
-- `./main_server.py`: Main file for server
-- `./main_client.py`: Main file for client
-- `./logger.py`: Handles logging with the use of the syslog standard
-- `./helper.py`: Collection of useful functions
-- `./errors.py`: Collection of internal errors
-- `./encrypted_socket.py`: Parent socket class for server and client
-- `./command_defs.py`: Constants for all commands/menu options
-- `./args.py`: Handles client and server file arguments
-
-### /src/server
-
-- `./view.py`: Handles menu interaction between user and server
-- `./socket.py`: Child socket class stores connections and client info
-- `./control.py`: Executes the server commands
-
-### /src/client
-
-- `./socket.py`: Child socket class for client
-- `./persistence.py`: Functions for adding persistence/detection
-- `./keylogger.py`: Keylogger module
-- `./control.py`: Executes client commands
-- `./command_handler.py`: Parses command from server
-
-## Common problems
-
+- On linux, if there are any problems with pip modules while building with pyinstaller, uninstall and install them using python3.10
 - Injecting shellcode requires the architecture specified by the command. eg. x64: `msfvenom windows/x64/meterpreter/reverse_tcp`
 - For use outside of network specified port is not open, check specified port with a [port scanner](https://www.whatismyip.com/port-scanner/)
-
-## TODO
-
-- Configure the client to be cross platform (windows only tools will remain and show only with correct os)
-- Add webcam module (openCV maybe, if there is a smaller dependency)
+- Keylogger, and screencapture required permissions in MacOS
 
 ## Disclaimer
 

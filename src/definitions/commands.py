@@ -9,8 +9,9 @@ license: https://github.com/xp4xbox/Python-Backdoor/blob/master/license
 ERROR = -1
 SUCCESS = 0
 
-CLIENT_HANDSHAKE = 1
-# CLIENT_KEY = 2
+OK_SENDALL = 1  # used only in encrypted_socket.py
+
+CLIENT_HANDSHAKE = 2
 CLIENT_HEARTBEAT = 3
 CLIENT_EXIT = 4
 CLIENT_ADD_STARTUP = 6
@@ -68,7 +69,7 @@ MENU_INTERACT_SHELL = "E"
 MENU_INTERACT_PYTHON = "I"
 MENU_INTERACT_DISABLE_PROCESS = "D"
 MENU_INTERACT_KEYLOG = "K"
-MENU_INTERACT_SHUT = "X"
+MENU_INTERACT_LOCK = "L"
 MENU_INTERACT_BACKGROUND = "B"
 MENU_INTERACT_CLOSE = "C"
 MENU_INTERACT_SHELLCODE = "J"
@@ -81,27 +82,24 @@ MENU_INTERACT_KEYLOG_DUMP = "dump"
 MENU_INTERACT_STARTUP_ADD = "add"
 MENU_INTERACT_STARTUP_RMV = "rmv"
 
-MENU_INTERACT_SHUT_SHUTDOWN = "shutdown"
-MENU_INTERACT_SHUT_RESTART = "restart"
-MENU_INTERACT_SHUT_LOCK = "lock"
-
 MENU_INTERACT_DISABLE_PROCESS_POPUP = "fake_popup"
 
 SERVER_INTERACT_COMMAND_LIST = [{"arg": MENU_HELP, "info": "Help"},
                                 {"arg": MENU_INTERACT_SHELL, "info": "Open remote shell"},
                                 {"arg": MENU_INTERACT_PYTHON, "info": "Open python interpreter"},
                                 {"arg": MENU_INTERACT_DISABLE_PROCESS, "info": "Toggle disable process",
-                                 "arg2": "process_name", "optional_arg3": f"({MENU_INTERACT_DISABLE_PROCESS_POPUP})"},
-                                {"arg": MENU_INTERACT_SHELLCODE, "info": "Inject shellcode"},
+                                 "arg2": "process_name", "optional_arg3": f"({MENU_INTERACT_DISABLE_PROCESS_POPUP})",
+                                 "platform": "windows"},
+                                {"arg": MENU_INTERACT_SHELLCODE, "info": "Inject shellcode", "platform": "windows"},
                                 {"arg": MENU_INTERACT_KEYLOG, "info": "Keylogger",
                                  "arg2": f"({MENU_INTERACT_KEYLOG_START}) ({MENU_INTERACT_KEYLOG_STOP}) ({MENU_INTERACT_KEYLOG_DUMP})"},
                                 {"arg": MENU_INTERACT_RECV, "info": "Receive file"},
                                 {"arg": MENU_INTERACT_SEND, "info": "Send file"},
                                 {"arg": MENU_INTERACT_SCRN, "info": "Take screenshot"},
                                 {"arg": MENU_INTERACT_STARTUP, "info": "Add to startup",
-                                 "arg2": f"({MENU_INTERACT_STARTUP_ADD}) ({MENU_INTERACT_STARTUP_RMV})"},
-                                {"arg": MENU_INTERACT_INFO, "info": "OS & connection info"},
-                                {"arg": MENU_INTERACT_SHUT, "info": "Power options",
-                                 "arg2": f"({MENU_INTERACT_SHUT_SHUTDOWN}) ({MENU_INTERACT_SHUT_RESTART}) ({MENU_INTERACT_SHUT_LOCK})"},
+                                 "arg2": f"({MENU_INTERACT_STARTUP_ADD}) ({MENU_INTERACT_STARTUP_RMV})",
+                                 "platform": "windows"},
+                                {"arg": MENU_INTERACT_INFO, "info": "View information"},
+                                {"arg": MENU_INTERACT_LOCK, "info": "Lock computer", "platform": "windows"},
                                 {"arg": MENU_INTERACT_BACKGROUND, "info": "Move connection to background"},
                                 {"arg": MENU_CLOSE_CONNECTION, "info": "Close connection"}]

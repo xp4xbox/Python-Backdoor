@@ -10,6 +10,7 @@ import logging
 
 from cryptography.fernet import Fernet
 
+from src.definitions.commands import OK_SENDALL
 from src.logger import LOGGER_ID
 
 BUFFER = 1024
@@ -28,6 +29,8 @@ class EncryptedSocket(object):
     def recvall(self, buffer, encrypted=True):
         if encrypted and self.encryptor is None:
             raise Exception("Key is not set")
+
+        self.send_json(OK_SENDALL, encrypted=encrypted)
 
         data = b""
         while len(data) < buffer:
@@ -85,6 +88,12 @@ class EncryptedSocket(object):
             data = self.encryptor.encrypt(data)
 
         self.send_json(key, {"buffer": len(data), "value": sub_value}, encrypted)
+
+        # check to make sure that target received signal to continue with transfer
+        if self.recv_json(encrypted)["key"] != OK_SENDALL:
+            self.logger.error(f"recvall: failed to get OK signal")
+            return
+
         self.send(data, False)
 
     def set_key(self, key):

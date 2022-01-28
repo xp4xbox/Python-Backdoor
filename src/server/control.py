@@ -12,20 +12,20 @@ import socket
 import time
 
 from src import errors, helper
-from src.command_defs import *
+from src.definitions.commands import *
 from src.logger import LOGGER_ID
 
 
 class Control:
-    def __init__(self, socket):
-        self.socket = socket
+    def __init__(self, _socket):
+        self.socket = _socket
         self.logger = logging.getLogger(LOGGER_ID)
 
     def shellcode(self):
         _encoding = "x64" if self.socket.get_curr_address()['x64_python'] else "x86"
 
-        print(f"Enter {_encoding} unicode bytes eg. (\\x00\\) shellcode or metasploit py output (enter 'done', "
-              f"or 'cancel' when fully entered)")
+        print(f"Enter {_encoding} unicode bytes eg. (\\x00\\) shellcode or metasploit py output (enter done or cancel "
+              f"when fully entered)")
 
         data = r""
         while True:
@@ -60,10 +60,12 @@ class Control:
                 self.logger.info("OK.")
 
     def info(self):
-        out = ""
+        out = "\n"
         info = self.socket.get_curr_address()
         for key in info:
-            out += f"{key}: {info[key]}\n"
+            # ignore outputting redundant information
+            if key != "connected" and key != "is_unix":
+                out += f"{key}: {info[key]}\n"
 
         print(out, end="")
 
@@ -253,14 +255,6 @@ class Control:
             self.logger.info(rsp["value"])
         else:
             self.logger.error(rsp["value"])
-
-    def shutdown(self):
-        self.socket.send_json(CLIENT_SHUTDOWN)
-        self.logger.info("OK.")
-
-    def restart(self):
-        self.socket.send_json(CLIENT_RESTART)
-        self.logger.info("OK.")
 
     def lock(self):
         self.socket.send_json(CLIENT_LOCK)

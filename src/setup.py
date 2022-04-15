@@ -47,7 +47,7 @@ def get_local_ip():
 
 
 def get_external_ip():
-    _request = urllib.request.urlopen("https://ident.me", context=ssl.create_default_context(cafile=certifi.where()))
+    _request = urllib.request.urlopen("https://checkip.amazonaws.com", context=ssl.create_default_context(cafile=certifi.where()))
     return _request.read().decode("utf-8")
 
 

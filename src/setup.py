@@ -294,11 +294,11 @@ class Setup:
                 self.host_widg.insert(END, "IP")
             self.host_widg.grid(column=2, row=0, padx=8, pady=5)
 
-        if(value == "External IP"):
+        if value == "External IP":
             self.host_widg["text"] = self.external_ip
-        elif(value == "Local IP"):
+        elif value == "Local IP":
             self.host_widg["text"] = self.local_ip    
-        elif(value == "Loopback"):
+        elif value == "Loopback":
             self.host_widg["text"] = self.loopback_ip         
 
 

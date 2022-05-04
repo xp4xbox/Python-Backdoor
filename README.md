@@ -46,7 +46,7 @@ Currently, this program has several features, notably:
 4. Run the `src/main_server.py -p <port>` to start the server and accept connections.
 
 > If you plan on using the program with DNS hostname or external IP, you must port forward your chosen port.
-> The setup uses tkinter, install if not already installed `eg. sudo apt-get install python-tk`.
+> The setup uses tkinter, install if not already installed `eg. sudo apt-get install python3-tk`.
 
 ![image](.github/resources/setup.png)
 

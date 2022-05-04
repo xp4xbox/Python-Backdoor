@@ -69,6 +69,9 @@ class Control(metaclass=abc.ABCMeta):
         except NotImplemented:
             self.socket.send(ERROR, "Command not supported")
 
+    def heartbeat(self):
+        self.socket.send_json(SUCCESS)
+
     def close(self):
         self.socket.close()
         sys.exit(0)

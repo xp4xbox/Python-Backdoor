@@ -101,8 +101,16 @@ class Socket(EncryptedSocket):
         self.addresses = []
         self.socket = None
 
-    def close_one(self, index):
+    # either close with by index or a socket
+    def close_one(self, index=-1, sck=None):
         try:
+            if index == -1:
+                if sck is None:
+                    self.logger.error("Invalid use of function close_one")
+                    return
+
+                index = self.connections.index(sck) + 1
+
             self.select(index)
             self.send_json(CLIENT_EXIT)
             self.socket.close()
@@ -117,11 +125,20 @@ class Socket(EncryptedSocket):
 
     def refresh(self):
         for _, self.socket in enumerate(self.active_connections()):
+            close_conn = False
+
             try:
                 self.send_json(CLIENT_HEARTBEAT)
             except socket.error:
-                self.addresses[self.connections.index(self.socket)]["connected"] = False
+                close_conn = True
+            else:
+                if self.recv_json()["key"] != SUCCESS:
+                    close_conn = True
+
+            if close_conn:
+                # close conn, but don't send the close signal, so it can restart
                 self.socket.close()
+                self.addresses[self.connections.index(self.socket)]["connected"] = False
 
     def get_curr_address(self):
         return self.addresses[self.connections.index(self.socket)]

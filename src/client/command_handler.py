@@ -32,7 +32,7 @@ class CommandHandler:
         elif _command == c.CLIENT_LOCK:
             self.control.lock()
         elif _command == c.CLIENT_HEARTBEAT:
-            pass
+            self.control.heartbeat()
         elif _command == c.CLIENT_SHELL:
             self.control.command_shell()
         elif _command == c.CLIENT_PYTHON_INTERPRETER:

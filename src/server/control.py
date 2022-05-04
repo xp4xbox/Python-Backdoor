@@ -59,6 +59,9 @@ class Control:
             elif rsp["key"] == SUCCESS:
                 self.logger.info("OK.")
 
+    def close(self):
+        self.socket.close_one(sck=self.socket.socket)
+
     def info(self):
         out = "\n"
         info = self.socket.get_curr_address()

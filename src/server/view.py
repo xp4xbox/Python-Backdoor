@@ -101,7 +101,7 @@ class View:
                         if self.control.interact(choice[1]):
                             self.interact_menu()
                 elif choice[0] == c.MENU_CLOSE_CONNECTION:
-                        self.control.socket.close_one(choice[1])
+                        self.control.socket.close_one(index=choice[1])
                 elif choice[0] == c.MENU_CLOSE_ALL:
                         self.control.socket.close_clients()
                 elif choice[0] == c.MENU_OPEN_SHELL:
@@ -114,7 +114,8 @@ class View:
         try:
             while True:
                 choice = _input("interact>> ")
-                self.control.socket.send_json(CLIENT_HEARTBEAT)
+
+                self.control.socket.refresh()
 
                 if choice == "":
                     continue
@@ -159,14 +160,13 @@ class View:
                             self.control.socket.socket = None
                             break
                     elif choice[0] == c.MENU_INTERACT_CLOSE:
-                            self.control.socket.close()
+                            self.control.close()
                             break
                     elif choice[0] == c.MENU_INTERACT_SHELLCODE:
                             self.control.shellcode()
                     print()
-
-        except socket.error as e:  # if there is a socket error
-            self.control.logger.error(f"Connection was lost {e}")
+        except socket.error:  # if there is a socket error
+            self.control.logger.error(f"Connection was lost")
         except cryptography.fernet.InvalidToken:
-            self.control.logger.error(f"Connection lost (invalid crypto token)");
+            self.control.logger.error(f"Connection lost (invalid crypto token)")
 

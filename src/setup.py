@@ -239,18 +239,7 @@ class Setup:
             icon_command = f"--icon {self.icon_path}" if self.icon_path else ""
             debug_command = "--debug=all --log-level DEBUG" if bool(self.is_debug.get()) else ""
 
-            libs = ""
-            # add all libraries, currently there are only linux ones
-            if platforms.OS == platforms.LINUX:
-                libdir = os.path.abspath(
-                    os.path.join(os.path.dirname(os.path.abspath(__file__)), os.pardir)) + "/lib/linux"
-
-                for file in os.listdir(libdir):
-                    _file = os.path.join(libdir, file)
-                    if os.path.isfile(_file):
-                        libs += f"--add-data \"{_file}:/lib/linux\" "
-
-            command_arg = f"{self.pyinstaller} main_client.py {windowed} {icon_command} {debug_command} {libs} --onefile -y " \
+            command_arg = f"{self.pyinstaller} main_client.py {windowed} {icon_command} {debug_command} --onefile -y " \
                           f"--clean --hidden-import pynput.keyboard._win32 --hidden-import pynput.mouse._win32 " \
                           f"--exclude-module FixTk --exclude-module tcl --exclude-module tk --exclude-module _tkinter " \
                           f"--exclude-module tkinter --exclude-module Tkinter "

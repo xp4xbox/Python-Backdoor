@@ -11,13 +11,12 @@ DARWIN = 2
 UNKNOWN = -1
 
 UNIX = 3
-
-match platform.system().lower():
-    case "linux":
-        OS = LINUX
-    case "darwin":
-        OS = DARWIN
-    case 'windows':
-        OS = WINDOWS
-    case _:
-        OS = UNKNOWN
+platform_type =  platform.system().lower()
+if platform_type == "windows":
+    OS = WINDOWS
+elif platform_type == "linux":
+    OS = LINUX
+elif platform_type == "darwin":
+    OS = DARWIN
+elif platform_type == "":
+    OS = UNKNOWN

@@ -85,10 +85,9 @@ class View:
                 continue
 
             if self.check_input(choice, SERVER_MAIN_COMMAND_LIST):
-                match choice[0]:
-                    case c.MENU_HELP:
-                        menu_help(SERVER_MAIN_COMMAND_LIST)
-                    case c.MENU_LIST_CONNECTIONS:
+                if choice[0] == c.MENU_HELP:
+                    menu_help(SERVER_MAIN_COMMAND_LIST)
+                elif choice[0] == c.MENU_LIST_CONNECTIONS:
                         if len(choice) > 1:
                             if choice[1] == MENU_LIST_CONNECTIONS_INACTIVE:
                                 print(self.control.socket.list(True))
@@ -96,16 +95,16 @@ class View:
                                 self.control.logger.error("Invalid argument")
                         else:
                             print(self.control.socket.list())
-                    case c.MENU_SEND_ALL_CMD:
+                elif choice[0] == c.MENU_SEND_ALL_CMD:
                         self.control.socket.send_all_connections(CLIENT_RUN_CMD, choice[1], recvall=True)
-                    case c.MENU_INTERACT:
+                elif choice[0] == c.MENU_INTERACT:
                         if self.control.interact(choice[1]):
                             self.interact_menu()
-                    case c.MENU_CLOSE_CONNECTION:
+                elif choice[0] == c.MENU_CLOSE_CONNECTION:
                         self.control.socket.close_one(choice[1])
-                    case c.MENU_CLOSE_ALL:
+                elif choice[0] == c.MENU_CLOSE_ALL:
                         self.control.socket.close_clients()
-                    case c.MENU_OPEN_SHELL:
+                elif choice[0] == c.MENU_OPEN_SHELL:
                         self.control.command_shell(choice[1])
                 print()
 
@@ -121,29 +120,28 @@ class View:
                     continue
 
                 if self.check_input(choice, SERVER_INTERACT_COMMAND_LIST, _platform):
-                    match choice[0]:
-                        case c.MENU_HELP:
+                    if choice[0] == c.MENU_HELP:
                             menu_help(SERVER_INTERACT_COMMAND_LIST, _platform)
-                        case c.MENU_INTERACT_SEND:
+                    elif choice[0] == c.MENU_INTERACT_SEND:
                             self.control.send_file()
-                        case c.MENU_INTERACT_RECV:
+                    elif choice[0] == c.MENU_INTERACT_RECV:
                             self.control.receive_file()
-                        case c.MENU_INTERACT_SCRN:
+                    elif choice[0] == c.MENU_INTERACT_SCRN:
                             self.control.screenshot()
-                        case c.MENU_INTERACT_STARTUP:
+                    elif choice[0] == c.MENU_INTERACT_STARTUP:
                             if choice[1] == c.MENU_INTERACT_STARTUP_ADD:
                                 self.control.startup()
                             elif choice[1] == c.MENU_INTERACT_STARTUP_RMV:
                                 self.control.startup(True)
                             else:
                                 self.control.logger.error("Invalid argument")
-                        case c.MENU_INTERACT_INFO:
+                    elif choice[0] == c.MENU_INTERACT_INFO:
                             self.control.info()
-                        case c.MENU_INTERACT_SHELL:
+                    elif choice[0] == c.MENU_INTERACT_SHELL:
                             self.control.command_shell()
-                        case c.MENU_INTERACT_PYTHON:
+                    elif choice[0] == c.MENU_INTERACT_PYTHON:
                             self.control.python_interpreter()
-                        case c.MENU_INTERACT_KEYLOG:
+                    elif choice[0] == c.MENU_INTERACT_KEYLOG:
                             if choice[1] == c.MENU_INTERACT_KEYLOG_START:
                                 self.control.keylogger_start()
                             elif choice[1] == c.MENU_INTERACT_KEYLOG_STOP:
@@ -152,18 +150,18 @@ class View:
                                 self.control.keylogger_dump()
                             else:
                                 self.control.logger.error("Invalid argument")
-                        case c.MENU_INTERACT_DISABLE_PROCESS:
+                    elif choice[0] == c.MENU_INTERACT_DISABLE_PROCESS:
                             self.control.toggle_disable_process(choice[1], True if len(choice) > 2 and choice[
                                 2] == MENU_INTERACT_DISABLE_PROCESS_POPUP else False)
-                        case c.MENU_INTERACT_LOCK:
+                    elif choice[0] == c.MENU_INTERACT_LOCK:
                             self.control.lock()
-                        case c.MENU_INTERACT_BACKGROUND:
+                    elif choice[0] == c.MENU_INTERACT_BACKGROUND:
                             self.control.socket.socket = None
                             break
-                        case c.MENU_INTERACT_CLOSE:
+                    elif choice[0] == c.MENU_INTERACT_CLOSE:
                             self.control.socket.close()
                             break
-                        case c.MENU_INTERACT_SHELLCODE:
+                    elif choice[0] == c.MENU_INTERACT_SHELLCODE:
                             self.control.shellcode()
                     print()
 

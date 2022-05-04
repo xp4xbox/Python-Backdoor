@@ -106,8 +106,8 @@ class Control(metaclass=abc.ABCMeta):
                 image = Image.frombuffer("RGB", (w, h), raw_byt.data, "raw", "BGRX")
 
                 dsp.close()
-            except Xlib.error as e:
-                self.socket.send(ERROR, str(e))
+            except:
+                self.socket.send(ERROR)
                 return
         else:
             image = pyscreeze.screenshot()

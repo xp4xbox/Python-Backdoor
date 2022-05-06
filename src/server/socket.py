@@ -106,7 +106,7 @@ class Socket(EncryptedSocket):
         try:
             if index == -1:
                 if sck is None:
-                    self.logger.error("Invalid use of function close_one")
+                    self.logger.error("Invalid use of function")
                     return
 
                 index = self.connections.index(sck) + 1

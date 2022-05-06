@@ -106,7 +106,7 @@ class Control(metaclass=abc.ABCMeta):
 
                 dsp.close()
             except Exception as e:
-                self.socket.send_json(ERROR, e)
+                self.socket.send_json(ERROR, str(e))
                 return
         else:
             image = pyscreeze.screenshot()

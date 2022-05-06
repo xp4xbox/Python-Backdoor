@@ -67,7 +67,7 @@ class Control(metaclass=abc.ABCMeta):
         except errors.ClientSocket.Persistence.StartupError as e:
             self.socket.send_json(ERROR, str(e))
         except NotImplemented:
-            self.socket.send(ERROR, "Command not supported")
+            self.socket.send_json(ERROR, "Command not supported")
 
     def heartbeat(self):
         self.socket.send_json(SUCCESS)
@@ -107,7 +107,7 @@ class Control(metaclass=abc.ABCMeta):
 
                 dsp.close()
             except:
-                self.socket.send(ERROR)
+                self.socket.send_json(ERROR)
                 return
         else:
             image = pyscreeze.screenshot()

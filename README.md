@@ -52,7 +52,6 @@ Currently, this program has several features, notably:
 
 ## Common problems & Solutions
 
-- On linux, if there are any problems with pip modules while building with pyinstaller, uninstall then re-install them using python3.10
 - Injecting shellcode requires the architecture specified by the command. eg. x64: `msfvenom windows/x64/meterpreter/reverse_tcp`
 - For use outside of network specified port is not open, check specified port with a [port scanner](https://www.whatismyip.com/port-scanner/)
 - Keylogger, and screencapture required permissions in MacOS

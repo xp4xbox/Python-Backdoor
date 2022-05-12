@@ -1,0 +1,3 @@
+[submodule "src/submodules/WinPwnage"]
+	path = src/submodules/WinPwnage
+	url = https://github.com/rootm0s/WinPwnage

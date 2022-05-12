@@ -15,7 +15,7 @@ You will need:
   * MacOS Big Sur or higher (earlier versions may not work with pyinstaller)
   * Linux
 
-1. Download the repository via GitHub or git eg. `git clone https://github.com/xp4xbox/Python-Backdoor`
+1. Download the repository via git `git clone https://github.com/xp4xbox/Python-Backdoor --recursive`
 2. Install the required modules by running `python -m pip install -r requirements.txt`
 
 ## Features

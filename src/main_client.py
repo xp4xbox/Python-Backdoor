@@ -68,4 +68,4 @@ class MainClient:
 
 
 if __name__ == "__main__":
-    MainClient('192.168.10.16', 3000, False, False, False).start()
+    MainClient('192.168.10.16', 3003, False, False, False).start()

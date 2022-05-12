@@ -243,6 +243,10 @@ class Setup:
             paths = ""
             for it in os.scandir(f"{os.path.dirname(os.path.abspath(__file__))}\\submodule"):
                 if it.is_dir() and not it.path.endswith("__pycache__"):
+                    # don't add WinPwnage if not on windows
+                    if it.path.endswith("WinPwnage") and platforms.OS != platforms.WINDOWS:
+                        continue
+
                     paths += f"--path={it.path} "
 
             command_arg = f"{self.pyinstaller} main_client.py {windowed} {icon_command} {debug_command} {paths} --onefile -y " \

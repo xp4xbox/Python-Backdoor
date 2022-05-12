@@ -40,6 +40,8 @@ SERVER_PYTHON_INTERPRETER_RSP = 28
 SERVER_SCREENSHOT = 29
 CLIENT_UPLOAD_FILE_PATH = 30
 CLIENT_SHELLCODE = 31
+CLIENT_ELEVATE = 32
+SERVER_ELEVATE_RSP = 33
 
 # all menu arguments must be a single char
 MENU_HELP = "H"
@@ -73,6 +75,7 @@ MENU_INTERACT_LOCK = "L"
 MENU_INTERACT_BACKGROUND = "B"
 MENU_INTERACT_CLOSE = "C"
 MENU_INTERACT_SHELLCODE = "J"
+MENU_INTERACT_ELEVATE = "V"
 
 # arg2 commands
 MENU_INTERACT_KEYLOG_START = "start"
@@ -91,6 +94,7 @@ SERVER_INTERACT_COMMAND_LIST = [{"arg": MENU_HELP, "info": "Help"},
                                  "arg2": "process_name", "optional_arg3": f"({MENU_INTERACT_DISABLE_PROCESS_POPUP})",
                                  "platform": "windows"},
                                 {"arg": MENU_INTERACT_SHELLCODE, "info": "Inject shellcode", "platform": "windows"},
+                                {"arg": MENU_INTERACT_ELEVATE, "info": "Attempt to launch as admin", "platform": "windows"},
                                 {"arg": MENU_INTERACT_KEYLOG, "info": "Keylogger",
                                  "arg2": f"({MENU_INTERACT_KEYLOG_START}) ({MENU_INTERACT_KEYLOG_STOP}) ({MENU_INTERACT_KEYLOG_DUMP})"},
                                 {"arg": MENU_INTERACT_RECV, "info": "Receive file"},

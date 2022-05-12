@@ -7,6 +7,7 @@ import ctypes
 import os
 import platform
 import socket
+import sys
 
 from src.client.control.control import Control
 
@@ -19,7 +20,7 @@ class Unix(Control):
         info = {"username": os.environ["USER"], "hostname": _hostname, "platform": _platform,
                 "is_admin": bool(os.geteuid() == 0), "architecture": platform.architecture(),
                 "machine": platform.machine(), "processor": platform.processor(),
-                "x64_python": ctypes.sizeof(ctypes.c_voidp) == 8, "is_unix": True}
+                "x64_python": ctypes.sizeof(ctypes.c_voidp) == 8, "is_unix": True, "exec_path": os.path.realpath(sys.argv[0])}
 
         return info
 

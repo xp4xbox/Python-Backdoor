@@ -8,3 +8,4 @@ dist
 *.pyo
 *.spec
 *.pyc
+venv

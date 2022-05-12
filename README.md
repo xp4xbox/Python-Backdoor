@@ -1,6 +1,6 @@
 # Python Backdoor
 
-This project is a cross-platform (Windows/Linux/MacOS) yet simple and powerful backdoor/reverse tcp/RAT made in Python3 which contains many features such as multi-client support.
+This project is a cross-platform (Windows/Linux/MacOS) open source, backdoor/reverse tcp/RAT made in Python3 which contains many features such as multi-client support.
 
 ![image](.github/resources/demo.png)
 ![image](.github/resources/demo2.png)
@@ -30,6 +30,7 @@ Currently, this program has several features, notably:
 * Ability to capture screenshots
 * Ability to upload/download files
 * Ability to open remote shell or python interpreter
+* UAC Bypass with [WinPwnage](https://github.com/rootm0s/WinPwnage)*
 * Ability to disable a process*
 * Ability to inject shellcode*
 * VM/sandboxie check*

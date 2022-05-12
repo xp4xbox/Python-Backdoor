@@ -14,7 +14,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(os.path.realpath(__
 from src.args import Args
 from src import logger
 from src.server.control import Control
-from src.server.socket import Socket
+from src.server.server import Server
 from src.server.view import View
 
 
@@ -23,11 +23,11 @@ class MainServer:
         self._args = Args(self)
         logger.init(self._args.get_args())
 
-        self.socket = Socket(self._args.get_args().port)
-        self.control = Control(self.socket)
+        self.server = Server(self._args.get_args().port)
+        self.control = Control(self.server)
 
     def start(self):
-        self.socket.listen_asych()
+        self.server.listen_asych()
 
         View(self.control)
 

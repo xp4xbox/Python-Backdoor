@@ -259,7 +259,7 @@ class Setup:
 
             # add to path for all submodules
             paths = ""
-            for it in os.scandir(f"{os.path.dirname(os.path.abspath(__file__))}{os.path.sep}submodule"):
+            for it in os.scandir(f"{os.path.dirname(os.path.abspath(__file__))}/submodule"):
                 if it.is_dir() and not it.path.endswith("__pycache__"):
                     # don't add WinPwnage if not on windows
                     if it.path.endswith("WinPwnage") and platforms.OS != platforms.WINDOWS:
@@ -267,11 +267,11 @@ class Setup:
 
                     if it.path.endswith("LaZagne"):
                         if platforms.OS == platforms.WINDOWS:
-                            paths += f"--path=\"{it.path}{os.path.sep}Windows\" "
+                            paths += f"--path=\"{it.path}/Windows\" "
                         elif platforms.OS == platforms.DARWIN:
-                            paths += f"--path=\"{it.path}{os.path.sep}Mac\" "
+                            paths += f"--path=\"{it.path}/Mac\" "
                         elif platforms.OS == platforms.LINUX:
-                            paths += f"--path=\"{it.path}{os.path.sep}Linux\" "
+                            paths += f"--path=\"{it.path}/Linux\" "
 
                         continue
 
@@ -289,8 +289,8 @@ class Setup:
 
             binary = ""
             if platforms.OS == platforms.WINDOWS:
-                msvcp100dll = f"{os.environ['WINDIR']}\\System32\\msvcp100.dll"
-                msvcr100dll = f"{os.environ['WINDIR']}\\System32\\msvcr100.dll"
+                msvcp100dll = f"{os.environ['WINDIR']}/System32/msvcp100.dll"
+                msvcr100dll = f"{os.environ['WINDIR']}/System32/msvcr100.dll"
 
                 if os.path.exists(msvcp100dll) and os.path.exists(msvcr100dll):
                     binary += f"--add-binary={msvcp100dll};msvcp100.dll --add-binary={msvcr100dll};msvcr100.dll"

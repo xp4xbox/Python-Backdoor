@@ -11,7 +11,7 @@ DARWIN = 2
 UNKNOWN = -1
 
 UNIX = 3
-platform_type =  platform.system().lower()
+platform_type = platform.system().lower()
 if platform_type == "windows":
     OS = WINDOWS
 elif platform_type == "linux":

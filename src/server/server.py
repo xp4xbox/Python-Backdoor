@@ -223,7 +223,7 @@ class Server:
 
                 if output:
                     _info = self.addresses[self.connections.index(es.socket)]
-                    self.logger.info(f"Response from connection {str(i+1)} at {_info['ip']}:{_info['port']} \n{output}")
+                    print(f"Response from connection {str(i+1)} at {_info['ip']}:{_info['port']} \n{output}")
         else:
             self.logger.warning("No active connections")
 

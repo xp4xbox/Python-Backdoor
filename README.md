@@ -16,7 +16,9 @@ You will need:
   * Linux
 
 1. Download via git `git clone https://github.com/xp4xbox/Python-Backdoor --recursive`
-2. Install the required modules by running `python -m pip install -r requirements.txt`
+2. Install the project requirements by running `python -m pip install -r requirements.txt`
+3. Install each submodule requirements by running the following:
+- `python -m pip install -r src/submodule/LaZagne/requirements.txt`
 
 ## Features
 

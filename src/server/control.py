@@ -38,7 +38,7 @@ class Control:
                 print(f"\n{str(data).rstrip()}")
             except Exception:
                 print(f"\n{data}")
-                
+
         elif rsp["key"] == ERROR:
             self.logger.error(rsp["value"])
 

@@ -30,11 +30,11 @@ import src.helper as helper
 
 # add lazagne to path and check for supported platform
 if platforms.OS == platforms.DARWIN:
-    helper.init_submodule("laZagne/Mac")
+    helper.init_submodule("LaZagne/Mac")
 elif platforms.OS == platforms.LINUX:
-    helper.init_submodule("laZagne/Linux")
+    helper.init_submodule("LaZagne/Linux")
 elif platforms.OS == platforms.WINDOWS:
-    helper.init_submodule("laZagne/Windows")
+    helper.init_submodule("LaZagne/Windows")
 else:
     tkinter.messagebox.showerror("Error", f"Platform not supported.")
     sys.exit(0)

@@ -33,6 +33,7 @@ Currently, this program has several features, notably:
 * Capture screenshots
 * Upload/download files
 * Open remote shell or python interpreter
+* Find vulnerability(s) with [wesng](https://github.com/bitsadmin/wesng) and [linux-exploit-suggester](https://github.com/mzet-/linux-exploit-suggester)
 * Dump various passwords with [LaZagne](https://github.com/AlessandroZ/LaZagne)
 * UAC Bypass with [WinPwnage](https://github.com/rootm0s/WinPwnage)*
 * Disable a process*

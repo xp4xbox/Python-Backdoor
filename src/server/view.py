@@ -33,6 +33,9 @@ def menu_help(_list, _platform=platforms.UNKNOWN):
         if "optional_arg3" in _list[i]:
             out += f" [{_list[i]['optional_arg3']}]"
 
+        if "note" in _list[i]:
+            out += f" {_list[i]['note']}"
+
         if i != len(_list) - 1:
             out += "\n"
 
@@ -170,6 +173,15 @@ class View:
                         self.control.elevate()
                     elif choice[0] == MENU_INTERACT_PWD:
                         self.control.password_dump(choice[1] if len(choice) > 1 else None)
+                    elif choice[0] == MENU_INTERACT_VULN:
+                        # exploit-only is windows only, since linux only shows exploits
+                        if len(choice) > 1 and _platform == platforms.WINDOWS:
+                            if choice[1] == MENU_INTERACT_VULN_EXP_ONLY:
+                                self.control.get_vuln(True)
+                            else:
+                                self.control.logger.error("Invalid argument")
+                        else:
+                            self.control.get_vuln(False)
                     print()
         except socket.error:  # if there is a socket error
             self.control.logger.error(f"Connection was lost")

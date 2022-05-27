@@ -9,6 +9,7 @@ import base64
 import logging
 import socket
 import sys
+import time
 from threading import Thread
 
 from src.encrypted_socket import EncryptedSocket
@@ -45,8 +46,9 @@ class Server:
             try:
                 self.listener.bind(("0.0.0.0", self.port))
                 self.listener.listen(20)
-            except socket.error() as e:
+            except socket.error as e:
                 self.logger.warning(f"Error binding socket {e}\nRetrying...")
+                time.sleep(3)
                 bind()
 
         bind()

@@ -4,3 +4,6 @@
 [submodule "src/submodule/LaZagne"]
 	path = src/submodule/LaZagne
 	url = https://github.com/xp4xbox/LaZagne-Python-Backdoor-Submodule
+[submodule "src/submodule/linux-exploit-suggester"]
+	path = src/submodule/linux-exploit-suggester
+	url = https://github.com/mzet-/linux-exploit-suggester

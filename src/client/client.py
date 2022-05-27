@@ -14,6 +14,8 @@ from src.definitions import platforms
 from src.encryption import Encryption
 from src.logger import LOGGER_ID
 
+from src.client.control.control import get_info
+
 if platforms.OS in [platforms.DARWIN, platforms.LINUX]:
     from src.client.control.unix import Unix as Control
 else:
@@ -51,7 +53,7 @@ class Client:
         c = Control(self.es)
 
         # send handshake
-        self.es.send_json(CLIENT_HANDSHAKE, c.get_info())
+        self.es.send_json(CLIENT_HANDSHAKE, get_info())
 
         ch = CommandHandler(c)
 

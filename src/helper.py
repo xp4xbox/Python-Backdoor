@@ -5,6 +5,7 @@ https://github.com/xp4xbox/Python-Backdoor
 
 license: https://github.com/xp4xbox/Python-Backdoor/blob/master/license
 """
+import os.path
 import sys
 
 
@@ -14,6 +15,10 @@ def remove_quotes(string): return string.replace("\"", "")
 
 def init_submodule(submodule):
     sys.path.append(f"submodule/{submodule}")
+
+
+def get_submodule_path(submodule):
+    return f"{os.path.dirname(__file__)}/submodule/{submodule}"
 
 
 # function to return title centered around string

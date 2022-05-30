@@ -253,7 +253,7 @@ class Setup:
             self.disable_build_ui()
 
             client_args = \
-                [f"'{self.host}'", str(port), str(self.is_hostname), str(bool(self.add_startup.get())),
+                [f"'{self.host.rstrip()}'", str(port), str(self.is_hostname), str(bool(self.add_startup.get())),
                  str(bool(self.melt.get()))]
 
             save_files(client_args)

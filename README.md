@@ -31,6 +31,7 @@ Currently, this program has several features, notably:
 * Send commands to all clients
 * Capture screenshots
 * Upload/download files
+* Download directories recursively
 * Open remote shell or python interpreter
 * Find vulnerability(s) with [wesng](https://github.com/bitsadmin/wesng) and [linux-exploit-suggester](https://github.com/mzet-/linux-exploit-suggester)
 * Dump various passwords with [LaZagne](https://github.com/AlessandroZ/LaZagne)

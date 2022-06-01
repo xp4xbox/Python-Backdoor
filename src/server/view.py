@@ -90,6 +90,7 @@ class View:
                 if self.check_input(choice, SERVER_MAIN_COMMAND_LIST):
                     if choice[0] == MENU_HELP:
                         menu_help(SERVER_MAIN_COMMAND_LIST)
+
                     elif choice[0] == MENU_LIST_CONNECTIONS:
                         if len(choice) > 1:
                             if choice[1] == MENU_LIST_CONNECTIONS_INACTIVE:
@@ -98,6 +99,7 @@ class View:
                                 self.control.logger.error("Invalid argument")
                         else:
                             print(self.control.server.list())
+
                     elif choice[0] == MENU_SEND_ALL_CMD:
                         self.control.server.send_all_connections(CLIENT_RUN_CMD, choice[1], recvall=True)
                     elif choice[0] == MENU_INTERACT:
@@ -130,16 +132,18 @@ class View:
                         menu_help(SERVER_INTERACT_COMMAND_LIST, _platform)
                     elif choice[0] == MENU_INTERACT_UPLOAD:
                         self.control.upload_file()
+
                     elif choice[0] == MENU_INTERACT_DWNL:
-                        if len(choice) > 1:
-                            if choice[1] == MENU_INTERACT_DWNL_DIR:
-                                self.control.download_dir()
-                            else:
-                                self.control.logger.error("Invalid argument")
-                        else:
+                        if choice[1] == MENU_INTERACT_DWNL_DIR:
+                            self.control.download_dir()
+                        elif choice[1] == MENU_INTERACT_DWNL_FILE:
                             self.control.download_file()
+                        else:
+                            self.control.logger.error("Invalid argument")
+
                     elif choice[0] == MENU_INTERACT_SCRN:
                         self.control.screenshot()
+
                     elif choice[0] == MENU_INTERACT_STARTUP:
                         if choice[1] == MENU_INTERACT_STARTUP_ADD:
                             self.control.startup()
@@ -147,12 +151,14 @@ class View:
                             self.control.startup(True)
                         else:
                             self.control.logger.error("Invalid argument")
+
                     elif choice[0] == MENU_INTERACT_INFO:
                         self.control.info()
                     elif choice[0] == MENU_INTERACT_SHELL:
                         self.control.command_shell()
                     elif choice[0] == MENU_INTERACT_PYTHON:
                         self.control.python_interpreter()
+
                     elif choice[0] == MENU_INTERACT_KEYLOG:
                         if choice[1] == MENU_INTERACT_KEYLOG_START:
                             self.control.keylogger_start()
@@ -162,6 +168,7 @@ class View:
                             self.control.keylogger_dump()
                         else:
                             self.control.logger.error("Invalid argument")
+
                     elif choice[0] == MENU_INTERACT_DISABLE_PROCESS:
                         self.control.toggle_disable_process(choice[1], True if len(choice) > 2 and choice[
                             2] == MENU_INTERACT_DISABLE_PROCESS_POPUP else False)
@@ -179,6 +186,7 @@ class View:
                         self.control.elevate()
                     elif choice[0] == MENU_INTERACT_PWD:
                         self.control.password_dump(choice[1] if len(choice) > 1 else None)
+
                     elif choice[0] == MENU_INTERACT_VULN:
                         # exploit-only is windows only, since linux only shows exploits
                         if len(choice) > 1 and _platform == platforms.WINDOWS:
@@ -188,6 +196,7 @@ class View:
                                 self.control.logger.error("Invalid argument")
                         else:
                             self.control.get_vuln(False)
+
                     print()
         except socket.error:  # if there is a socket error
             self.control.logger.error(f"Connection was lost")

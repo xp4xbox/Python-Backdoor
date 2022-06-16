@@ -135,7 +135,7 @@ class Main:
                 print(f"Could not resolve .ico: {self.args.icon}")
                 sys.exit(0)
 
-            self.args.icon = "\"" + os.path.normpath(self.args.icon.replace("\"", "")) + "\""
+            self.args.icon = "\"" + os.path.normpath(helper.remove_quotes(self.args.icon)) + "\""
 
         if self.args.debug:
             self.args.console = True

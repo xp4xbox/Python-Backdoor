@@ -47,7 +47,7 @@ Currently, this program has several features, notably:
 ## Quick Usage
 
 1. Open `src/setup.py -h` in python to view build args
-2. Run `src/setup.py` with desired args, eg. `-hI 192.168.10.92 -p 3000`
+2. Run `src/setup.py` with desired args, eg. `-hI 192.168.10.92 -p 3003`
 3. Check the `dist` folder for the binary.
 4. Disable your firewall on the server or configure your firewall to allow the port chosen.
 5. Run the `src/main_server.py -p <port>` to start the server and accept connections.

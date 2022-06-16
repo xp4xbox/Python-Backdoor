@@ -12,7 +12,7 @@ You will need:
 * One of the following
   * Windows
   * MacOS Big Sur or higher (earlier versions may not work with pyinstaller)
-  * Linux (with `python3-tkinter`)
+  * Linux
 
 1. Download via git `git clone https://github.com/xp4xbox/Python-Backdoor --recursive`
 2. Install the project requirements by running `python -m pip install -r requirements.txt`
@@ -46,10 +46,11 @@ Currently, this program has several features, notably:
 
 ## Quick Usage
 
-1. Open `src/setup.py` in python and configure options to build the client
-2. Check the `dist` folder for the binary.
-3. Disable your firewall on the server or configure your firewall to allow the port chosen.
-4. Run the `src/main_server.py -p <port>` to start the server and accept connections.
+1. Open `src/setup.py -h` in python to view build args
+2. Run `src/setup.py` with desired args, eg. `-hI 192.168.10.92 -p 3000`
+3. Check the `dist` folder for the binary.
+4. Disable your firewall on the server or configure your firewall to allow the port chosen.
+5. Run the `src/main_server.py -p <port>` to start the server and accept connections.
 
 > If you plan on using the program with DNS hostname or external IP, you must port forward your chosen port.
 

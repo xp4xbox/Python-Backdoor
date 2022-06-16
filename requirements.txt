@@ -4,7 +4,6 @@ Xlib; platform_system == "Linux"
 pynput
 cryptography
 pillow
-certifi
 pywin32; platform_system == "Windows"
 wmi; platform_system == "Windows"
 future

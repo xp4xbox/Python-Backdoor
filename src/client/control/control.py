@@ -214,7 +214,7 @@ class Control(metaclass=abc.ABCMeta):
             for it in os.scandir(tmp):
                 if not it.is_dir() and it.path.endswith(".txt"):
                     # send file using helper function
-                    self.send_file(it.path)
+                    self.upload(it.path)
                     return
 
             self.es.send_json(ERROR, "Error getting results file.")

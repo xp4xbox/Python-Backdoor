@@ -87,7 +87,7 @@ class Server:
                     del dh
 
                     if es.socket in self.connections:
-                        self.addresses[self.connections.index(es.socket)]["connected"] = True
+                        self.addresses[self.connections.index(es.socket)] = address
                     else:
                         self.connections.append(es.socket)
                         self.addresses.append(address)

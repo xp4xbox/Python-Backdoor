@@ -9,7 +9,7 @@ import hashlib
 
 import pyDH
 
-d = pyDH.DiffieHellman(group=14)
+d = pyDH.DiffieHellman(group=5)
 
 
 class DiffieHellman:
@@ -18,4 +18,5 @@ class DiffieHellman:
         self.pub_key = d.gen_public_key()
 
     def set_shared_key(self, pub_key):
+        # hash key to get 256
         self.key = hashlib.sha256(d.gen_shared_key(pub_key).encode()).digest()

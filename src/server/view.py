@@ -8,8 +8,6 @@ license: https://github.com/xp4xbox/Python-Backdoor/blob/master/license
 
 import socket
 
-from cryptography.fernet import InvalidToken
-
 from src.definitions.commands import *
 from src.definitions import platforms
 
@@ -200,5 +198,5 @@ class View:
                     print()
         except socket.error:  # if there is a socket error
             self.control.logger.error(f"Connection was lost")
-        except InvalidToken:
-            self.control.logger.error(f"Connection lost (invalid crypto token)")
+        except Exception as e:
+            self.control.logger.error(f"Error occurred: {e}")

@@ -11,84 +11,82 @@ import logging
 from src.definitions.commands import OK_SENDALL
 from src.logger import LOGGER_ID
 
+from src.cbc import encrypt, decrypt
+
 BUFFER = 1024
 
 
 class EncryptedSocket:
-    def __init__(self, socket, fernet):
-        self.encryptor = fernet
+    def __init__(self, socket, key):
+        self.key = key
         self.socket = socket
         self.logger = logging.getLogger(LOGGER_ID)
 
     def close(self):
         self.socket.close()
 
-    def recvall(self, buffer, encrypted=True):
-        if encrypted and self.encryptor is None:
+    def recvall(self, buffer):
+        if self.key is None:
             raise Exception("Key is not set")
 
-        self.send_json(OK_SENDALL, encrypted=encrypted)
+        self.send_json(OK_SENDALL)
 
         data = b""
         while len(data) < buffer:
             data += self.socket.recv(BUFFER)
 
-        if encrypted:
-            data = self.encryptor.decrypt(data)
+        data = decrypt(data, self.key)
 
         self.logger.debug(f"recvall: {data}")
 
         return data
 
-    def send(self, data, encrypted=True):
-        if not encrypted:
+    def send(self, data):
+        if self.key is None:
+            raise Exception("Key is not set")
+        else:
+            data = encrypt(data, self.key)
+
             self.socket.send(data)
-        else:
-            if self.encryptor is None:
-                raise Exception("Key is not set")
-            else:
-                self.socket.send(self.encryptor.encrypt(data))
 
-    def recv(self, encrypted=True):
-        if not encrypted:
-            return self.socket.recv(BUFFER)
-        else:
-            if self.encryptor is None:
-                raise Exception("Key is not set")
+    def recv(self):
+        if self.key is None:
+            raise Exception("Key is not set")
 
-            return self.encryptor.decrypt(self.socket.recv(BUFFER))
+        return decrypt(self.socket.recv(BUFFER), self.key)
 
-    def recv_json(self, encrypted=True):
-        data = self.recv(encrypted).decode()
+    def recv_json(self):
+        data = json.loads(self.recv())
 
         self.logger.debug(f"recv: {data}")
 
-        return json.loads(data)
+        return data
 
-    def send_json(self, key, value=None, encrypted=True):
+    def send_json(self, key, value=None):
         command = json.dumps({"key": key, "value": value})
 
         self.logger.debug(f"send: {command}")
 
         command = command.encode()
 
-        if encrypted:
-            self.send(command)
-        else:
-            self.send(command, False)
+        self.send(command)
 
-    def sendall_json(self, key, data, sub_value=None, encrypted=True, is_bytes=False):
+    def sendall_json(self, key, data, sub_value=None, is_bytes=False):
+        if self.key is None:
+            raise Exception("Key is not set")
+
         if not is_bytes:
             data = data.encode()
 
-        if encrypted:
-            data = self.encryptor.encrypt(data)
+        data = encrypt(data, self.key)
 
-        self.send_json(key, {"buffer": len(data), "value": sub_value}, encrypted)
+        self.send_json(key, {"buffer": len(data), "value": sub_value})
 
         # check to make sure that target received signal to continue with transfer
-        if self.recv_json(encrypted)["key"] != OK_SENDALL:
-            self.logger.error(f"recvall: failed to get OK signal")
+        if self.recv_json()["key"] != OK_SENDALL:
+            self.logger.error(f"recvall: failed to get OK signal, got {self.recv_json()['key']} instead")
             return
 
-        self.send(data, False)
+        self.socket.send(data)
+
+

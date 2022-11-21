@@ -118,7 +118,7 @@ class Control:
         info = self.server.get_address(self.es.socket)
         for key in info:
             # ignore outputting redundant information
-            if key != "connected" and key != "is_unix" and key != "cbc_key":
+            if key != "connected" and key != "is_unix" and key != "aes_key":
                 out += f"{key}: {info[key]}\n"
 
         print(out, end="")
@@ -215,7 +215,7 @@ class Control:
 
             data = self.es.recvall(buffer)
 
-            file = f"{os.getcwd()}/{time.strftime('scrn_%Y%m%d_%H%M%S.png')}"
+            file = f"{os.getcwd()}{os.path.sep}{time.strftime('scrn_%Y%m%d_%H%M%S.png')}"
 
             try:
                 with open(file, "wb") as objPic:
@@ -266,7 +266,19 @@ class Control:
         input_out = input("Output directory: ")
 
         if input_in == "" or input_out == "":  # if the user left an input blank
+            self.logger.info("Aborting")
             return
+
+        max_file_size = -1
+
+        input_file_size = input("Max file size kB ([ENTER] for infinite): ")
+
+        if input_file_size != "":
+            try:
+                max_file_size = 1000 * int(input_file_size)
+            except Exception:
+                self.logger.error("Invalid integer")
+                return
 
         _in = helper.remove_quotes(input_in)
         _out = os.path.normpath(helper.remove_quotes(input_out))
@@ -287,7 +299,7 @@ class Control:
                 self.logger.error(f"Local directory {_out} not empty")
                 return
 
-        self.es.send_json(CLIENT_DWNL_DIR, _in)
+        self.es.send_json(CLIENT_DWNL_DIR, {'path': _in, 'size': max_file_size})
 
         file_count = 0
         bytes_recv = 0

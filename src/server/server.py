@@ -82,7 +82,7 @@ class Server:
                             break
 
                     address = {**{"ip": address[0], "port": address[1]}, **response["value"], **{"connected": True},
-                               **{"cbc_key": dh.key}}
+                               **{"aes_key": dh.key}}
 
                     del dh
 
@@ -105,7 +105,7 @@ class Server:
     def close_clients(self):
         if len(self.connections) > 0:
             for _socket in self.active_connections():
-                key = self.addresses[self.connections.index(_socket)]["cbc_key"]
+                key = self.addresses[self.connections.index(_socket)]["aes_key"]
                 es = EncryptedSocket(_socket, key)
 
                 try:
@@ -148,7 +148,7 @@ class Server:
         for _, _socket in enumerate(self.active_connections()):
             close_conn = False
 
-            k = self.addresses[self.connections.index(_socket)]["cbc_key"]
+            k = self.addresses[self.connections.index(_socket)]["aes_key"]
             es = EncryptedSocket(_socket, k)
 
             try:
@@ -214,13 +214,13 @@ class Server:
         except Exception:
             raise errors.ServerSocket.InvalidIndex(f"No active connection found with index {connection_id}")
 
-        return EncryptedSocket(_socket, self.addresses[connection_id - 1]["cbc_key"])
+        return EncryptedSocket(_socket, self.addresses[connection_id - 1]["aes_key"])
 
     def send_all_connections(self, key, value, recv=False, recvall=False):
         if self.num_active_connections() > 0:
             for i, _socket in enumerate(self.active_connections()):
 
-                es = EncryptedSocket(_socket, self.addresses[i]["cbc_key"])
+                es = EncryptedSocket(_socket, self.addresses[i]["aes_key"])
 
                 try:
                     es.send_json(key, value)

@@ -26,7 +26,7 @@ Currently, this program has several features, notably:
 
 * Multi-client support
 * Cross-platform server and client
-* AES-256 CBC encryption & Diffie-Hellman key exchange
+* AES GCM encryption & Diffie-Hellman key exchange
 * Built-in keylogger
 * Send commands to all clients
 * Capture screenshots

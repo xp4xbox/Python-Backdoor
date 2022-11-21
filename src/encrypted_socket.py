@@ -11,7 +11,7 @@ import logging
 from src.definitions.commands import OK_SENDALL
 from src.logger import LOGGER_ID
 
-from src.cbc import encrypt, decrypt
+from src.gcm import encrypt, decrypt
 
 BUFFER = 1024
 

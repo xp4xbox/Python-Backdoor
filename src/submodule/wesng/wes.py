@@ -97,6 +97,7 @@ FILENAME = 'wes.py'
 
 # Mapping table between build numbers and versions to correctly identify
 # the Windows 10/11/Server 2016/2019/2022 version specified in the systeminfo output
+
 buildnumbers = OrderedDict([
     (10240, 1507),
     (10586, 1511),
@@ -110,9 +111,11 @@ buildnumbers = OrderedDict([
     (19041, 2004),
     (19042, '20H2'),
     (19043, '21H1'),
-    (19044, '21H2'),  # Windows 10
-    (20348, '21H2'),  # Windows Server 2022
-    (22000, '21H2')  # Windows 11
+    (19044, '21H2'), # Windows 10
+    (19045, '22H2'),
+    (20348, '21H2'), # Windows Server 2022
+    (22000, '21H2'),  # Windows 11
+    (22621, '22H2')
 ])
 
 

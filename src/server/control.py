@@ -271,7 +271,7 @@ class Control:
 
         max_file_size = -1
 
-        input_file_size = input("Max file size kB ([ENTER] for infinite): ")
+        input_file_size = input("Max file size kB ([ENTER] for unlimited): ")
 
         if input_file_size != "":
             try:

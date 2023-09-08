@@ -37,7 +37,7 @@ class Windows(Control):
 
         # support for py file only
         if os.path.realpath(sys.argv[0]).endswith(".py"):
-            payload = [f"{sys.executable}", f"\"{payload[0]}\""]
+            payload = [f"{sys.executable}", f"\"{os.path.realpath(sys.argv[0])}\""]
         else:
             payload = [f"{os.path.realpath(sys.executable)}"]
 

@@ -312,22 +312,16 @@ class Control(metaclass=abc.ABCMeta):
                     command_request = command_request.replace("chdir", "cd", 1)
 
                 if command_request[:3].lower() == "cd ":
-                    cwd = ' '.join(command_request.split(" ")[1:])
+                    new_dir = os.path.expandvars(' '.join(command_request.split(" ")[1:]))
 
-                    try:
-                        command = subprocess.Popen('cd' if platforms.OS == platforms.WINDOWS else 'pwd', cwd=cwd,
-                                                   stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-                                                   stdin=subprocess.PIPE, shell=True)
-                    except FileNotFoundError as e:
-                        self.es.sendall_json(SERVER_COMMAND_RSP, str(e))
-                    else:
-                        if command.stderr.read().decode() == "":  # if there is no error
-                            output = (command.stdout.read()).decode().splitlines()[0]  # decode and remove new line
-                            os.chdir(output)  # change directory
-
+                    if os.path.isdir(new_dir):
+                        try:
+                            os.chdir(new_dir)
                             self.es.send_json(SERVER_SHELL_DIR, os.getcwd())
-                        else:
-                            self.es.send_json(SERVER_COMMAND_RSP, helper.decode(command.stderr.read()))
+                        except Exception as e:
+                            self.es.sendall_json(SERVER_COMMAND_RSP, f"Could not enter directory: {e}")
+                    else:
+                        self.es.sendall_json(SERVER_COMMAND_RSP, f"Directory name is invalid")
                 else:
                     command = subprocess.Popen(command_request, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                                                stdin=subprocess.PIPE,

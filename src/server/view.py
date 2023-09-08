@@ -7,6 +7,7 @@ license: https://github.com/xp4xbox/Python-Backdoor/blob/master/license
 """
 
 import socket
+import traceback
 
 from src.definitions.commands import *
 from src.definitions import platforms
@@ -119,7 +120,9 @@ class View:
                         self.control.server.change_host(choice[1], choice[2])
                     print()
             except ConnectionAbortedError as e:
-                self.control.logger.error(f"Error occurred: {e}")
+                self.control.logger.error(f"Connection aborted: {e}")
+            except:
+                self.control.logger.error(f"Error occurred: {traceback.format_exc()}")
 
     def interact_menu(self):
         _platform = platforms.UNIX if self.control.server.get_address(self.control.es.socket)['is_unix'] else platforms.WINDOWS
@@ -206,5 +209,5 @@ class View:
                     print()
         except socket.error:  # if there is a socket error
             self.control.logger.error(f"Connection was lost")
-        except Exception as e:
-            self.control.logger.error(f"Error occurred: {e}")
+        except:
+            self.control.logger.error(f"Error occurred: {traceback.format_exc()}")

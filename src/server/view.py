@@ -25,6 +25,9 @@ def menu_help(_list, _platform=platforms.UNKNOWN):
         if "arg2" in _list[i]:
             out += f" <{_list[i]['arg2']}>"
 
+        if "arg3" in _list[i]:
+            out += f" <{_list[i]['arg3']}>"
+
         if "optional_arg2" in _list[i]:
             out += f" [{_list[i]['optional_arg2']}]"
 
@@ -66,6 +69,9 @@ class View:
             if _input[0] == arg["arg"]:
                 if "arg2" in arg and len(_input) < 2:
                     self.control.logger.error(f"Missing argument: {arg['arg2']}")
+                    return False
+                elif "arg3" in arg and len(_input) < 3:
+                    self.control.logger.error(f"Missing argument: {arg['arg3']}")
                     return False
                 elif "platform" in arg and arg["platform"] == "windows" and _platform != platforms.WINDOWS:
                     self.control.logger.error(f"Command '{_input[0]}' is only supported with windows clients")
@@ -109,9 +115,11 @@ class View:
                         self.control.server.close_clients()
                     elif choice[0] == MENU_OPEN_SHELL:
                         self.control.command_shell(choice[1])
+                    elif choice[0] == MENU_CHANGE_HOST:
+                        self.control.server.change_host(choice[1], choice[2])
                     print()
             except ConnectionAbortedError as e:
-                self.control.logger.error(str(e))
+                self.control.logger.error(f"Error occurred: {e}")
 
     def interact_menu(self):
         _platform = platforms.UNIX if self.control.server.get_address(self.control.es.socket)['is_unix'] else platforms.WINDOWS

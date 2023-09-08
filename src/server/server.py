@@ -64,9 +64,15 @@ class Server:
 
                     self.logger.debug(f"send pub key: {dh.pub_key}")
 
-                    pub_key = int(_socket.recv(1024).decode())
+                    _msg = _socket.recv(1024)
 
-                    self.logger.debug(f"recv pub key: {pub_key}")
+                    self.logger.debug(f"recv first msg (usually pub key): {_msg}")
+
+                    if _msg and _msg.decode().isdigit():
+                        pub_key = int(_msg.decode())
+                    else:
+                        # for port scanning
+                        continue
 
                     dh.set_shared_key(pub_key)
 
@@ -261,3 +267,23 @@ class Server:
                 count += 1
 
         return count
+
+    def change_host(self, host, port):
+        if not port.isdigit():
+            self.logger.error(f"Port {port} must be an integer")
+            return
+
+        if self.num_active_connections() > 0:
+            for i, _socket in enumerate(self.active_connections()):
+
+                es = EncryptedSocket(_socket, self.addresses[i]["aes_key"])
+
+                try:
+                    es.send_json(CLIENT_CHANGE_HOST, {"host": host, "port": port})
+                    es.socket.close()
+                except socket.error:
+                    continue
+
+                self.addresses[self.connections.index(es.socket)]["connected"] = False
+        else:
+            self.logger.warning("No active connections")

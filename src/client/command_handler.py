@@ -59,4 +59,6 @@ class CommandHandler:
             self.control.get_vuln(command["value"])
         elif _command == CLIENT_INFO:
             self.control.info()
+        elif _command == CLIENT_CHANGE_HOST:
+            self.control.change_host(command["value"])
 

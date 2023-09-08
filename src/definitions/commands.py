@@ -44,6 +44,7 @@ CLIENT_GET_VULN = 35
 CLIENT_DWNL_DIR = 36
 SERVER_UPLOAD_DIR = 37
 SERVER_UPLOAD_DIR_DONE = 38
+CLIENT_CHANGE_HOST = 39
 
 # all menu arguments must be a single char
 MENU_HELP = "H"
@@ -54,6 +55,7 @@ MENU_SEND_ALL_CMD = "S"
 MENU_CLOSE_CONNECTION = "C"
 MENU_CLOSE_ALL = "X"
 MENU_LIST_CONNECTIONS_INACTIVE = "inactive"
+MENU_CHANGE_HOST = "O"
 
 SERVER_MAIN_COMMAND_LIST = [{"arg": MENU_HELP, "info": "Help"},
                             {"arg": MENU_LIST_CONNECTIONS, "info": "List all connections",
@@ -61,6 +63,7 @@ SERVER_MAIN_COMMAND_LIST = [{"arg": MENU_HELP, "info": "Help"},
                             {"arg": MENU_INTERACT, "info": "Interact with a connection", "arg2": "index"},
                             {"arg": MENU_OPEN_SHELL, "info": "Open remote shell with connection", "arg2": "index"},
                             {"arg": MENU_SEND_ALL_CMD, "info": "Send command to every connection", "arg2": "command"},
+                            {"arg": MENU_CHANGE_HOST, "info": "Change connection details", "arg2": "hostname/IP", "arg3": "port"},
                             {"arg": MENU_CLOSE_CONNECTION, "info": "Close connection", "arg2": "index"},
                             {"arg": MENU_CLOSE_ALL, "info": "Close/clear all connections"}]
 

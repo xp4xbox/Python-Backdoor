@@ -245,7 +245,7 @@ class Control(metaclass=abc.ABCMeta):
 
     def close(self):
         self.es.socket.close()
-        sys.exit(0)
+        raise errors.ClientSocket.CloseConnection
 
     def keylogger_dump(self):
         try:

@@ -78,6 +78,8 @@ class MainClient:
 
             try:
                 self.client.connect()
+            except errors.ClientSocket.CloseConnection:
+                sys.exit(0)
             except errors.ClientSocket.ChangeConnectionDetails as host:
                 host = str(host).split(":")
                 self.host = socket.gethostbyname(host[0])

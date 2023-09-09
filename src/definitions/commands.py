@@ -56,6 +56,7 @@ MENU_CLOSE_CONNECTION = "C"
 MENU_CLOSE_ALL = "X"
 MENU_LIST_CONNECTIONS_INACTIVE = "inactive"
 MENU_CHANGE_HOST = "O"
+MENU_CLOSE_SERVER = "Q"
 
 SERVER_MAIN_COMMAND_LIST = [{"arg": MENU_HELP, "info": "Help"},
                             {"arg": MENU_LIST_CONNECTIONS, "info": "List all connections",
@@ -65,7 +66,8 @@ SERVER_MAIN_COMMAND_LIST = [{"arg": MENU_HELP, "info": "Help"},
                             {"arg": MENU_SEND_ALL_CMD, "info": "Send command to every connection", "arg2": "command"},
                             {"arg": MENU_CHANGE_HOST, "info": "Change connection details", "arg2": "hostname/IP", "arg3": "port"},
                             {"arg": MENU_CLOSE_CONNECTION, "info": "Close connection", "arg2": "index"},
-                            {"arg": MENU_CLOSE_ALL, "info": "Close/clear all connections"}]
+                            {"arg": MENU_CLOSE_ALL, "info": "Close/clear all connections"},
+                            {"arg": MENU_CLOSE_SERVER, "info": "Close server but keep clients"}]
 
 MENU_INTERACT_DWNL = "D"
 MENU_INTERACT_UPLOAD = "U"

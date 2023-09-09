@@ -287,3 +287,10 @@ class Server:
                 self.addresses[self.connections.index(es.socket)]["connected"] = False
         else:
             self.logger.warning("No active connections")
+
+    def close(self):
+        for _socket in self.active_connections():
+            try:
+                _socket.close()
+            except Exception:
+                pass

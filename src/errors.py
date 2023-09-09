@@ -19,9 +19,6 @@ class ClientSocket:
     class ChangeConnectionDetails(Exception):
         pass
 
-    class CloseConnection(Exception):
-        pass
-
     class Persistence:
         class StartupError(Exception):
             pass

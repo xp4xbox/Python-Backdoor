@@ -54,7 +54,7 @@ class MainClient:
         if rm and os.path.isfile(rm):
             try:
                 os.remove(rm)
-            except:
+            except Exception:
                 pass
 
         self.client = None
@@ -78,17 +78,19 @@ class MainClient:
 
             try:
                 self.client.connect()
-            except errors.ClientSocket.CloseConnection:
-                sys.exit(0)
             except errors.ClientSocket.ChangeConnectionDetails as host:
                 host = str(host).split(":")
                 self.host = socket.gethostbyname(host[0])
                 self.port = int(host[1])
                 del self.client
-            except:  # if the server closes without warning or something happens
+            except Exception:  # if the server closes without warning or something happens
                 self.client.logger.debug(f"Error occurred, restarting. {traceback.format_exc()}")
 
-                self.client.es.socket.close()
+                try:
+                    self.client.es.socket.close()
+                except Exception:
+                    pass
+
                 del self.client
 
 

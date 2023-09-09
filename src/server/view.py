@@ -7,6 +7,7 @@ license: https://github.com/xp4xbox/Python-Backdoor/blob/master/license
 """
 
 import socket
+import sys
 import traceback
 
 from src.definitions.commands import *
@@ -118,10 +119,13 @@ class View:
                         self.control.command_shell(choice[1])
                     elif choice[0] == MENU_CHANGE_HOST:
                         self.control.server.change_host(choice[1], choice[2])
+                    elif choice[0] == MENU_CLOSE_SERVER:
+                        self.control.server.close()
+                        sys.exit(0)
                     print()
             except ConnectionAbortedError as e:
                 self.control.logger.error(f"Connection aborted: {e}")
-            except:
+            except Exception:
                 self.control.logger.error(f"Error occurred: {traceback.format_exc()}")
 
     def interact_menu(self):
@@ -209,5 +213,5 @@ class View:
                     print()
         except socket.error:  # if there is a socket error
             self.control.logger.error(f"Connection was lost")
-        except:
+        except Exception:
             self.control.logger.error(f"Error occurred: {traceback.format_exc()}")

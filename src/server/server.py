@@ -91,12 +91,13 @@ class Server:
 
                     es.send_json(CLIENT_INFO)
 
-                    while True:
-                        # wait for info
-                        response = es.recv_json()
+                    response = es.recv_json()
 
-                        if response["key"] == SUCCESS:
-                            break
+                    if response["key"] != SUCCESS:
+                        self.logger.error(f"Did not receive first encrypted msg successfully: {address[0]}:{address[1]}")
+                        _socket.close()
+                        del dh
+                        continue
 
                     address = {**{"ip": address[0], "port": address[1]}, **response["value"], **{"connected": True},
                                **{"aes_key": dh.key}}

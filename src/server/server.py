@@ -80,7 +80,12 @@ class Server:
                         _socket.close()
                         continue
 
-                    dh.set_shared_key(pub_key)
+                    try:
+                        dh.set_shared_key(pub_key)
+                    except Exception as e:
+                        self.logger.error(e)
+                        _socket.close()
+                        continue
 
                     es = EncryptedSocket(_socket, dh.key)
 

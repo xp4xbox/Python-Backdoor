@@ -52,6 +52,7 @@ class Server:
         self.logger.info(f"Listening on port {self.port}")
 
         def socket_accept():
+            address = [0, 0]
             while True:
                 try:
                     _socket, address = self.listener.accept()
@@ -100,8 +101,11 @@ class Server:
 
                     self.logger.info(
                         f"Connection {len(self.connections)} has been established: {address['ip']}:{address['port']} ({address['hostname']})")
+                except UnicodeDecodeError:
+                    self.logger.error(f"Received invalid byte data from {address[0]}:{address[1]}")
+                    continue
                 except socket.error as err:
-                    self.logger.error(f"Error accepting connection {err}")
+                    self.logger.error(f"Error accepting connection: {err}")
                     continue
 
         self.thread_accept = Thread(target=socket_accept)
@@ -246,7 +250,7 @@ class Server:
 
                 if output:
                     _info = self.addresses[i]
-                    print(f"Response from connection {str(i+1)} at {_info['ip']}:{_info['port']} \n{output}")
+                    print(f"Response from connection {str(i + 1)} at {_info['ip']}:{_info['port']} \n{output}")
         else:
             self.logger.warning("No active connections")
 

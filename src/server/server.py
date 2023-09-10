@@ -91,12 +91,16 @@ class Server:
 
                     es.send_json(CLIENT_INFO)
 
-                    response = es.recv_json()
+                    try:
+                        response = es.recv_json()
+                    except Exception as e:
+                        self.logger.error(f"Error from {address[0]}:{address[1]}: {e}")
+                        _socket.close()
+                        continue
 
                     if response["key"] != SUCCESS:
-                        self.logger.error(f"Did not receive first encrypted msg successfully: {address[0]}:{address[1]}")
+                        self.logger.error(f"Unexpected value received from: {address[0]}:{address[1]}")
                         _socket.close()
-                        del dh
                         continue
 
                     address = {**{"ip": address[0], "port": address[1]}, **response["value"], **{"connected": True},

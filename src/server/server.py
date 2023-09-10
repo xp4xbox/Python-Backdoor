@@ -72,6 +72,7 @@ class Server:
                         if _msg and _msg.decode().isdigit():
                             pub_key = int(_msg.decode())
                         else:
+                            self.logger.warning(f"Received unexpected data from: {address[0]}:{address[1]}")
                             _socket.close()
                             continue
                     except UnicodeDecodeError:

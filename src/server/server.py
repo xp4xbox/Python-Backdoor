@@ -52,7 +52,6 @@ class Server:
         self.logger.info(f"Listening on port {self.port}")
 
         def socket_accept():
-            address = [0, 0]
             while True:
                 try:
                     _socket, address = self.listener.accept()
@@ -69,10 +68,15 @@ class Server:
 
                     self.logger.debug(f"recv first msg (usually pub key): {_msg}")
 
-                    if _msg and _msg.decode().isdigit():
-                        pub_key = int(_msg.decode())
-                    else:
-                        # for port scanning
+                    try:
+                        if _msg and _msg.decode().isdigit():
+                            pub_key = int(_msg.decode())
+                        else:
+                            _socket.close()
+                            continue
+                    except UnicodeDecodeError:
+                        self.logger.error(f"Received invalid byte data from {address[0]}:{address[1]}")
+                        _socket.close()
                         continue
 
                     dh.set_shared_key(pub_key)
@@ -101,9 +105,6 @@ class Server:
 
                     self.logger.info(
                         f"Connection {len(self.connections)} has been established: {address['ip']}:{address['port']} ({address['hostname']})")
-                except UnicodeDecodeError:
-                    self.logger.error(f"Received invalid byte data from {address[0]}:{address[1]}")
-                    continue
                 except socket.error as err:
                     self.logger.error(f"Error accepting connection: {err}")
                     continue

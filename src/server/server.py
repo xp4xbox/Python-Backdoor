@@ -9,6 +9,7 @@ import logging
 import socket
 import sys
 import time
+import traceback
 from threading import Thread
 
 from src.encrypted_socket import EncryptedSocket
@@ -118,6 +119,9 @@ class Server:
                         f"Connection {len(self.connections)} has been established: {address['ip']}:{address['port']} ({address['hostname']})")
                 except socket.error as err:
                     self.logger.error(f"Error accepting connection: {err}")
+                    continue
+                except Exception:
+                    self.logger.error(f"Error occurred in listener: {traceback.format_exc()}")
                     continue
 
         self.thread_accept = Thread(target=socket_accept)

@@ -123,8 +123,6 @@ class View:
                         self.control.server.close()
                         sys.exit(0)
                     print()
-            except ConnectionAbortedError as e:
-                self.control.logger.error(f"Connection aborted: {e}")
             except Exception:
                 self.control.logger.error(f"Error occurred: {traceback.format_exc()}")
 

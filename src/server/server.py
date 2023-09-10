@@ -179,11 +179,11 @@ class Server:
 
             try:
                 es.send_json(CLIENT_HEARTBEAT)
-            except socket.error:
-                close_conn = True
-            else:
+
                 if es.recv_json()["key"] != SUCCESS:
                     close_conn = True
+            except Exception:
+                close_conn = True
 
             if close_conn:
                 # close conn, but don't send the close signal, so it can restart

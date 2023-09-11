@@ -9,6 +9,7 @@ import logging
 import socket
 import sys
 import time
+import traceback
 from threading import Thread
 
 from src.encrypted_socket import EncryptedSocket
@@ -64,22 +65,44 @@ class Server:
 
                     self.logger.debug(f"send pub key: {dh.pub_key}")
 
-                    pub_key = int(_socket.recv(1024).decode())
+                    _msg = _socket.recv(1024)
 
-                    self.logger.debug(f"recv pub key: {pub_key}")
+                    self.logger.debug(f"recv first msg (usually pub key): {_msg}")
 
-                    dh.set_shared_key(pub_key)
+                    try:
+                        if _msg and _msg.decode().isdigit():
+                            pub_key = int(_msg.decode())
+                        else:
+                            self.logger.warning(f"Received unexpected data from: {address[0]}:{address[1]}")
+                            _socket.close()
+                            continue
+                    except UnicodeDecodeError:
+                        self.logger.error(f"Received invalid byte data from {address[0]}:{address[1]}")
+                        _socket.close()
+                        continue
+
+                    try:
+                        dh.set_shared_key(pub_key)
+                    except Exception as e:
+                        self.logger.error(e)
+                        _socket.close()
+                        continue
 
                     es = EncryptedSocket(_socket, dh.key)
 
                     es.send_json(CLIENT_INFO)
 
-                    while True:
-                        # wait for info
+                    try:
                         response = es.recv_json()
+                    except Exception as e:
+                        self.logger.error(f"Error from {address[0]}:{address[1]}: {e}")
+                        _socket.close()
+                        continue
 
-                        if response["key"] == SUCCESS:
-                            break
+                    if response["key"] != SUCCESS:
+                        self.logger.error(f"Unexpected value received from: {address[0]}:{address[1]}")
+                        _socket.close()
+                        continue
 
                     address = {**{"ip": address[0], "port": address[1]}, **response["value"], **{"connected": True},
                                **{"aes_key": dh.key}}
@@ -95,7 +118,10 @@ class Server:
                     self.logger.info(
                         f"Connection {len(self.connections)} has been established: {address['ip']}:{address['port']} ({address['hostname']})")
                 except socket.error as err:
-                    self.logger.error(f"Error accepting connection {err}")
+                    self.logger.error(f"Error accepting connection: {err}")
+                    continue
+                except Exception:
+                    self.logger.error(f"Error occurred in listener: {traceback.format_exc()}")
                     continue
 
         self.thread_accept = Thread(target=socket_accept)
@@ -145,7 +171,7 @@ class Server:
         self.addresses[self.connections.index(es.socket)]["connected"] = False
 
     def refresh(self):
-        for _, _socket in enumerate(self.active_connections()):
+        for i, _socket in enumerate(self.active_connections()):
             close_conn = False
 
             k = self.addresses[self.connections.index(_socket)]["aes_key"]
@@ -153,13 +179,14 @@ class Server:
 
             try:
                 es.send_json(CLIENT_HEARTBEAT)
-            except socket.error:
-                close_conn = True
-            else:
+
                 if es.recv_json()["key"] != SUCCESS:
                     close_conn = True
+            except Exception:
+                close_conn = True
 
             if close_conn:
+                self.logger.warning(f"Connection {i + 1} disconnected")
                 # close conn, but don't send the close signal, so it can restart
                 es.socket.close()
                 self.addresses[self.connections.index(es.socket)]["connected"] = False
@@ -240,7 +267,7 @@ class Server:
 
                 if output:
                     _info = self.addresses[i]
-                    print(f"Response from connection {str(i+1)} at {_info['ip']}:{_info['port']} \n{output}")
+                    print(f"Response from connection {str(i + 1)} at {_info['ip']}:{_info['port']} \n{output}")
         else:
             self.logger.warning("No active connections")
 
@@ -261,3 +288,30 @@ class Server:
                 count += 1
 
         return count
+
+    def change_host(self, host, port):
+        if not port.isdigit():
+            self.logger.error(f"Port {port} must be an integer")
+            return
+
+        if self.num_active_connections() > 0:
+            for i, _socket in enumerate(self.active_connections()):
+
+                es = EncryptedSocket(_socket, self.addresses[i]["aes_key"])
+
+                try:
+                    es.send_json(CLIENT_CHANGE_HOST, {"host": host, "port": port})
+                    es.socket.close()
+                except socket.error:
+                    continue
+
+                self.addresses[self.connections.index(es.socket)]["connected"] = False
+        else:
+            self.logger.warning("No active connections")
+
+    def close(self):
+        for _socket in self.active_connections():
+            try:
+                _socket.close()
+            except Exception:
+                pass

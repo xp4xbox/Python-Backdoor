@@ -15,6 +15,7 @@ import sys
 import logging
 import ctypes
 import tempfile
+from datetime import datetime
 from io import BytesIO, StringIO
 from pathlib import PurePath
 
@@ -68,7 +69,9 @@ class Control(metaclass=abc.ABCMeta):
         info = {"hostname": _hostname, "platform": _platform,
                 "architecture": platform.architecture(), "machine": platform.machine(),
                 "processor": platform.processor(),
-                "x64_python": ctypes.sizeof(ctypes.c_voidp) == 8}
+                "x64_python": ctypes.sizeof(ctypes.c_voidp) == 8,
+                "connected_at": datetime.now().strftime("%m-%d-%Y %H:%M:%S")}
+
         exec_path = os.path.realpath(sys.argv[0])
 
         if not exec_path.endswith(".py"):
@@ -93,7 +96,7 @@ class Control(metaclass=abc.ABCMeta):
 
     def get_vuln(self, exploit_only):
         if platforms.OS == platforms.DARWIN:
-            self.es.send_json(ERROR, "Mac not supported.")
+            self.es.send_json(ERROR, "Mac OS currently not supported")
             return
 
         with tempfile.TemporaryDirectory() as tmp_dir:

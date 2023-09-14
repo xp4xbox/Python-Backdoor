@@ -116,7 +116,7 @@ class Server:
                         self.addresses.append(address)
 
                     self.logger.info(
-                        f"Connection {len(self.connections)} has been established: {address['ip']}:{address['port']} ({address['hostname']})")
+                        f"Connection {len(self.connections)} has been established: {address['ip']}:{address['port']} ({address['hostname']}) at {address['connected_at']}")
                 except socket.error as err:
                     self.logger.error(f"Error accepting connection: {err}")
                     continue

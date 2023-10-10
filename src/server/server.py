@@ -105,7 +105,7 @@ class Server:
                         continue
 
                     address = {**{"ip": address[0], "port": address[1]}, **response["value"],
-                               **{"connected": True, "aes_key": dh.key, "id": len(self.connections) + 1}}
+                               **{"connected": True, "aes_key": dh.key, "no": len(self.connections) + 1}}
 
                     del dh
 
@@ -116,7 +116,7 @@ class Server:
                         self.addresses.append(address)
 
                     self.logger.info(
-                        f"Connection {address['id']} has been established: {address['ip']}:{address['port']} ({address['hostname']}) at {address['connected_at']}")
+                        f"Connection {address['no']} has been established: {address['ip']}:{address['port']} ({address['hostname']}) at {address['connected_at']}")
                 except socket.error as err:
                     self.logger.error(f"Error accepting connection: {err}")
                     continue
@@ -187,7 +187,7 @@ class Server:
                 close_conn = True
 
             if close_conn:
-                self.logger.warning(f"Connection {addr['id']} disconnected")
+                self.logger.warning(f"Connection {addr['no']} disconnected")
                 # close conn, but don't send the close signal, so it can restart
                 es.socket.close()
                 addr["connected"] = False
@@ -269,7 +269,7 @@ class Server:
                     output = es.recv_json()["value"]
 
                 if output:
-                    print(f"Response from connection {addr['id']} at {addr['ip']}:{addr['port']} \n{output}")
+                    print(f"Response from connection {addr['no']} at {addr['ip']}:{addr['port']} \n{output}")
         else:
             self.logger.warning("No active connections")
 

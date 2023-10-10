@@ -104,8 +104,8 @@ class Server:
                         _socket.close()
                         continue
 
-                    address = {**{"ip": address[0], "port": address[1]}, **response["value"], **{"connected": True},
-                               **{"aes_key": dh.key}}
+                    address = {**{"ip": address[0], "port": address[1]}, **response["value"],
+                               **{"connected": True, "aes_key": dh.key, "id": len(self.connections) + 1}}
 
                     del dh
 
@@ -116,7 +116,7 @@ class Server:
                         self.addresses.append(address)
 
                     self.logger.info(
-                        f"Connection {len(self.connections)} has been established: {address['ip']}:{address['port']} ({address['hostname']}) at {address['connected_at']}")
+                        f"Connection {address['id']} has been established: {address['ip']}:{address['port']} ({address['hostname']}) at {address['connected_at']}")
                 except socket.error as err:
                     self.logger.error(f"Error accepting connection: {err}")
                     continue
@@ -171,11 +171,12 @@ class Server:
         self.addresses[self.connections.index(es.socket)]["connected"] = False
 
     def refresh(self):
-        for i, _socket in enumerate(self.active_connections()):
+        for _socket in self.active_connections():
             close_conn = False
 
-            k = self.addresses[self.connections.index(_socket)]["aes_key"]
-            es = EncryptedSocket(_socket, k)
+            addr = self.addresses[self.connections.index(_socket)]
+
+            es = EncryptedSocket(_socket, addr["aes_key"])
 
             try:
                 es.send_json(CLIENT_HEARTBEAT)
@@ -186,10 +187,10 @@ class Server:
                 close_conn = True
 
             if close_conn:
-                self.logger.warning(f"Connection {i + 1} disconnected")
+                self.logger.warning(f"Connection {addr['id']} disconnected")
                 # close conn, but don't send the close signal, so it can restart
                 es.socket.close()
-                self.addresses[self.connections.index(es.socket)]["connected"] = False
+                addr["connected"] = False
 
     def get_address(self, _socket):
         return self.addresses[self.connections.index(_socket)]
@@ -245,9 +246,11 @@ class Server:
 
     def send_all_connections(self, key, value, recv=False, recvall=False):
         if self.num_active_connections() > 0:
-            for i, _socket in enumerate(self.active_connections()):
+            for _socket in self.active_connections():
 
-                es = EncryptedSocket(_socket, self.addresses[i]["aes_key"])
+                addr = self.addresses[self.connections.index(_socket)]
+
+                es = EncryptedSocket(_socket, addr["aes_key"])
 
                 try:
                     es.send_json(key, value)
@@ -266,8 +269,7 @@ class Server:
                     output = es.recv_json()["value"]
 
                 if output:
-                    _info = self.addresses[i]
-                    print(f"Response from connection {str(i + 1)} at {_info['ip']}:{_info['port']} \n{output}")
+                    print(f"Response from connection {addr['id']} at {addr['ip']}:{addr['port']} \n{output}")
         else:
             self.logger.warning("No active connections")
 
@@ -295,9 +297,11 @@ class Server:
             return
 
         if self.num_active_connections() > 0:
-            for i, _socket in enumerate(self.active_connections()):
+            for _socket in self.active_connections():
 
-                es = EncryptedSocket(_socket, self.addresses[i]["aes_key"])
+                addr = self.addresses[self.connections.index(_socket)]
+
+                es = EncryptedSocket(_socket, addr["aes_key"])
 
                 try:
                     es.send_json(CLIENT_CHANGE_HOST, {"host": host, "port": port})
@@ -305,7 +309,7 @@ class Server:
                 except socket.error:
                     continue
 
-                self.addresses[self.connections.index(es.socket)]["connected"] = False
+                addr["connected"] = False
         else:
             self.logger.warning("No active connections")
 

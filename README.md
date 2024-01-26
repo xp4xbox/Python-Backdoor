@@ -1,6 +1,6 @@
 # Python Backdoor
 
-This project is a cross-platform (Windows/Linux/MacOS) open source, backdoor/reverse tcp/RAT made in Python3 which contains many features such as multi-client support.
+This project is a cross-platform backdoor/reverse shell and post-exploitation tool written in Python3.
 
 ![image](.github/resources/demo.png)
 

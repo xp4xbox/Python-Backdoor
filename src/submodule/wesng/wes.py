@@ -705,7 +705,7 @@ def get_patches_servicepacks(results, cves, productfilter):
     if len(sp) > 0:
         sp = sp[0]  # There should only be one result
 
-        # Only focus on OS + architecure, current service pack is not relevant
+        # Only focus on OS + architecture, current service pack is not relevant
         productfilter = re.sub(' Service Pack \d', '', productfilter)
 
         # Determine service packs available for the OS and determine the latest version available
